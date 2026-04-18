@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bell, MapPin, Search, ArrowRight, TrendingUp, TrendingDown } from "lucide-react";
+import { Bell, Search, ArrowRight, TrendingUp, TrendingDown, Leaf } from "lucide-react";
 import { PhoneFrame } from "@/components/PhoneFrame";
 import { BottomTabBar } from "@/components/BottomTabBar";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -33,16 +33,13 @@ function Index() {
     <PhoneFrame withBottomNav>
       {/* Header */}
       <header className="flex items-center justify-between px-5 pt-6">
-        <div className="flex items-center gap-3">
-          <img
-            src="https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=120&q=80"
-            alt="User avatar"
-            className="h-11 w-11 rounded-full object-cover ring-2 ring-primary-soft"
-          />
-          <div>
-            <p className="text-xs text-muted-foreground">Good morning,</p>
-            <p className="text-sm font-semibold text-foreground">Hello, Sarah 👋</p>
-          </div>
+        <div className="flex items-center gap-2">
+          <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+            <Leaf className="h-5 w-5" />
+          </span>
+          <p className="text-lg font-bold tracking-tight text-foreground">
+            farm<span className="text-primary">link</span>
+          </p>
         </div>
         <button
           type="button"
@@ -54,13 +51,8 @@ function Index() {
         </button>
       </header>
 
-      <div className="mt-2 flex items-center gap-1.5 px-5 text-xs text-muted-foreground">
-        <MapPin className="h-3.5 w-3.5 text-primary" />
-        <span>Springfield, OR · Local farms nearby</span>
-      </div>
-
       {/* Search */}
-      <div className="mt-4 px-5">
+      <div className="mt-5 px-5">
         <label className="flex items-center gap-2 rounded-full bg-surface-2 px-4 py-3">
           <Search className="h-4 w-4 text-muted-foreground" />
           <input
