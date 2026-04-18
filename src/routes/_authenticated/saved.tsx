@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Heart } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/saved")({
-  head: () => ({ meta: [{ title: "Saved listings — Farmlink" }] }),
+  head: () => ({ meta: [{ title: "Saved listings — farmlink" }] }),
   component: SavedPage,
 });
 
@@ -24,7 +24,7 @@ function SavedPage() {
     void supabase
       .from("saved_listings")
       .select(
-        "listing:listings(id,title,category,price_ghs,price_unit,region,district,created_at,seller_id,listing_photos(storage_path,is_cover,display_order),profiles!listings_seller_id_fkey(badge_tier))",
+        "listing:listings(id,title,category,price_ghs,price_unit,region,district,created_at,seller_id,listing_photos(storage_path,is_cover,display_order),profiles!listings_seller_id_fkey(badge_tier,display_name))",
       )
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
@@ -49,6 +49,7 @@ function SavedPage() {
               created_at: r.created_at,
               cover_path: photos[0]?.storage_path ?? null,
               seller_badge: r.profiles?.badge_tier ?? null,
+              seller_name: r.profiles?.display_name ?? null,
             };
           });
         setRows(mapped);
@@ -62,7 +63,9 @@ function SavedPage() {
   return (
     <AppShell>
       <div className="mx-auto max-w-6xl px-4 py-5 md:py-8">
-        <h1 className="text-2xl font-bold tracking-tight">Saved listings</h1>
+        <h1 className="font-display text-[28px] font-extrabold tracking-tight">
+          Saved listings
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {rows.length} saved listing{rows.length === 1 ? "" : "s"}
         </p>
@@ -70,11 +73,14 @@ function SavedPage() {
           {loading ? (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="aspect-square animate-pulse rounded-2xl bg-background" />
+                <div
+                  key={i}
+                  className="aspect-[4/3] animate-pulse rounded-2xl border-[1.5px] border-border bg-card"
+                />
               ))}
             </div>
           ) : rows.length === 0 ? (
-            <div className="rounded-2xl bg-background p-12 text-center shadow-[var(--shadow-card)]">
+            <div className="rounded-2xl border-[1.5px] border-dashed border-border bg-card p-12 text-center">
               <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary-soft text-primary">
                 <Heart className="h-6 w-6" />
               </span>
@@ -82,7 +88,7 @@ function SavedPage() {
               <p className="mt-1 text-xs text-muted-foreground">
                 Tap the heart on any listing to save it for later.
               </p>
-              <Button asChild className="mt-5 rounded-full">
+              <Button asChild className="mt-5 rounded-xl">
                 <Link to="/listings">Browse listings</Link>
               </Button>
             </div>

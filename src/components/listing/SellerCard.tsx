@@ -23,14 +23,14 @@ export function SellerCard({
     .map((p) => p[0]?.toUpperCase() ?? "")
     .join("");
   return (
-    <div className="rounded-2xl bg-background p-4 shadow-[var(--shadow-card)]">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+    <div className="rounded-2xl border-[1.5px] border-border bg-card p-4">
+      <p className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
         Seller
       </p>
       <div className="mt-2 flex items-center gap-3">
         <Avatar className="h-12 w-12">
           {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName} /> : null}
-          <AvatarFallback className="bg-primary-soft text-primary font-semibold">
+          <AvatarFallback className="bg-primary-soft font-semibold text-primary">
             {initials || "S"}
           </AvatarFallback>
         </Avatar>
@@ -39,7 +39,7 @@ export function SellerCard({
             <p className="truncate font-semibold">{displayName}</p>
             <BadgeChip tier={badgeTier} />
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
             {listingCount} listing{listingCount === 1 ? "" : "s"} · {tradeCount} sale
             {tradeCount === 1 ? "" : "s"}
           </p>

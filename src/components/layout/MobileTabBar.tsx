@@ -1,14 +1,20 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Bookmark, Plus, Search, User, Home } from "lucide-react";
+import { Bookmark, Plus, User, Home, Newspaper } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
+
+type TabTo = "/listings" | "/saved" | "/dashboard" | "/login" | "/services";
 
 export function MobileTabBar() {
   const location = useLocation();
   const { isAuthenticated } = useAuth();
-  const accountTo = isAuthenticated ? "/dashboard" : "/login";
+  const accountTo: TabTo = isAuthenticated ? "/dashboard" : "/login";
 
-  const isBrowse = location.pathname === "/" || location.pathname.startsWith("/listings");
+  const isBrowse =
+    location.pathname === "/" ||
+    (location.pathname.startsWith("/listings") && !location.pathname.startsWith("/listings/"));
+  const isServices =
+    location.pathname.startsWith("/services") || location.pathname.startsWith("/hatcheries");
   const isSaved = location.pathname.startsWith("/saved");
   const isAccount =
     location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/login");
@@ -21,7 +27,7 @@ export function MobileTabBar() {
     >
       <ul className="mx-auto flex h-[66px] max-w-md items-center px-1">
         <TabItem to="/listings" label="Browse" Icon={Home} active={isBrowse} />
-        <TabItem to="/listings" label="Search" Icon={Search} active={false} />
+        <TabItem to="/services" label="Services" Icon={Newspaper} active={isServices} />
         <li className="flex shrink-0 justify-center">
           <Link
             to="/post"
@@ -44,9 +50,9 @@ function TabItem({
   Icon,
   active,
 }: {
-  to: "/listings" | "/saved" | "/dashboard" | "/login";
+  to: TabTo;
   label: string;
-  Icon: typeof Search;
+  Icon: typeof Home;
   active: boolean;
 }) {
   return (

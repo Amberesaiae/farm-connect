@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { AdminGate } from "@/components/layout/AdminGate";
+import { AdminNav } from "@/components/layout/AdminNav";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +12,7 @@ import { toast } from "sonner";
 import { formatGhs, formatRelative } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/listings")({
-  head: () => ({ meta: [{ title: "Listing moderation — Farmlink admin" }] }),
+  head: () => ({ meta: [{ title: "Listing moderation — farmlink admin" }] }),
   component: ListingMod,
 });
 
@@ -54,23 +55,36 @@ function ListingMod() {
   return (
     <AdminGate>
       <AppShell>
-        <div className="mx-auto max-w-5xl px-4 py-6">
-          <h1 className="text-2xl font-bold tracking-tight">Listing moderation</h1>
+        <div className="mx-auto max-w-5xl px-4 py-6 md:py-8">
+          <h1 className="font-display text-[28px] font-extrabold tracking-tight">
+            Listing moderation
+          </h1>
+          <div className="mt-5">
+            <AdminNav />
+          </div>
           <div className="mt-6 space-y-2">
             {loading ? (
               <p className="text-sm text-muted-foreground">Loading…</p>
             ) : (
               rows.map((r) => (
-                <div key={r.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
+                <div
+                  key={r.id}
+                  className="flex items-center gap-3 rounded-xl border-[1.5px] border-border bg-card p-3"
+                >
                   <div className="min-w-0 flex-1">
-                    <Link to="/listings/$id" params={{ id: r.id }} className="block truncate font-semibold hover:underline">
+                    <Link
+                      to="/listings/$id"
+                      params={{ id: r.id }}
+                      className="block truncate font-semibold hover:underline"
+                    >
                       {r.title}
                     </Link>
-                    <p className="text-xs text-muted-foreground">
-                      {r.profiles?.display_name ?? "—"} · {r.region} · {formatGhs(r.price_ghs)} · {formatRelative(r.created_at)}
+                    <p className="font-mono text-[10.5px] uppercase tracking-wider text-muted-foreground">
+                      {r.profiles?.display_name ?? "—"} · {r.region} · {formatGhs(r.price_ghs)} ·{" "}
+                      {formatRelative(r.created_at)}
                     </p>
                   </div>
-                  <Badge variant="outline">{r.status}</Badge>
+                  <Badge variant="outline" className="capitalize">{r.status}</Badge>
                   {r.status !== "hidden" ? (
                     <Button size="sm" variant="outline" onClick={() => act(r.id, "hide")}>Hide</Button>
                   ) : (

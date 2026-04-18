@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { AdminGate } from "@/components/layout/AdminGate";
+import { AdminNav } from "@/components/layout/AdminNav";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +13,7 @@ import { toast } from "sonner";
 import { formatRelative } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/verifications")({
-  head: () => ({ meta: [{ title: "Verification queue — Farmlink admin" }] }),
+  head: () => ({ meta: [{ title: "Verification queue — farmlink admin" }] }),
   component: VerificationQueue,
 });
 
@@ -70,53 +71,62 @@ function VerificationQueue() {
   return (
     <AdminGate>
       <AppShell>
-        <div className="mx-auto max-w-4xl px-4 py-6">
-          <h1 className="text-2xl font-bold tracking-tight">Verification queue</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{rows.length} pending</p>
+        <div className="mx-auto max-w-4xl px-4 py-6 md:py-8">
+          <h1 className="font-display text-[28px] font-extrabold tracking-tight">
+            Verification queue
+          </h1>
+          <p className="mt-1 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+            {rows.length} pending
+          </p>
+          <div className="mt-5">
+            <AdminNav />
+          </div>
           <div className="mt-6 space-y-4">
             {loading ? (
               <p className="text-sm text-muted-foreground">Loading…</p>
             ) : rows.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+              <div className="rounded-2xl border-[1.5px] border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
                 No submissions in the queue.
               </div>
             ) : (
               rows.map((s) => (
-                <div key={s.id} className="rounded-2xl border border-border p-4">
+                <div key={s.id} className="rounded-2xl border-[1.5px] border-border bg-card p-4">
                   <div className="flex items-baseline justify-between">
                     <p className="font-semibold">{s.profiles?.display_name ?? "Seller"}</p>
-                    <p className="text-xs text-muted-foreground">{formatRelative(s.created_at)}</p>
+                    <p className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                      {formatRelative(s.created_at)}
+                    </p>
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-3">
                     <a href={signed[s.id]?.card} target="_blank" rel="noreferrer" className="block">
                       {signed[s.id]?.card ? (
-                        <img src={signed[s.id]?.card} alt="Ghana Card" className="aspect-video rounded-md object-cover" />
+                        <img src={signed[s.id]?.card} alt="Ghana Card" className="aspect-video rounded-lg object-cover" />
                       ) : (
-                        <div className="aspect-video rounded-md bg-surface" />
+                        <div className="aspect-video rounded-lg bg-surface" />
                       )}
                       <p className="mt-1 text-xs text-muted-foreground">Ghana Card</p>
                     </a>
                     <a href={signed[s.id]?.selfie} target="_blank" rel="noreferrer" className="block">
                       {signed[s.id]?.selfie ? (
-                        <img src={signed[s.id]?.selfie} alt="Selfie" className="aspect-video rounded-md object-cover" />
+                        <img src={signed[s.id]?.selfie} alt="Selfie" className="aspect-video rounded-lg object-cover" />
                       ) : (
-                        <div className="aspect-video rounded-md bg-surface" />
+                        <div className="aspect-video rounded-lg bg-surface" />
                       )}
                       <p className="mt-1 text-xs text-muted-foreground">Selfie with card</p>
                     </a>
                   </div>
                   <Textarea
                     rows={2}
-                    className="mt-3"
+                    className="mt-3 rounded-xl"
                     placeholder="Reason if rejecting…"
                     value={reasons[s.id] ?? ""}
                     onChange={(e) => setReasons((r) => ({ ...r, [s.id]: e.target.value }))}
                   />
                   <div className="mt-3 flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => decide(s.id, "rejected")}>
+                    <Button variant="outline" className="rounded-xl" onClick={() => decide(s.id, "rejected")}>
                       Reject
                     </Button>
-                    <Button onClick={() => decide(s.id, "approved")}>Approve</Button>
+                    <Button className="rounded-xl" onClick={() => decide(s.id, "approved")}>Approve</Button>
                   </div>
                 </div>
               ))

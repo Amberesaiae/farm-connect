@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { AdminGate } from "@/components/layout/AdminGate";
+import { AdminNav } from "@/components/layout/AdminNav";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +11,7 @@ import { setUserStatus } from "@/server/admin.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
-  head: () => ({ meta: [{ title: "Users — Farmlink admin" }] }),
+  head: () => ({ meta: [{ title: "Users — farmlink admin" }] }),
   component: UsersMod,
 });
 
@@ -48,18 +49,26 @@ function UsersMod() {
   return (
     <AdminGate>
       <AppShell>
-        <div className="mx-auto max-w-5xl px-4 py-6">
-          <h1 className="text-2xl font-bold tracking-tight">Users</h1>
+        <div className="mx-auto max-w-5xl px-4 py-6 md:py-8">
+          <h1 className="font-display text-[28px] font-extrabold tracking-tight">Users</h1>
+          <div className="mt-5">
+            <AdminNav />
+          </div>
           <div className="mt-6 space-y-2">
             {rows.map((r) => (
-              <div key={r.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
+              <div
+                key={r.id}
+                className="flex items-center gap-3 rounded-xl border-[1.5px] border-border bg-card p-3"
+              >
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">{r.display_name}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="font-mono text-[10.5px] uppercase tracking-wider text-muted-foreground">
                     {r.listing_count} listings · {r.trade_count} sales · badge {r.badge_tier}
                   </p>
                 </div>
-                <Badge variant={r.status === "suspended" ? "destructive" : "outline"}>{r.status}</Badge>
+                <Badge variant={r.status === "suspended" ? "destructive" : "outline"} className="capitalize">
+                  {r.status}
+                </Badge>
                 {r.status === "active" ? (
                   <Button size="sm" variant="destructive" onClick={() => act(r.id, "suspend")}>Suspend</Button>
                 ) : (

@@ -31,8 +31,8 @@ import { ImagePlus, X } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/post")({
   head: () => ({
     meta: [
-      { title: "Post a listing — Farmlink" },
-      { name: "description", content: "List your livestock for sale on Farmlink." },
+      { title: "Post a listing — farmlink" },
+      { name: "description", content: "List your livestock for sale on farmlink." },
     ],
   }),
   component: PostWizard,
@@ -164,8 +164,10 @@ function PostWizard() {
   };
 
   const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <section className="rounded-2xl bg-background p-5 shadow-[var(--shadow-card)]">
-      <h2 className="text-sm font-semibold tracking-tight text-foreground">{title}</h2>
+    <section className="rounded-2xl border-[1.5px] border-border bg-card p-5">
+      <h2 className="font-display text-[15px] font-extrabold tracking-tight text-foreground">
+        {title}
+      </h2>
       <div className="mt-4 space-y-4">{children}</div>
     </section>
   );
@@ -173,7 +175,9 @@ function PostWizard() {
   return (
     <AppShell>
       <div className="mx-auto max-w-2xl px-4 pb-32 pt-5 md:pb-12 md:pt-8">
-        <h1 className="text-2xl font-bold tracking-tight">Post a listing</h1>
+        <h1 className="font-display text-[28px] font-extrabold tracking-tight">
+          Post a listing
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           It only takes a minute. Your listing stays live for 60 days.
         </p>
@@ -346,7 +350,7 @@ function PostWizard() {
           {step === 3 && (
             <>
               <Section title="Photos">
-                <p className="text-xs text-muted-foreground -mt-2">
+                <p className="-mt-2 text-xs text-muted-foreground">
                   Add up to 8 photos. The first is your cover.
                 </p>
                 <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
@@ -364,7 +368,7 @@ function PostWizard() {
                       <button
                         type="button"
                         onClick={() => removePhoto(i)}
-                        className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-background/90 shadow-sm"
+                        className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-card/90 shadow-sm"
                         aria-label="Remove photo"
                       >
                         <X className="h-3.5 w-3.5" />
@@ -409,29 +413,29 @@ function PostWizard() {
         </div>
       </div>
 
-      {/* Sticky footer */}
+      {/* Sticky footer — sits above the mobile tab bar (66px), pinned to viewport on desktop */}
       <div
-        className="fixed inset-x-0 z-30 border-t border-border/60 bg-background/95 backdrop-blur"
-        style={{ bottom: "calc(env(safe-area-inset-bottom) + 64px)" }}
+        className="fixed inset-x-0 z-30 border-t border-border bg-card/95 backdrop-blur"
+        style={{ bottom: "calc(env(safe-area-inset-bottom) + 66px)" }}
       >
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3">
           <Button
             variant="ghost"
             onClick={back}
             disabled={step === 1 || busy}
-            className="rounded-full"
+            className="rounded-xl"
           >
             Back
           </Button>
           {step < 3 ? (
-            <Button onClick={next} className="flex-1 rounded-full font-semibold sm:flex-none sm:px-8">
+            <Button onClick={next} className="flex-1 rounded-xl font-semibold sm:flex-none sm:px-8">
               Continue
             </Button>
           ) : (
             <Button
               onClick={submit}
               disabled={busy}
-              className="flex-1 rounded-full font-semibold sm:flex-none sm:px-8"
+              className="flex-1 rounded-xl font-semibold sm:flex-none sm:px-8"
             >
               {busy ? "Posting…" : "Post listing"}
             </Button>
