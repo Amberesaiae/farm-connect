@@ -1,70 +1,61 @@
 
 
-## Farmlink — UI/UX Refinement Plan
+## Farmlink — v2 Propagation, Brand Cleanup & New Sections
 
-Take the **visual language** from the produce mockups (clean white cards on a soft gray canvas, generous radii, a confident green hero block, sticky bottom action, big square thumbnails, calm typography) and apply it to **Farmlink's livestock domain** — without copying the produce app's content, layout literally, or that "Good morning Jenny / location" pattern. No emojis, no avatar, no fake phone bezel. The brand mark stays "Farmlink".
+Apply the warm-cream + forest-green v2 visual language to **every page** (login, dashboard, post wizard, listing detail, saved, all admin), drop the price ticker entirely, lock the brand to a clean lowercase **"farmlink"** wordmark (no leaf, no Sprout, no emoji), add **Services** and **Hatcheries** as real routes, and rotate the hero image based on the active category. All work stays atomic — no monolithic files, every section is its own component.
 
-### Design tokens (refine `src/styles.css`)
-- App canvas becomes `--surface` (soft gray `#F6F6F6`), cards stay pure white → instant depth.
-- Bump `--radius` from `1rem` → `1.25rem` for the mockup's pillowy feel.
-- Introduce one extra token: `--shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 8px 24px -12px rgb(15 23 42 / 0.08)` for resting cards.
-- Keep WhatsApp green (`#25D366`) reserved exclusively for the contact CTA.
+### 1. Brand & global chrome
+- **Wordmark**: replace every `<Sprout>` / `<Leaf>` icon-plus-text combo with a single `<Wordmark />` component rendering plain lowercase `farmlink` in `font-display font-extrabold tracking-tight` — no icon, no colored span. Used in `TopNav`, `MobileTabBar` (none currently), `login`, footer.
+- **`AppShell`**: drop the `showTicker` prop and the `<PriceTicker />` import entirely. Delete `src/components/layout/PriceTicker.tsx`. Add a slim `<Footer />` with farmlink wordmark, links to Browse / Sell / Services / Hatcheries / Verification / About, copyright.
+- **`AnnouncementBar`**: keep, but soften copy to one line, no link clutter.
+- **`TrustBanner`**: keep, used on `/listings` and the new section pages.
 
-### Layout shell (`AppShell`, `TopNav`, `MobileTabBar`)
-- `AppShell`: switch `bg-background` → `bg-surface` so the white cards pop.
-- `TopNav`: collapse to a single 56px row on mobile — wordmark left, **bell + user avatar** right (no separate mobile search bar; the search lives on `/listings`). On desktop: wordmark, primary nav links (Browse, Sell, How it works), pill-shaped search field, "Post listing" green pill.
-- `MobileTabBar`: 4 items (Browse / Saved / **Post (raised FAB)** / Account). Active tab = filled green pill behind the icon, inactive = slate. Add 1px hairline top border + safe-area padding (already there). Remove the "Mine/Sign in" duality — show "Account" always; tapping it routes to `/dashboard` if signed in, else `/login`.
+### 2. New routes (real pages, not hash anchors)
+Create separate route files so each page gets its own SSR head/og:
+- `src/routes/services.tsx` — Services directory (vets, transport, feed/agro-vet supply, insurance). Card grid, each card = name, region, phone (WhatsApp link), category chip. Seeded from a new `src/lib/services-data.ts` mock list (clearly labelled "Coming soon — partner directory") so it ships now without DB changes.
+- `src/routes/hatcheries.tsx` — Hatcheries directory (poultry chicks, fish fingerlings, breeding stock). Same card format, different mock dataset in `src/lib/hatcheries-data.ts`.
+- `src/routes/about.tsx` — short brand page: how Farmlink works, 3-step "Browse → Contact → Trade", trust banner, CTA to post.
+- `src/routes/how-it-works.tsx` — buyer & seller guides side-by-side.
+- All four routes use `AppShell` + the v2 token system. Each defines its own `head()` with title, description, og:title, og:description (and og:image where a hero exists).
 
-### Home / Browse (`/listings`) — biggest visual lift
-Restructure into three stacked sections inside a `max-w-6xl` container:
-1. **Hero offer panel** (replaces the bare "Browse livestock" h1). Soft green card (`bg-primary-soft`), 2-column on desktop / stacked on mobile: left = headline "Buy livestock direct from Ghanaian farmers" + subcopy + two pill buttons ("Browse all" primary, "Post a listing" outline); right = a single high-quality livestock photo with rounded-3xl mask. No carousel dots, no avatar.
-2. **Category strip** — horizontal scroll of 8 round category chips (Cattle, Goats, Sheep, Poultry, Pigs, Rabbits, Donkeys, Other) with small monochrome livestock icon + label. Tapping filters the grid below via search params. Replaces the dropdown-only category filter on mobile.
-3. **Listings section** with a left-rail filter sidebar on `md+` (Region, price range, verified-only toggle, sort) and a top **filter sheet** trigger on mobile. Grid stays 2/3/4 cols but cards are restyled (see below).
+### 3. Category-aware hero imagery
+- Generate three more photographic heroes via Lovable AI (`google/gemini-2.5-flash-image`):
+  - `goats-hero.jpg`, `poultry-hero.jpg`, `mixed-hero.jpg` (default).
+- New helper `src/lib/hero-image.ts` exporting `heroForCategory(cat?: string)` that returns the right import. `HeroOffer` accepts an optional `category` prop, swaps image + headline copy ("Cattle from verified farmers" / "Healthy goats, fair prices" / etc.). `/listings` passes `search.category` in.
 
-### `ListingCard` redesign (atomic component)
-- Square `aspect-square` image (mockup uses square thumbs, not 4:3) with `rounded-2xl` and the **save-heart in a white circular pill** at top-right (currently the badge sits there — move badge to bottom-left of image as a subtle chip).
-- Below image: title (one line, `font-semibold text-sm`), price line in bolder treatment (`text-base font-bold` + small unit suffix), then a single muted meta line: "Region · 3d ago".
-- Card has no border — relies on white surface against gray canvas + `--shadow-card` on hover only. Removes the boxy look.
+### 4. Propagate v2 styling everywhere
+Replace any lingering `bg-background` panel cards, hard borders, or generic `rounded-2xl` shells with the v2 pattern: **cream page canvas, white cards, soft beige `bg-surface` insets, `border-[1.5px] border-border`, `font-display` headings, `font-mono` numerals for prices/stats**. Files touched:
+- `src/routes/_authenticated/dashboard.tsx` — KPI tiles → bordered v2 cards, listing rows → bordered surface, prices in `font-mono`.
+- `src/routes/_authenticated/post.tsx` — wizard `<Section>` wrapper → bordered v2 card, sticky footer styled to match cream theme.
+- `src/routes/_authenticated/saved.tsx` — empty state and grid backgrounds → v2 surface tokens.
+- `src/routes/_authenticated/dashboard.verification.tsx` — section cards → bordered v2 cards, status badges restyled.
+- `src/routes/listings.$id.tsx` — header price → `font-mono`, sticky bar updated to safe-area-only (no tab-bar offset on desktop), `SpecsPanel` lifted to bordered white card.
+- `src/routes/login.tsx` — drop the Leaf icon, use `<Wordmark />`, card uses bordered v2 surface.
+- `src/routes/_authenticated/admin*.tsx` — apply v2 cards to all three admin pages, add a small admin sub-nav component `src/components/layout/AdminNav.tsx` for consistent navigation between queue/listings/users.
 
-### Listing detail (`/listings/$id`) — sticky CTA pattern from mockup
-- Photo carousel becomes edge-to-edge on mobile with the dot indicator at the bottom inside the image (mockup pattern), back-arrow as a floating white circle top-left.
-- Specs grid (category/breed/sex/age/weight/qty) becomes 2-col chip rows inside a flat soft-gray panel (`bg-surface rounded-2xl`, no border) — feels lighter than the current bordered dl.
-- **Sticky bottom action bar on mobile** (the mockup's signature move): full-width WhatsApp green pill "Contact on WhatsApp" + small square save button beside it, fixed `bottom-[calc(env(safe-area-inset-bottom)+72px)]` so it sits above the tab bar. On desktop the actions stay in the right rail.
-- Seller card: white, rounded-2xl, avatar + name + badge chip + "X listings · Y trades" + a ghost link "View seller's listings".
+### 5. Components touched / added
+**New (atomic):**
+- `src/components/brand/Wordmark.tsx`
+- `src/components/layout/Footer.tsx`
+- `src/components/layout/AdminNav.tsx`
+- `src/components/services/ServiceCard.tsx`
+- `src/components/services/HatcheryCard.tsx`
+- `src/lib/services-data.ts`, `src/lib/hatcheries-data.ts`, `src/lib/hero-image.ts`
 
-### Post wizard (`/post`)
-- Replace the WizardProgress bar pills with a **stepper** showing 3 numbered circles + connecting line (filled green up to current step) + "Step 2 of 3 · Pricing & location" caption — clearer than four equal bars.
-- Group fields into card sections with subheads instead of one big bordered box.
-- Step 3 photo grid: enlarge tiles to `aspect-square` with dashed `+ Add photo` first tile labelled "Cover photo" so users understand the cover convention.
-- Sticky footer with Back / Continue (Post listing on step 3) — matches the mockup's bottom-action language.
+**Edited:**
+- `AppShell` (drop ticker, mount Footer), `TopNav` (Wordmark + add Services/Hatcheries links + drop the unused MapPin location chip), `MobileTabBar` (no brand change needed — already iconless), `HeroOffer` (category-aware), `SpecsPanel`, `SellerCard` (v2 card), `ListingGrid` empty state (v2), all touched routes above.
 
-### Dashboard (`/dashboard`)
-- Add a 3-tile KPI strip at top: Active listings · Total views · WhatsApp taps (read from existing aggregates). Each tile = white rounded-2xl, big number, small label.
-- Listing rows: increase thumb from 64px → 80px square `rounded-xl`; right-side actions become an icon-only `MoreHorizontal` dropdown (Mark sold, Edit, Hide, Relist) instead of multiple inline buttons.
-- Empty state per tab gets an illustration-free but warmer copy + primary CTA.
+**Deleted:**
+- `src/components/layout/PriceTicker.tsx`
 
-### Login (`/login`)
-- Already on `bg-surface`. Tighten the card to `max-w-sm`, lift wordmark, add a small subhead "Sell or save livestock listings across Ghana" under the logo, and put the Google button **above** the email tabs (industry convention, fewer clicks).
-
-### Saved (`/saved`)
-- Reuse the new `ListingGrid` + `ListingCard` directly. Empty state with a "Browse listings" primary CTA.
-
-### Admin pages
-- Apply the same surface/card system; no functional changes. Tables get sticky headers and zebra rows for legibility.
-
-### Atomic component additions (no monolith)
-- `src/components/home/HeroOffer.tsx`
-- `src/components/home/CategoryStrip.tsx` + `CategoryChip.tsx`
-- `src/components/listing/StickyContactBar.tsx`
-- `src/components/listing/SpecsPanel.tsx`
-- `src/components/dashboard/KpiTile.tsx`
-- `src/components/wizard/Stepper.tsx` (replaces `WizardProgress`)
-- `src/components/layout/MobileFilterSheet.tsx` (uses existing shadcn `Sheet`)
-- `src/assets/hero-livestock.jpg` — single AI-generated photographic hero (cattle in Ghanaian savanna landscape) via Lovable AI image gen, used only on the home hero + as `og:image` for `/listings`.
+### 6. Navigation wiring
+- Desktop `TopNav` adds: Browse · Services · Hatcheries · Sell.
+- Mobile `MobileTabBar` stays 5-slot (Browse / Saved / Post FAB / Account) — Services & Hatcheries reachable via the Account dropdown / Footer / TopNav on tablet+.
+- Footer present on every page so mobile users still get to Services / Hatcheries / About / How-it-works.
 
 ### What stays unchanged
-Database schema, routes, server functions, auth, and all data flows. This is **purely a visual + component-composition pass** — no migrations, no breaking API changes.
+DB schema, server functions, RLS, auth flow, routing structure beyond the four new public routes.
 
-### Out of scope
-Dark-mode polish (already wired, will inherit), animations beyond hover, blog/about pages, marketing landing.
+### Open assumption (no clarifying question needed)
+Services & Hatcheries ship as **static curated lists** in v1 (mock data file). Once you want sellers to self-list services, we'll add a `services` table + admin moderation in a follow-up — out of scope for this visual+structure pass.
 
