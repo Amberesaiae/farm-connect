@@ -30,7 +30,7 @@ function Index() {
   const marketPreview = MARKET_MOVES.slice(0, 3);
 
   return (
-    <PhoneFrame withBottomNav>
+    <PhoneFrame>
       {/* Header */}
       <header className="flex items-center justify-between px-5 pt-6">
         <div className="flex items-center gap-2">
