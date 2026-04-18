@@ -88,6 +88,7 @@ function Profile() {
         </button>
       </section>
 
+      <div className="mt-6 flex-1" />
       <BottomTabBar />
     </PhoneFrame>
   );
