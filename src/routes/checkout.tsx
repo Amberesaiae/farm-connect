@@ -1,16 +1,18 @@
 import * as React from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { Tag } from "lucide-react";
 import { PhoneFrame } from "@/components/PhoneFrame";
 import { TopBar } from "@/components/TopBar";
-import { INITIAL_CART, productById } from "@/lib/data";
+import { StickyCTA } from "@/components/StickyCTA";
+import { productById } from "@/lib/data";
+import { useCart, selectCartSubtotal } from "@/stores/cart-store";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
     meta: [
-      { title: "Checkout — Agri Farming" },
+      { title: "Checkout — Farmlink" },
       { name: "description", content: "Review your order summary and complete your purchase." },
-      { property: "og:title", content: "Checkout — Agri Farming" },
+      { property: "og:title", content: "Checkout — Farmlink" },
       { property: "og:description", content: "Secure checkout for your fresh farm order." },
     ],
   }),
@@ -18,24 +20,29 @@ export const Route = createFileRoute("/checkout")({
 });
 
 function Checkout() {
+  const router = useRouter();
   const [promo, setPromo] = React.useState("");
-  const lines = INITIAL_CART;
-  const subtotal = lines.reduce((sum, l) => {
-    const p = productById(l.id);
-    return sum + (p ? p.price * l.qty : 0);
-  }, 0);
-  const discount = promo.toLowerCase() === "fresh25" ? subtotal * 0.25 : 0;
+  const [applied, setApplied] = React.useState(false);
+  const lines = useCart((s) => s.lines);
+  const subtotal = useCart(selectCartSubtotal);
+
+  const discount = applied && promo.trim().toLowerCase() === "fresh25" ? subtotal * 0.25 : 0;
   const tax = (subtotal - discount) * 0.05;
   const total = subtotal - discount + tax;
 
   return (
     <PhoneFrame>
       <TopBar title="Checkout" />
-      <section className="flex-1 px-5 pb-32">
+      <section className="flex-1 px-5 pb-6">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Order Summary
         </h2>
-        <ul className="mt-2 space-y-2 rounded-2xl bg-surface-2/70 p-3">
+        <ul className="mt-2 space-y-3 rounded-2xl bg-surface-2/70 p-3">
+          {lines.length === 0 && (
+            <li className="py-6 text-center text-sm text-muted-foreground">
+              Your cart is empty.
+            </li>
+          )}
           {lines.map((l) => {
             const p = productById(l.id);
             if (!p) return null;
@@ -54,23 +61,43 @@ function Checkout() {
           })}
         </ul>
 
-        <div className="mt-5 rounded-2xl bg-surface-2/70 p-3">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            setApplied(true);
+          }}
+          className="mt-5 rounded-2xl bg-surface-2/70 p-3"
+        >
           <div className="flex items-center gap-2">
             <Tag className="h-4 w-4 text-primary" />
             <input
               value={promo}
-              onChange={(e) => setPromo(e.target.value)}
+              onChange={(e) => {
+                setPromo(e.target.value);
+                setApplied(false);
+              }}
               placeholder="Promo code (try FRESH25)"
+              aria-label="Promo code"
               className="w-full bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none"
             />
             <button
-              type="button"
-              className="rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+              type="submit"
+              className="rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
               Apply
             </button>
           </div>
-        </div>
+          {applied && (
+            <p
+              className={
+                "mt-2 text-[11px] font-medium " +
+                (discount > 0 ? "text-success" : "text-destructive")
+              }
+            >
+              {discount > 0 ? "Promo applied — 25% off" : "Invalid promo code"}
+            </p>
+          )}
+        </form>
 
         <dl className="mt-5 space-y-2 text-sm">
           <div className="flex justify-between text-muted-foreground">
@@ -85,23 +112,19 @@ function Checkout() {
             <dt>Tax (5%)</dt>
             <dd>${tax.toFixed(2)}</dd>
           </div>
-          <div className="mt-2 border-t border-border pt-3 flex justify-between text-base font-bold">
+          <div className="mt-2 flex justify-between border-t border-border pt-3 text-base font-bold">
             <dt>Total</dt>
             <dd className="text-primary">${total.toFixed(2)}</dd>
           </div>
         </dl>
       </section>
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0">
-        <div className="pointer-events-auto mx-auto max-w-[440px] bg-gradient-to-t from-background via-background to-background/0 px-5 pb-5 pt-6">
-          <Link
-            to="/receipt"
-            className="flex w-full items-center justify-center rounded-full bg-primary px-5 py-4 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30"
-          >
-            Continue
-          </Link>
-        </div>
-      </div>
+      <StickyCTA
+        onClick={() => router.navigate({ to: "/receipt" })}
+        disabled={lines.length === 0}
+        label="Continue to Payment"
+        trailing={`$${total.toFixed(2)}`}
+      />
     </PhoneFrame>
   );
 }

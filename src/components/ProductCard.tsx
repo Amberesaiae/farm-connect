@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Heart } from "lucide-react";
 import type { Product } from "@/lib/data";
 import { cn } from "@/lib/utils";
+import { useFavorites } from "@/stores/favorites-store";
 
 type Props = {
   product: Product;
@@ -10,7 +11,18 @@ type Props = {
 };
 
 export function ProductCard({ product, className }: Props) {
-  const [liked, setLiked] = React.useState(false);
+  const liked = useFavorites((s) => s.ids.includes(product.id));
+  const toggle = useFavorites((s) => s.toggle);
+
+  const onLike = React.useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggle(product.id);
+    },
+    [toggle, product.id],
+  );
+
   return (
     <Link
       to="/product/$id"
@@ -29,15 +41,16 @@ export function ProductCard({ product, className }: Props) {
         />
         <button
           type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            setLiked((v) => !v);
-          }}
+          onClick={onLike}
           className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition-colors hover:bg-background"
           aria-label={liked ? "Remove from favorites" : "Add to favorites"}
+          aria-pressed={liked}
         >
           <Heart
-            className={cn("h-4 w-4 transition-colors", liked ? "fill-destructive text-destructive" : "")}
+            className={cn(
+              "h-4 w-4 transition-colors",
+              liked && "fill-destructive text-destructive",
+            )}
           />
         </button>
       </div>
@@ -45,7 +58,9 @@ export function ProductCard({ product, className }: Props) {
         <p className="truncate text-sm font-medium text-foreground">{product.name}</p>
         <p className="mt-0.5 text-sm font-semibold text-primary">
           ${product.price.toFixed(2)}
-          <span className="ml-1 text-[11px] font-normal text-muted-foreground">{product.unit}</span>
+          <span className="ml-1 text-[11px] font-normal text-muted-foreground">
+            {product.unit}
+          </span>
         </p>
       </div>
     </Link>

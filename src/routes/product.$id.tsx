@@ -1,11 +1,14 @@
 import * as React from "react";
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
-import { Heart, Star, ShoppingCart } from "lucide-react";
+import { Heart, Star, ShoppingCart, ChevronLeft } from "lucide-react";
 import { PhoneFrame } from "@/components/PhoneFrame";
 import { TopBar } from "@/components/TopBar";
 import { QtyStepper } from "@/components/QtyStepper";
+import { StickyCTA } from "@/components/StickyCTA";
 import { PRODUCTS, productById } from "@/lib/data";
 import { cn } from "@/lib/utils";
+import { useCart } from "@/stores/cart-store";
+import { useFavorites } from "@/stores/favorites-store";
 
 export const Route = createFileRoute("/product/$id")({
   loader: ({ params }) => {
@@ -17,14 +20,11 @@ export const Route = createFileRoute("/product/$id")({
     const p = loaderData?.product;
     return {
       meta: [
-        { title: p ? `${p.name} — Agri Farming` : "Product — Agri Farming" },
-        {
-          name: "description",
-          content: p?.description ?? "Fresh from the farm.",
-        },
+        { title: p ? `${p.name} — Farmlink` : "Product — Farmlink" },
+        { name: "description", content: p?.description ?? "Fresh from the farm." },
         ...(p
           ? [
-              { property: "og:title", content: `${p.name} — Agri Farming` },
+              { property: "og:title", content: `${p.name} — Farmlink` },
               { property: "og:description", content: p.description ?? "" },
               { property: "og:image", content: p.image },
               { name: "twitter:image", content: p.image },
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/product/$id")({
   notFoundComponent: () => (
     <PhoneFrame>
       <TopBar title="Not found" />
-      <div className="px-5 py-12 text-center text-sm text-muted-foreground">
+      <div className="flex-1 px-5 py-12 text-center text-sm text-muted-foreground">
         That product doesn't exist.
         <div className="mt-4">
           <Link to="/freshly-stocked" className="text-primary underline">
@@ -53,13 +53,21 @@ function ProductDetail() {
   const { product } = Route.useLoaderData();
   const router = useRouter();
   const [qty, setQty] = React.useState(1);
-  const [liked, setLiked] = React.useState(false);
   const [slide, setSlide] = React.useState(0);
+
+  const liked = useFavorites((s) => s.ids.includes(product.id));
+  const toggleFav = useFavorites((s) => s.toggle);
+  const addToCart = useCart((s) => s.add);
+
   const slides = [product.image, product.image, product.image];
-  const related = PRODUCTS.filter((p) => p.id !== product.id && p.category === product.category).slice(
-    0,
-    4,
-  );
+  const related = PRODUCTS.filter(
+    (p) => p.id !== product.id && p.category === product.category,
+  ).slice(0, 4);
+
+  const onAdd = () => {
+    addToCart(product.id, qty);
+    router.navigate({ to: "/cart" });
+  };
 
   return (
     <PhoneFrame>
@@ -75,13 +83,14 @@ function ProductDetail() {
             className="flex h-10 w-10 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition-colors hover:bg-background"
             aria-label="Go back"
           >
-            ‹
+            <ChevronLeft className="h-5 w-5" />
           </button>
           <button
             type="button"
-            onClick={() => setLiked((v) => !v)}
+            onClick={() => toggleFav(product.id)}
+            aria-pressed={liked}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition-colors hover:bg-background"
-            aria-label="Toggle favorite"
+            aria-label={liked ? "Remove from favorites" : "Add to favorites"}
           >
             <Heart className={cn("h-5 w-5", liked && "fill-destructive text-destructive")} />
           </button>
@@ -102,7 +111,7 @@ function ProductDetail() {
         </div>
       </div>
 
-      <div className="flex-1 px-5 pb-32 pt-5">
+      <div className="flex-1 px-5 pb-6 pt-5">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs font-medium text-primary">{product.category}</p>
@@ -122,7 +131,9 @@ function ProductDetail() {
             <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Price</p>
             <p className="text-lg font-bold text-primary">
               ${product.price.toFixed(2)}
-              <span className="ml-1 text-xs font-normal text-muted-foreground">{product.unit}</span>
+              <span className="ml-1 text-xs font-normal text-muted-foreground">
+                {product.unit}
+              </span>
             </p>
           </div>
           <QtyStepper value={qty} onChange={setQty} />
@@ -158,18 +169,15 @@ function ProductDetail() {
         )}
       </div>
 
-      {/* Sticky CTA */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0">
-        <div className="pointer-events-auto mx-auto max-w-[440px] bg-gradient-to-t from-background via-background to-background/0 px-5 pb-5 pt-6">
-          <Link
-            to="/cart"
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-4 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-[1.01]"
-          >
-            <ShoppingCart className="h-4 w-4" />
-            Add to Cart · ${(product.price * qty).toFixed(2)}
-          </Link>
-        </div>
-      </div>
+      <StickyCTA
+        onClick={onAdd}
+        label="Add to Cart"
+        trailing={
+          <span className="inline-flex items-center gap-2">
+            <ShoppingCart className="h-4 w-4" />${(product.price * qty).toFixed(2)}
+          </span>
+        }
+      />
     </PhoneFrame>
   );
 }

@@ -1,40 +1,74 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { Home, Store, ShoppingCart, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCart, selectCartCount } from "@/stores/cart-store";
 
-const tabs = [
+type Tab = {
+  to: "/" | "/shop" | "/cart" | "/profile";
+  label: string;
+  icon: typeof Home;
+};
+
+const TABS: Tab[] = [
   { to: "/", label: "Home", icon: Home },
   { to: "/shop", label: "Shop", icon: Store },
   { to: "/cart", label: "Cart", icon: ShoppingCart },
   { to: "/profile", label: "Profile", icon: User },
-] as const;
+];
 
 export function BottomTabBar() {
   const { pathname } = useLocation();
+  const count = useCart(selectCartCount);
+
   return (
-    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center pb-3 sm:absolute">
-      <div className="pointer-events-auto mx-3 flex w-full max-w-[416px] items-center justify-between rounded-full border border-border/60 bg-background/95 px-3 py-2 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.2)] backdrop-blur">
-        {tabs.map((t) => {
+    <nav
+      aria-label="Primary"
+      className="sticky bottom-0 left-0 right-0 z-40 mt-auto border-t border-border/60 bg-background/95 px-3 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2 backdrop-blur"
+    >
+      <ul className="mx-auto flex max-w-[420px] items-center justify-between">
+        {TABS.map((t) => {
           const active = pathname === t.to;
           const Icon = t.icon;
           return (
-            <Link
-              key={t.to}
-              to={t.to}
-              className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-3 py-2 text-[11px] font-medium transition-colors",
-                active
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-              aria-label={t.label}
-            >
-              <Icon className="h-5 w-5" strokeWidth={active ? 2.4 : 2} />
-              <span className={cn("leading-none", active ? "block" : "hidden")}>{t.label}</span>
-            </Link>
+            <li key={t.to} className="flex-1">
+              <Link
+                to={t.to}
+                aria-current={active ? "page" : undefined}
+                aria-label={t.label}
+                className={cn(
+                  "group relative mx-auto flex flex-col items-center justify-center gap-0.5 rounded-2xl px-3 py-2 text-[11px] font-medium transition-colors",
+                  active
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <span className="relative">
+                  <Icon
+                    className="h-5 w-5"
+                    strokeWidth={active ? 2.4 : 2}
+                    aria-hidden
+                  />
+                  {t.to === "/cart" && count > 0 && (
+                    <span
+                      aria-label={`${count} items in cart`}
+                      className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-destructive-foreground"
+                    >
+                      {count > 9 ? "9+" : count}
+                    </span>
+                  )}
+                </span>
+                <span className="leading-none">{t.label}</span>
+                {active && (
+                  <span
+                    aria-hidden
+                    className="absolute -top-2 h-1 w-6 rounded-full bg-primary"
+                  />
+                )}
+              </Link>
+            </li>
           );
         })}
-      </div>
+      </ul>
     </nav>
   );
 }

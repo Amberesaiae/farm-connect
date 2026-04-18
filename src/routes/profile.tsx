@@ -34,7 +34,7 @@ const items = [
 
 function Profile() {
   return (
-    <PhoneFrame withBottomNav>
+    <PhoneFrame>
       <header className="px-5 pt-6">
         <h1 className="text-center text-base font-semibold tracking-tight">Profile</h1>
       </header>
@@ -88,6 +88,7 @@ function Profile() {
         </button>
       </section>
 
+      <div className="mt-6 flex-1" />
       <BottomTabBar />
     </PhoneFrame>
   );
