@@ -1,12 +1,8 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 
-export const Route = createFileRoute("/_authenticated/_admin")({
-  component: AdminGate,
-});
-
-function AdminGate() {
+export function AdminGate({ children }: { children: ReactNode }) {
   const { loading, isAdmin } = useAuth();
   const navigate = useNavigate();
 
@@ -23,5 +19,5 @@ function AdminGate() {
       </div>
     );
   }
-  return <Outlet />;
+  return <>{children}</>;
 }

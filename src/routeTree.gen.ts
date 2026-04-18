@@ -17,12 +17,11 @@ import { Route as ListingsIdRouteImport } from './routes/listings.$id'
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
 import { Route as AuthenticatedPostRouteImport } from './routes/_authenticated/post'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/_admin'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedDashboardVerificationRouteImport } from './routes/_authenticated/dashboard.verification'
-import { Route as AuthenticatedAdminAdminRouteImport } from './routes/_authenticated/_admin/admin'
-import { Route as AuthenticatedAdminAdminVerificationsRouteImport } from './routes/_authenticated/_admin/admin.verifications'
-import { Route as AuthenticatedAdminAdminUsersRouteImport } from './routes/_authenticated/_admin/admin.users'
-import { Route as AuthenticatedAdminAdminListingsRouteImport } from './routes/_authenticated/_admin/admin.listings'
+import { Route as AuthenticatedAdminVerificationsRouteImport } from './routes/_authenticated/admin.verifications'
+import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
+import { Route as AuthenticatedAdminListingsRouteImport } from './routes/_authenticated/admin.listings'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -64,7 +63,8 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/_admin',
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedDashboardVerificationRoute =
@@ -73,57 +73,51 @@ const AuthenticatedDashboardVerificationRoute =
     path: '/verification',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
-const AuthenticatedAdminAdminRoute = AuthenticatedAdminAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const AuthenticatedAdminAdminVerificationsRoute =
-  AuthenticatedAdminAdminVerificationsRouteImport.update({
+const AuthenticatedAdminVerificationsRoute =
+  AuthenticatedAdminVerificationsRouteImport.update({
     id: '/verifications',
     path: '/verifications',
-    getParentRoute: () => AuthenticatedAdminAdminRoute,
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedAdminAdminUsersRoute =
-  AuthenticatedAdminAdminUsersRouteImport.update({
-    id: '/users',
-    path: '/users',
-    getParentRoute: () => AuthenticatedAdminAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminListingsRoute =
-  AuthenticatedAdminAdminListingsRouteImport.update({
+const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminListingsRoute =
+  AuthenticatedAdminListingsRouteImport.update({
     id: '/listings',
     path: '/listings',
-    getParentRoute: () => AuthenticatedAdminAdminRoute,
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/listings': typeof ListingsRouteWithChildren
   '/login': typeof LoginRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/post': typeof AuthenticatedPostRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/listings/$id': typeof ListingsIdRoute
-  '/admin': typeof AuthenticatedAdminAdminRouteWithChildren
+  '/admin/listings': typeof AuthenticatedAdminListingsRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/dashboard/verification': typeof AuthenticatedDashboardVerificationRoute
-  '/admin/listings': typeof AuthenticatedAdminAdminListingsRoute
-  '/admin/users': typeof AuthenticatedAdminAdminUsersRoute
-  '/admin/verifications': typeof AuthenticatedAdminAdminVerificationsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/listings': typeof ListingsRouteWithChildren
   '/login': typeof LoginRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/post': typeof AuthenticatedPostRoute
   '/saved': typeof AuthenticatedSavedRoute
   '/listings/$id': typeof ListingsIdRoute
-  '/admin': typeof AuthenticatedAdminAdminRouteWithChildren
+  '/admin/listings': typeof AuthenticatedAdminListingsRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/dashboard/verification': typeof AuthenticatedDashboardVerificationRoute
-  '/admin/listings': typeof AuthenticatedAdminAdminListingsRoute
-  '/admin/users': typeof AuthenticatedAdminAdminUsersRoute
-  '/admin/verifications': typeof AuthenticatedAdminAdminVerificationsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -131,16 +125,15 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/listings': typeof ListingsRouteWithChildren
   '/login': typeof LoginRoute
-  '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/_authenticated/post': typeof AuthenticatedPostRoute
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
   '/listings/$id': typeof ListingsIdRoute
-  '/_authenticated/_admin/admin': typeof AuthenticatedAdminAdminRouteWithChildren
+  '/_authenticated/admin/listings': typeof AuthenticatedAdminListingsRoute
+  '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/_authenticated/dashboard/verification': typeof AuthenticatedDashboardVerificationRoute
-  '/_authenticated/_admin/admin/listings': typeof AuthenticatedAdminAdminListingsRoute
-  '/_authenticated/_admin/admin/users': typeof AuthenticatedAdminAdminUsersRoute
-  '/_authenticated/_admin/admin/verifications': typeof AuthenticatedAdminAdminVerificationsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -148,45 +141,44 @@ export interface FileRouteTypes {
     | '/'
     | '/listings'
     | '/login'
+    | '/admin'
     | '/dashboard'
     | '/post'
     | '/saved'
     | '/listings/$id'
-    | '/admin'
-    | '/dashboard/verification'
     | '/admin/listings'
     | '/admin/users'
     | '/admin/verifications'
+    | '/dashboard/verification'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/listings'
     | '/login'
+    | '/admin'
     | '/dashboard'
     | '/post'
     | '/saved'
     | '/listings/$id'
-    | '/admin'
-    | '/dashboard/verification'
     | '/admin/listings'
     | '/admin/users'
     | '/admin/verifications'
+    | '/dashboard/verification'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/listings'
     | '/login'
-    | '/_authenticated/_admin'
+    | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/post'
     | '/_authenticated/saved'
     | '/listings/$id'
-    | '/_authenticated/_admin/admin'
+    | '/_authenticated/admin/listings'
+    | '/_authenticated/admin/users'
+    | '/_authenticated/admin/verifications'
     | '/_authenticated/dashboard/verification'
-    | '/_authenticated/_admin/admin/listings'
-    | '/_authenticated/_admin/admin/users'
-    | '/_authenticated/_admin/admin/verifications'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -254,10 +246,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/_admin': {
-      id: '/_authenticated/_admin'
-      path: ''
-      fullPath: '/'
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
@@ -268,62 +260,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardVerificationRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
-    '/_authenticated/_admin/admin': {
-      id: '/_authenticated/_admin/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminAdminRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/verifications': {
-      id: '/_authenticated/_admin/admin/verifications'
+    '/_authenticated/admin/verifications': {
+      id: '/_authenticated/admin/verifications'
       path: '/verifications'
       fullPath: '/admin/verifications'
-      preLoaderRoute: typeof AuthenticatedAdminAdminVerificationsRouteImport
-      parentRoute: typeof AuthenticatedAdminAdminRoute
+      preLoaderRoute: typeof AuthenticatedAdminVerificationsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/_admin/admin/users': {
-      id: '/_authenticated/_admin/admin/users'
+    '/_authenticated/admin/users': {
+      id: '/_authenticated/admin/users'
       path: '/users'
       fullPath: '/admin/users'
-      preLoaderRoute: typeof AuthenticatedAdminAdminUsersRouteImport
-      parentRoute: typeof AuthenticatedAdminAdminRoute
+      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/_admin/admin/listings': {
-      id: '/_authenticated/_admin/admin/listings'
+    '/_authenticated/admin/listings': {
+      id: '/_authenticated/admin/listings'
       path: '/listings'
       fullPath: '/admin/listings'
-      preLoaderRoute: typeof AuthenticatedAdminAdminListingsRouteImport
-      parentRoute: typeof AuthenticatedAdminAdminRoute
+      preLoaderRoute: typeof AuthenticatedAdminListingsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
   }
 }
 
-interface AuthenticatedAdminAdminRouteChildren {
-  AuthenticatedAdminAdminListingsRoute: typeof AuthenticatedAdminAdminListingsRoute
-  AuthenticatedAdminAdminUsersRoute: typeof AuthenticatedAdminAdminUsersRoute
-  AuthenticatedAdminAdminVerificationsRoute: typeof AuthenticatedAdminAdminVerificationsRoute
-}
-
-const AuthenticatedAdminAdminRouteChildren: AuthenticatedAdminAdminRouteChildren =
-  {
-    AuthenticatedAdminAdminListingsRoute: AuthenticatedAdminAdminListingsRoute,
-    AuthenticatedAdminAdminUsersRoute: AuthenticatedAdminAdminUsersRoute,
-    AuthenticatedAdminAdminVerificationsRoute:
-      AuthenticatedAdminAdminVerificationsRoute,
-  }
-
-const AuthenticatedAdminAdminRouteWithChildren =
-  AuthenticatedAdminAdminRoute._addFileChildren(
-    AuthenticatedAdminAdminRouteChildren,
-  )
-
 interface AuthenticatedAdminRouteChildren {
-  AuthenticatedAdminAdminRoute: typeof AuthenticatedAdminAdminRouteWithChildren
+  AuthenticatedAdminListingsRoute: typeof AuthenticatedAdminListingsRoute
+  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
+  AuthenticatedAdminVerificationsRoute: typeof AuthenticatedAdminVerificationsRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
-  AuthenticatedAdminAdminRoute: AuthenticatedAdminAdminRouteWithChildren,
+  AuthenticatedAdminListingsRoute: AuthenticatedAdminListingsRoute,
+  AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
+  AuthenticatedAdminVerificationsRoute: AuthenticatedAdminVerificationsRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =
@@ -383,3 +353,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

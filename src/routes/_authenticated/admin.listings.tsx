@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
+import { AdminGate } from "@/components/layout/AdminGate";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +10,7 @@ import { moderateListing } from "@/server/admin.functions";
 import { toast } from "sonner";
 import { formatGhs, formatRelative } from "@/lib/format";
 
-export const Route = createFileRoute("/_authenticated/_admin/admin/listings")({
+export const Route = createFileRoute("/_authenticated/admin/listings")({
   head: () => ({ meta: [{ title: "Listing moderation — Farmlink admin" }] }),
   component: ListingMod,
 });
@@ -51,35 +52,37 @@ function ListingMod() {
   };
 
   return (
-    <AppShell>
-      <div className="mx-auto max-w-5xl px-4 py-6">
-        <h1 className="text-2xl font-bold tracking-tight">Listing moderation</h1>
-        <div className="mt-6 space-y-2">
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
-          ) : (
-            rows.map((r) => (
-              <div key={r.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
-                <div className="min-w-0 flex-1">
-                  <Link to="/listings/$id" params={{ id: r.id }} className="block truncate font-semibold hover:underline">
-                    {r.title}
-                  </Link>
-                  <p className="text-xs text-muted-foreground">
-                    {r.profiles?.display_name ?? "—"} · {r.region} · {formatGhs(r.price_ghs)} · {formatRelative(r.created_at)}
-                  </p>
+    <AdminGate>
+      <AppShell>
+        <div className="mx-auto max-w-5xl px-4 py-6">
+          <h1 className="text-2xl font-bold tracking-tight">Listing moderation</h1>
+          <div className="mt-6 space-y-2">
+            {loading ? (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            ) : (
+              rows.map((r) => (
+                <div key={r.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
+                  <div className="min-w-0 flex-1">
+                    <Link to="/listings/$id" params={{ id: r.id }} className="block truncate font-semibold hover:underline">
+                      {r.title}
+                    </Link>
+                    <p className="text-xs text-muted-foreground">
+                      {r.profiles?.display_name ?? "—"} · {r.region} · {formatGhs(r.price_ghs)} · {formatRelative(r.created_at)}
+                    </p>
+                  </div>
+                  <Badge variant="outline">{r.status}</Badge>
+                  {r.status !== "hidden" ? (
+                    <Button size="sm" variant="outline" onClick={() => act(r.id, "hide")}>Hide</Button>
+                  ) : (
+                    <Button size="sm" variant="outline" onClick={() => act(r.id, "restore")}>Restore</Button>
+                  )}
+                  <Button size="sm" variant="destructive" onClick={() => act(r.id, "delete")}>Delete</Button>
                 </div>
-                <Badge variant="outline">{r.status}</Badge>
-                {r.status !== "hidden" ? (
-                  <Button size="sm" variant="outline" onClick={() => act(r.id, "hide")}>Hide</Button>
-                ) : (
-                  <Button size="sm" variant="outline" onClick={() => act(r.id, "restore")}>Restore</Button>
-                )}
-                <Button size="sm" variant="destructive" onClick={() => act(r.id, "delete")}>Delete</Button>
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
         </div>
-      </div>
-    </AppShell>
+      </AppShell>
+    </AdminGate>
   );
 }
