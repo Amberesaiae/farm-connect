@@ -1,6 +1,7 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
-
 import appCss from "../styles.css?url";
+import { AuthProvider } from "@/lib/auth-context";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -29,18 +30,18 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "Agri Farming — Fresh from the farm" },
+      { title: "Farmlink — Ghana's livestock marketplace" },
       {
         name: "description",
         content:
-          "Agri Farming: shop fresh produce, grains, dairy and more directly from local farmers.",
+          "Buy and sell cattle, goats, sheep, poultry and more across Ghana. Direct contact with farmers via WhatsApp.",
       },
-      { name: "author", content: "Agri Farming" },
+      { name: "author", content: "Farmlink" },
       { name: "theme-color", content: "#00B354" },
-      { property: "og:title", content: "Agri Farming — Fresh from the farm" },
+      { property: "og:title", content: "Farmlink — Ghana's livestock marketplace" },
       {
         property: "og:description",
-        content: "Shop fresh produce, grains, dairy and more directly from local farmers.",
+        content: "Buy and sell livestock across Ghana. Direct WhatsApp contact with verified sellers.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -75,5 +76,10 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  return <Outlet />;
+  return (
+    <AuthProvider>
+      <Outlet />
+      <Toaster richColors position="top-center" />
+    </AuthProvider>
+  );
 }
