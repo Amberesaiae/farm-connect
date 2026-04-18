@@ -8,13 +8,13 @@ import { CATEGORIES } from "@/lib/data";
 export const Route = createFileRoute("/shop")({
   head: () => ({
     meta: [
-      { title: "Shop by Category — Agri Farming" },
+      { title: "Shop by Category — Farmlink" },
       {
         name: "description",
         content:
           "Shop by category: vegetables, fruits, grains, dairy, spices, oils and more.",
       },
-      { property: "og:title", content: "Shop by Category — Agri Farming" },
+      { property: "og:title", content: "Shop by Category — Farmlink" },
       {
         property: "og:description",
         content: "Browse all farm categories: produce, grains, dairy, spices and more.",
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/shop")({
 
 function Shop() {
   return (
-    <PhoneFrame withBottomNav>
+    <PhoneFrame>
       <header className="px-5 pt-6">
         <h1 className="text-center text-base font-semibold tracking-tight">Shop</h1>
         <div className="mt-4">
@@ -35,6 +35,7 @@ function Shop() {
             <input
               type="search"
               placeholder="Search categories…"
+              aria-label="Search categories"
               className="w-full bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none"
             />
           </label>
@@ -49,7 +50,7 @@ function Shop() {
         </div>
       </section>
 
-      <div className="h-10" />
+      <div className="mt-6 flex-1" />
       <BottomTabBar />
     </PhoneFrame>
   );

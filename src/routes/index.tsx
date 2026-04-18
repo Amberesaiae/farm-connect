@@ -153,7 +153,7 @@ function Index() {
         </ul>
       </section>
 
-      <div className="h-6" />
+      <div className="mt-6 flex-1" />
       <BottomTabBar />
     </PhoneFrame>
   );
