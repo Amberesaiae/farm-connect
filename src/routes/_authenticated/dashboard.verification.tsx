@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { CheckCircle2, Clock, ImagePlus, ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard/verification")({
-  head: () => ({ meta: [{ title: "Get verified — Farmlink" }] }),
+  head: () => ({ meta: [{ title: "Get verified — farmlink" }] }),
   component: VerificationPage,
 });
 
@@ -117,16 +117,18 @@ function VerificationPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-2xl px-4 py-6 space-y-6">
+      <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Get verified</h1>
+          <h1 className="font-display text-[28px] font-extrabold tracking-tight">
+            Get verified
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Verified sellers display a badge and earn higher trust from buyers.
           </p>
         </div>
 
         {profile?.badge_tier && profile.badge_tier !== "none" && (
-          <div className="flex items-center gap-2 rounded-xl bg-primary-soft p-3 text-primary">
+          <div className="flex items-center gap-2 rounded-2xl border-[1.5px] border-primary/30 bg-primary-soft p-3 text-primary">
             <CheckCircle2 className="h-5 w-5" />
             <span className="font-medium capitalize">
               You are {profile.badge_tier.replace("_", " ")}
@@ -134,8 +136,10 @@ function VerificationPage() {
           </div>
         )}
 
-        <section className="rounded-2xl border border-border bg-background p-5 space-y-3">
-          <h2 className="font-semibold">WhatsApp number</h2>
+        <section className="space-y-3 rounded-2xl border-[1.5px] border-border bg-card p-5">
+          <h2 className="font-display text-[16px] font-extrabold tracking-tight">
+            WhatsApp number
+          </h2>
           <p className="text-sm text-muted-foreground">
             Buyers will use this number to contact you. Required before submitting verification.
           </p>
@@ -144,19 +148,26 @@ function VerificationPage() {
               value={whats}
               onChange={(e) => setWhats(e.target.value)}
               placeholder="024 123 4567"
+              className="rounded-xl"
             />
-            <Button onClick={saveWhatsapp}>Save</Button>
+            <Button onClick={saveWhatsapp} className="rounded-xl">
+              Save
+            </Button>
           </div>
           {profile?.whatsapp_e164 && (
-            <p className="text-xs text-muted-foreground">Current: {profile.whatsapp_e164}</p>
+            <p className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+              Current: {profile.whatsapp_e164}
+            </p>
           )}
         </section>
 
-        <section className="rounded-2xl border border-border bg-background p-5 space-y-4">
+        <section className="space-y-4 rounded-2xl border-[1.5px] border-border bg-card p-5">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold">Identity documents</h2>
+            <h2 className="font-display text-[16px] font-extrabold tracking-tight">
+              Identity documents
+            </h2>
             {latest && (
-              <Badge variant="outline" className="gap-1">
+              <Badge variant="outline" className="gap-1 capitalize">
                 {latest.status === "pending" && <Clock className="h-3 w-3" />}
                 {latest.status === "approved" && <CheckCircle2 className="h-3 w-3" />}
                 {latest.status === "rejected" && <ShieldAlert className="h-3 w-3" />}
@@ -166,7 +177,7 @@ function VerificationPage() {
           </div>
 
           {latest?.status === "rejected" && latest.rejection_reason && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
               {latest.rejection_reason}
             </div>
           )}
@@ -199,11 +210,11 @@ function VerificationPage() {
                   onChange={(e) => setSelfieFile(e.target.files?.[0] ?? null)}
                 />
               </div>
-              <Button onClick={onSubmit} disabled={busy} className="w-full">
+              <Button onClick={onSubmit} disabled={busy} className="w-full rounded-xl">
                 {busy ? "Submitting…" : "Submit for review"}
               </Button>
               <p className="text-xs text-muted-foreground">
-                Documents are private and only visible to you and Farmlink admins.
+                Documents are private and only visible to you and farmlink admins.
               </p>
             </>
           )}
@@ -222,19 +233,38 @@ function VerificationPage() {
   );
 }
 
-function FileBlock({ label, file, onPick }: { label: string; file: File | null; onPick: () => void }) {
+function FileBlock({
+  label,
+  file,
+  onPick,
+}: {
+  label: string;
+  file: File | null;
+  onPick: () => void;
+}) {
   return (
     <button
       type="button"
       onClick={onPick}
-      className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-surface p-4 text-sm hover:bg-muted"
+      className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-surface p-4 text-sm transition-colors hover:bg-muted"
     >
       {file ? (
-        <img src={URL.createObjectURL(file)} alt="" className="h-32 w-full rounded object-cover" />
+        <img src={URL.createObjectURL(file)} alt="" className="h-32 w-full rounded-lg object-cover" />
       ) : (
         <ImagePlus className="h-8 w-8 text-muted-foreground" />
       )}
       <span className="font-medium">{file ? file.name : label}</span>
     </button>
+  );
+}
+
+function Label({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+    >
+      {children}
+    </label>
   );
 }

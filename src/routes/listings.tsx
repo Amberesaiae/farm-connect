@@ -19,7 +19,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { GHANA_REGIONS } from "@/lib/constants";
 import type { ListingCardData } from "@/components/listing/ListingCard";
-import heroImage from "@/assets/hero-livestock.jpg";
+import mixedHero from "@/assets/mixed-hero.jpg";
 
 interface ListingsSearch {
   q?: string;
@@ -41,14 +41,14 @@ export const Route = createFileRoute("/listings")({
   }),
   head: () => ({
     meta: [
-      { title: "Browse livestock — Farmlink" },
+      { title: "Browse livestock — farmlink" },
       {
         name: "description",
         content: "Browse cattle, goats, sheep, poultry and more from sellers across Ghana.",
       },
-      { property: "og:title", content: "Browse livestock — Farmlink" },
+      { property: "og:title", content: "Browse livestock — farmlink" },
       { property: "og:description", content: "Find livestock for sale across Ghana." },
-      { property: "og:image", content: heroImage },
+      { property: "og:image", content: mixedHero },
     ],
   }),
   component: ListingsPage,
@@ -149,7 +149,7 @@ function ListingsPage() {
   return (
     <AppShell showTrust>
       <div className="mx-auto max-w-7xl space-y-10 px-4 py-6 md:px-8 md:py-10">
-        <HeroOffer />
+        <HeroOffer category={search.category} />
 
         <section>
           <div className="flex items-baseline justify-between">

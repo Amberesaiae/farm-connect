@@ -8,9 +8,9 @@ interface KpiTileProps {
 
 export function KpiTile({ label, value, Icon }: KpiTileProps) {
   return (
-    <div className="rounded-2xl bg-background p-4 shadow-[var(--shadow-card)]">
+    <div className="rounded-2xl border-[1.5px] border-border bg-card p-4">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <p className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
           {label}
         </p>
         {Icon ? (
@@ -19,7 +19,9 @@ export function KpiTile({ label, value, Icon }: KpiTileProps) {
           </span>
         ) : null}
       </div>
-      <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{value}</p>
+      <p className="font-mono mt-2 text-2xl font-bold tracking-tight text-foreground">
+        {value}
+      </p>
     </div>
   );
 }

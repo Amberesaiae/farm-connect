@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { Eye, MessageCircle, MoreHorizontal, Package, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "My listings — Farmlink" }] }),
+  head: () => ({ meta: [{ title: "My listings — farmlink" }] }),
   component: Dashboard,
 });
 
@@ -75,7 +75,7 @@ function Dashboard() {
     return (
       <div
         key={r.id}
-        className="flex items-center gap-3 rounded-2xl bg-background p-3 shadow-[var(--shadow-card)]"
+        className="flex items-center gap-3 rounded-2xl border-[1.5px] border-border bg-card p-3"
       >
         <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-surface">
           {cover ? (
@@ -91,10 +91,10 @@ function Dashboard() {
             {r.title}
           </Link>
           <p className="text-sm">
-            <span className="font-bold">{formatGhs(r.price_ghs)}</span>{" "}
+            <span className="font-mono font-bold">{formatGhs(r.price_ghs)}</span>{" "}
             <span className="text-xs text-muted-foreground">{formatPriceUnit(r.price_unit)}</span>
           </p>
-          <div className="mt-1 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+          <div className="mt-1 flex flex-wrap items-center gap-3 font-mono text-[10.5px] uppercase tracking-wider text-muted-foreground">
             <span className="flex items-center gap-1">
               <Eye className="h-3 w-3" /> {r.view_count}
             </span>
@@ -145,9 +145,9 @@ function Dashboard() {
   };
 
   const empty = (msg: string) => (
-    <div className="rounded-2xl bg-background p-10 text-center shadow-[var(--shadow-card)]">
+    <div className="rounded-2xl border-[1.5px] border-dashed border-border bg-card p-10 text-center">
       <p className="text-sm text-muted-foreground">{msg}</p>
-      <Button asChild className="mt-4 rounded-full">
+      <Button asChild className="mt-4 rounded-xl">
         <Link to="/post">
           <Plus className="h-4 w-4" /> Post a listing
         </Link>
@@ -160,12 +160,12 @@ function Dashboard() {
       <div className="mx-auto max-w-4xl px-4 py-5 md:py-8">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">My listings</h1>
+            <h1 className="font-display text-[28px] font-extrabold tracking-tight">My listings</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Manage your active and past listings
+              Manage your active and past livestock listings
             </p>
           </div>
-          <Button asChild className="hidden rounded-full sm:inline-flex">
+          <Button asChild className="hidden rounded-xl sm:inline-flex">
             <Link to="/post">
               <Plus className="h-4 w-4" /> New listing
             </Link>
@@ -179,17 +179,17 @@ function Dashboard() {
         </div>
 
         <Tabs defaultValue="active" className="mt-6">
-          <TabsList className="rounded-full bg-background p-1 shadow-[var(--shadow-card)]">
-            <TabsTrigger value="active" className="rounded-full">
+          <TabsList className="rounded-xl border-[1.5px] border-border bg-card p-1">
+            <TabsTrigger value="active" className="rounded-lg">
               Active ({byStatus("active").length})
             </TabsTrigger>
-            <TabsTrigger value="expired" className="rounded-full">
+            <TabsTrigger value="expired" className="rounded-lg">
               Expired ({byStatus("expired").length})
             </TabsTrigger>
-            <TabsTrigger value="sold" className="rounded-full">
+            <TabsTrigger value="sold" className="rounded-lg">
               Sold ({byStatus("sold").length})
             </TabsTrigger>
-            <TabsTrigger value="hidden" className="rounded-full">
+            <TabsTrigger value="hidden" className="rounded-lg">
               Hidden ({byStatus("hidden").length})
             </TabsTrigger>
           </TabsList>
