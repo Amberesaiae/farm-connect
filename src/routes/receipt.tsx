@@ -2,14 +2,15 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Download, CheckCircle2 } from "lucide-react";
 import { PhoneFrame } from "@/components/PhoneFrame";
 import { TopBar } from "@/components/TopBar";
-import { INITIAL_CART, productById } from "@/lib/data";
+import { productById } from "@/lib/data";
+import { useCart, selectCartSubtotal } from "@/stores/cart-store";
 
 export const Route = createFileRoute("/receipt")({
   head: () => ({
     meta: [
-      { title: "E-Receipt — Agri Farming" },
+      { title: "E-Receipt — Farmlink" },
       { name: "description", content: "Your order receipt with itemized totals." },
-      { property: "og:title", content: "E-Receipt — Agri Farming" },
+      { property: "og:title", content: "E-Receipt — Farmlink" },
       { property: "og:description", content: "Download your e-receipt." },
     ],
   }),
@@ -17,13 +18,17 @@ export const Route = createFileRoute("/receipt")({
 });
 
 function Barcode() {
-  // Decorative barcode-like SVG
   const bars = Array.from({ length: 48 }, (_, i) => {
-    const w = (i * 7) % 5 === 0 ? 3 : (i % 3 === 0 ? 2 : 1);
+    const w = (i * 7) % 5 === 0 ? 3 : i % 3 === 0 ? 2 : 1;
     return { x: i * 4, w };
   });
   return (
-    <svg viewBox="0 0 200 60" className="h-14 w-full">
+    <svg
+      viewBox="0 0 200 60"
+      className="h-14 w-full"
+      role="img"
+      aria-label="Order barcode"
+    >
       {bars.map((b, i) => (
         <rect key={i} x={b.x} y={4} width={b.w} height={48} fill="currentColor" />
       ))}
@@ -32,11 +37,8 @@ function Barcode() {
 }
 
 function Receipt() {
-  const lines = INITIAL_CART;
-  const subtotal = lines.reduce((sum, l) => {
-    const p = productById(l.id);
-    return sum + (p ? p.price * l.qty : 0);
-  }, 0);
+  const lines = useCart((s) => s.lines);
+  const subtotal = useCart(selectCartSubtotal);
   const tax = subtotal * 0.05;
   const total = subtotal + tax;
 
@@ -93,7 +95,7 @@ function Receipt() {
 
         <button
           type="button"
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-4 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30"
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-4 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-[1.01]"
         >
           <Download className="h-4 w-4" />
           Download E-Receipt
@@ -101,7 +103,7 @@ function Receipt() {
 
         <Link
           to="/orders"
-          className="mt-3 flex w-full items-center justify-center rounded-full border border-border bg-background px-5 py-3 text-sm font-semibold text-foreground"
+          className="mt-3 flex w-full items-center justify-center rounded-full border border-border bg-background px-5 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
         >
           View My Orders
         </Link>
