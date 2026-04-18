@@ -3,6 +3,13 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { KpiTile } from "@/components/dashboard/KpiTile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { useServerFn } from "@tanstack/react-start";
@@ -10,7 +17,7 @@ import { markSold, relistListing } from "@/server/listings.functions";
 import { formatGhs, formatPriceUnit, formatRelative } from "@/lib/format";
 import { listingPhotoUrl } from "@/lib/photo-url";
 import { toast } from "sonner";
-import { Eye, MessageCircle, Plus } from "lucide-react";
+import { Eye, MessageCircle, MoreHorizontal, Package, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "My listings — Farmlink" }] }),
@@ -57,27 +64,37 @@ function Dashboard() {
   }, [user?.id]);
 
   const byStatus = (s: string) => rows.filter((r) => r.status === s);
+  const activeListings = byStatus("active");
+  const totalViews = rows.reduce((acc, r) => acc + (r.view_count ?? 0), 0);
+  const totalTaps = rows.reduce((acc, r) => acc + (r.contact_count ?? 0), 0);
 
   const renderRow = (r: Row) => {
     const cover = [...(r.listing_photos ?? [])].sort(
       (a, b) => (b.is_cover ? 1 : 0) - (a.is_cover ? 1 : 0) || a.display_order - b.display_order,
     )[0]?.storage_path;
     return (
-      <div key={r.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
-        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-surface">
+      <div
+        key={r.id}
+        className="flex items-center gap-3 rounded-2xl bg-background p-3 shadow-[var(--shadow-card)]"
+      >
+        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-surface">
           {cover ? (
             <img src={listingPhotoUrl(cover)} alt="" className="h-full w-full object-cover" />
           ) : null}
         </div>
         <div className="min-w-0 flex-1">
-          <Link to="/listings/$id" params={{ id: r.id }} className="block truncate font-semibold hover:underline">
+          <Link
+            to="/listings/$id"
+            params={{ id: r.id }}
+            className="block truncate text-sm font-semibold hover:underline"
+          >
             {r.title}
           </Link>
           <p className="text-sm">
-            <span className="font-semibold">{formatGhs(r.price_ghs)}</span>{" "}
-            <span className="text-muted-foreground">{formatPriceUnit(r.price_unit)}</span>
+            <span className="font-bold">{formatGhs(r.price_ghs)}</span>{" "}
+            <span className="text-xs text-muted-foreground">{formatPriceUnit(r.price_unit)}</span>
           </p>
-          <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+          <div className="mt-1 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
             <span className="flex items-center gap-1">
               <Eye className="h-3 w-3" /> {r.view_count}
             </span>
@@ -87,67 +104,105 @@ function Dashboard() {
             <span>posted {formatRelative(r.created_at)}</span>
           </div>
         </div>
-        <div className="flex flex-col gap-1.5">
-          {r.status === "active" && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={async () => {
-                await sold({ data: { id: r.id } });
-                toast.success("Marked as sold");
-                void load();
-              }}
-            >
-              Mark sold
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Listing actions" className="rounded-full">
+              <MoreHorizontal className="h-5 w-5" />
             </Button>
-          )}
-          {r.status === "expired" && (
-            <Button
-              size="sm"
-              onClick={async () => {
-                await relist({ data: { id: r.id } });
-                toast.success("Relisted for 60 days");
-                void load();
-              }}
-            >
-              Relist
-            </Button>
-          )}
-        </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem asChild>
+              <Link to="/listings/$id" params={{ id: r.id }}>
+                View listing
+              </Link>
+            </DropdownMenuItem>
+            {r.status === "active" && (
+              <DropdownMenuItem
+                onClick={async () => {
+                  await sold({ data: { id: r.id } });
+                  toast.success("Marked as sold");
+                  void load();
+                }}
+              >
+                Mark sold
+              </DropdownMenuItem>
+            )}
+            {r.status === "expired" && (
+              <DropdownMenuItem
+                onClick={async () => {
+                  await relist({ data: { id: r.id } });
+                  toast.success("Relisted for 60 days");
+                  void load();
+                }}
+              >
+                Relist
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     );
   };
 
+  const empty = (msg: string) => (
+    <div className="rounded-2xl bg-background p-10 text-center shadow-[var(--shadow-card)]">
+      <p className="text-sm text-muted-foreground">{msg}</p>
+      <Button asChild className="mt-4 rounded-full">
+        <Link to="/post">
+          <Plus className="h-4 w-4" /> Post a listing
+        </Link>
+      </Button>
+    </div>
+  );
+
   return (
     <AppShell>
-      <div className="mx-auto max-w-4xl px-4 py-6">
+      <div className="mx-auto max-w-4xl px-4 py-5 md:py-8">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">My listings</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Manage your active and past listings</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Manage your active and past listings
+            </p>
           </div>
-          <Button asChild>
+          <Button asChild className="hidden rounded-full sm:inline-flex">
             <Link to="/post">
               <Plus className="h-4 w-4" /> New listing
             </Link>
           </Button>
         </div>
 
+        <div className="mt-5 grid grid-cols-3 gap-3">
+          <KpiTile label="Active" value={activeListings.length} Icon={Package} />
+          <KpiTile label="Total views" value={totalViews} Icon={Eye} />
+          <KpiTile label="WhatsApp taps" value={totalTaps} Icon={MessageCircle} />
+        </div>
+
         <Tabs defaultValue="active" className="mt-6">
-          <TabsList>
-            <TabsTrigger value="active">Active ({byStatus("active").length})</TabsTrigger>
-            <TabsTrigger value="expired">Expired ({byStatus("expired").length})</TabsTrigger>
-            <TabsTrigger value="sold">Sold ({byStatus("sold").length})</TabsTrigger>
-            <TabsTrigger value="hidden">Hidden ({byStatus("hidden").length})</TabsTrigger>
+          <TabsList className="rounded-full bg-background p-1 shadow-[var(--shadow-card)]">
+            <TabsTrigger value="active" className="rounded-full">
+              Active ({byStatus("active").length})
+            </TabsTrigger>
+            <TabsTrigger value="expired" className="rounded-full">
+              Expired ({byStatus("expired").length})
+            </TabsTrigger>
+            <TabsTrigger value="sold" className="rounded-full">
+              Sold ({byStatus("sold").length})
+            </TabsTrigger>
+            <TabsTrigger value="hidden" className="rounded-full">
+              Hidden ({byStatus("hidden").length})
+            </TabsTrigger>
           </TabsList>
           {(["active", "expired", "sold", "hidden"] as const).map((s) => (
             <TabsContent key={s} value={s} className="mt-4 space-y-2">
               {loading ? (
                 <p className="text-sm text-muted-foreground">Loading…</p>
               ) : byStatus(s).length === 0 ? (
-                <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-                  Nothing here yet.
-                </div>
+                empty(
+                  s === "active"
+                    ? "You have no active listings yet — post your first one in under a minute."
+                    : `Nothing in ${s} yet.`,
+                )
               ) : (
                 byStatus(s).map(renderRow)
               )}
