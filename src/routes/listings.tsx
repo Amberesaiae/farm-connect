@@ -1,7 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ListingGrid } from "@/components/listing/ListingGrid";
+import { HeroOffer } from "@/components/home/HeroOffer";
+import { CategoryStrip } from "@/components/home/CategoryStrip";
+import { MobileFilterSheet } from "@/components/layout/MobileFilterSheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -14,9 +17,9 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
-import { GHANA_REGIONS, LIVESTOCK_CATEGORIES } from "@/lib/constants";
+import { GHANA_REGIONS } from "@/lib/constants";
 import type { ListingCardData } from "@/components/listing/ListingCard";
-import { Search } from "lucide-react";
+import heroImage from "@/assets/hero-livestock.jpg";
 
 interface ListingsSearch {
   q?: string;
@@ -45,6 +48,7 @@ export const Route = createFileRoute("/listings")({
       },
       { property: "og:title", content: "Browse livestock — Farmlink" },
       { property: "og:description", content: "Find livestock for sale across Ghana." },
+      { property: "og:image", content: heroImage },
     ],
   }),
   component: ListingsPage,
@@ -131,136 +135,157 @@ function ListingsPage() {
     navigate({ to: "/listings", search: { ...search, ...patch } as never });
   };
 
+  const activeCount =
+    (search.region ? 1 : 0) +
+    (search.minPrice ? 1 : 0) +
+    (search.maxPrice ? 1 : 0) +
+    (search.verifiedOnly ? 1 : 0);
+
+  const FiltersPanel = (
+    <FiltersInner search={search} update={update} navigate={navigate} />
+  );
+
   return (
     <AppShell>
-      <div className="mx-auto max-w-6xl px-4 py-6">
-        <h1 className="text-2xl font-bold tracking-tight">Browse livestock</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {rows.length} listing{rows.length === 1 ? "" : "s"} from sellers across Ghana
-        </p>
+      <div className="mx-auto max-w-6xl space-y-8 px-4 py-5 md:py-8">
+        <HeroOffer />
 
-        <div className="mt-5 grid gap-3 md:grid-cols-[260px_1fr]">
-          <aside className="rounded-xl border border-border bg-background p-4 space-y-4 self-start">
+        <section>
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-base font-semibold tracking-tight md:text-lg">Shop by category</h2>
+          </div>
+          <div className="mt-3">
+            <CategoryStrip active={search.category} />
+          </div>
+        </section>
+
+        <section>
+          <div className="flex items-baseline justify-between gap-3">
             <div>
-              <Label htmlFor="q">Search</Label>
-              <div className="relative mt-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="q"
-                  defaultValue={search.q ?? ""}
-                  placeholder="e.g. Sanga, Boer goat"
-                  className="pl-9"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") update({ q: (e.target as HTMLInputElement).value || undefined });
-                  }}
-                />
-              </div>
+              <h2 className="text-lg font-bold tracking-tight md:text-xl">
+                {search.category
+                  ? `${search.category[0].toUpperCase()}${search.category.slice(1)} listings`
+                  : "Latest listings"}
+              </h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {rows.length} listing{rows.length === 1 ? "" : "s"} from sellers across Ghana
+              </p>
             </div>
+            <MobileFilterSheet activeCount={activeCount}>{FiltersPanel}</MobileFilterSheet>
+          </div>
+
+          <div className="mt-4 grid gap-5 md:grid-cols-[240px_1fr]">
+            <aside className="hidden self-start rounded-2xl bg-background p-5 shadow-[var(--shadow-card)] md:block">
+              {FiltersPanel}
+            </aside>
 
             <div>
-              <Label>Category</Label>
-              <Select
-                value={search.category ?? "all"}
-                onValueChange={(v) => update({ category: v === "all" ? undefined : v })}
-              >
-                <SelectTrigger className="mt-1 w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  {LIVESTOCK_CATEGORIES.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      {c.label}
-                    </SelectItem>
+              {loading ? (
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="aspect-square animate-pulse rounded-2xl bg-background" />
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Region</Label>
-              <Select
-                value={search.region ?? "all"}
-                onValueChange={(v) => update({ region: v === "all" ? undefined : v })}
-              >
-                <SelectTrigger className="mt-1 w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All regions</SelectItem>
-                  {GHANA_REGIONS.map((r) => (
-                    <SelectItem key={r} value={r}>
-                      {r}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label htmlFor="min">Min GH₵</Label>
-                <Input
-                  id="min"
-                  type="number"
-                  defaultValue={search.minPrice ?? ""}
-                  className="mt-1"
-                  onBlur={(e) =>
-                    update({ minPrice: e.target.value ? Number(e.target.value) : undefined })
-                  }
+                </div>
+              ) : (
+                <ListingGrid
+                  listings={rows}
+                  emptyMessage="No listings match your filters yet. Try clearing some filters."
                 />
-              </div>
-              <div>
-                <Label htmlFor="max">Max GH₵</Label>
-                <Input
-                  id="max"
-                  type="number"
-                  defaultValue={search.maxPrice ?? ""}
-                  className="mt-1"
-                  onBlur={(e) =>
-                    update({ maxPrice: e.target.value ? Number(e.target.value) : undefined })
-                  }
-                />
-              </div>
+              )}
             </div>
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="vo">Verified sellers only</Label>
-              <Switch
-                id="vo"
-                checked={!!search.verifiedOnly}
-                onCheckedChange={(c) => update({ verifiedOnly: c || undefined })}
-              />
-            </div>
-
-            <Button
-              variant="ghost"
-              className="w-full"
-              onClick={() => navigate({ to: "/listings", search: {} as never })}
-            >
-              Clear filters
-            </Button>
-          </aside>
-
-          <section>
-            {loading ? (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="aspect-[4/3] animate-pulse rounded-xl bg-surface"
-                  />
-                ))}
-              </div>
-            ) : (
-              <ListingGrid
-                listings={rows}
-                emptyMessage="No listings match your filters yet. Try clearing some filters."
-              />
-            )}
-          </section>
-        </div>
+          </div>
+        </section>
       </div>
     </AppShell>
+  );
+}
+
+function FiltersInner({
+  search,
+  update,
+  navigate,
+}: {
+  search: ListingsSearch;
+  update: (patch: Partial<ListingsSearch>) => void;
+  navigate: ReturnType<typeof useNavigate>;
+}): ReactNode {
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="q-rail" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Keyword
+        </Label>
+        <Input
+          id="q-rail"
+          defaultValue={search.q ?? ""}
+          placeholder="e.g. Sanga, Boer"
+          className="mt-1.5 h-10 rounded-xl"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") update({ q: (e.target as HTMLInputElement).value || undefined });
+          }}
+        />
+      </div>
+
+      <div>
+        <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Region</Label>
+        <Select
+          value={search.region ?? "all"}
+          onValueChange={(v) => update({ region: v === "all" ? undefined : v })}
+        >
+          <SelectTrigger className="mt-1.5 w-full rounded-xl">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All regions</SelectItem>
+            {GHANA_REGIONS.map((r) => (
+              <SelectItem key={r} value={r}>
+                {r}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Price (GH₵)
+        </Label>
+        <div className="mt-1.5 grid grid-cols-2 gap-2">
+          <Input
+            type="number"
+            placeholder="Min"
+            defaultValue={search.minPrice ?? ""}
+            className="h-10 rounded-xl"
+            onBlur={(e) => update({ minPrice: e.target.value ? Number(e.target.value) : undefined })}
+          />
+          <Input
+            type="number"
+            placeholder="Max"
+            defaultValue={search.maxPrice ?? ""}
+            className="h-10 rounded-xl"
+            onBlur={(e) => update({ maxPrice: e.target.value ? Number(e.target.value) : undefined })}
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between rounded-xl bg-surface px-3 py-2.5">
+        <Label htmlFor="vo" className="cursor-pointer text-sm font-medium">
+          Verified sellers only
+        </Label>
+        <Switch
+          id="vo"
+          checked={!!search.verifiedOnly}
+          onCheckedChange={(c) => update({ verifiedOnly: c || undefined })}
+        />
+      </div>
+
+      <Button
+        variant="ghost"
+        className="w-full rounded-xl"
+        onClick={() => navigate({ to: "/listings", search: {} as never })}
+      >
+        Clear filters
+      </Button>
+    </div>
   );
 }

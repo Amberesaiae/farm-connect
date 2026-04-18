@@ -1,4 +1,4 @@
-import { Bookmark, BookmarkCheck } from "lucide-react";
+import { Heart } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 interface SaveButtonProps {
   listingId: string;
   initialSaved: boolean;
-  variant?: "icon" | "full";
+  variant?: "icon" | "full" | "square";
 }
 
 export function SaveButton({ listingId, initialSaved, variant = "icon" }: SaveButtonProps) {
@@ -54,14 +54,30 @@ export function SaveButton({ listingId, initialSaved, variant = "icon" }: SaveBu
         onClick={toggle}
         disabled={busy}
         className={cn(
-          "flex w-full items-center justify-center gap-2 rounded-full border px-5 py-3 text-sm font-semibold",
+          "flex w-full items-center justify-center gap-2 rounded-full border px-5 py-3 text-sm font-semibold transition-colors",
           saved
             ? "border-primary bg-primary-soft text-primary"
             : "border-border bg-background hover:bg-surface",
         )}
       >
-        {saved ? <BookmarkCheck className="h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+        <Heart className={cn("h-4 w-4", saved && "fill-current")} />
         {saved ? "Saved" : "Save listing"}
+      </button>
+    );
+  }
+
+  if (variant === "square") {
+    return (
+      <button
+        onClick={toggle}
+        disabled={busy}
+        aria-label={saved ? "Unsave" : "Save"}
+        className={cn(
+          "flex h-12 w-12 shrink-0 items-center justify-center rounded-full border bg-background transition-colors",
+          saved ? "border-primary text-primary" : "border-border text-foreground",
+        )}
+      >
+        <Heart className={cn("h-5 w-5", saved && "fill-current")} />
       </button>
     );
   }
@@ -76,7 +92,7 @@ export function SaveButton({ listingId, initialSaved, variant = "icon" }: SaveBu
         saved ? "border-primary text-primary" : "border-border text-foreground",
       )}
     >
-      {saved ? <BookmarkCheck className="h-5 w-5" /> : <Bookmark className="h-5 w-5" />}
+      <Heart className={cn("h-5 w-5", saved && "fill-current")} />
     </button>
   );
 }

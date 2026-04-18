@@ -1,10 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ListingGrid } from "@/components/listing/ListingGrid";
 import type { ListingCardData } from "@/components/listing/ListingCard";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { Heart } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/saved")({
   head: () => ({ meta: [{ title: "Saved listings — Farmlink" }] }),
@@ -59,16 +61,33 @@ function SavedPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-6xl px-4 py-6">
+      <div className="mx-auto max-w-6xl px-4 py-5 md:py-8">
         <h1 className="text-2xl font-bold tracking-tight">Saved listings</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {rows.length} saved listing{rows.length === 1 ? "" : "s"}
         </p>
         <div className="mt-5">
           {loading ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="aspect-square animate-pulse rounded-2xl bg-background" />
+              ))}
+            </div>
+          ) : rows.length === 0 ? (
+            <div className="rounded-2xl bg-background p-12 text-center shadow-[var(--shadow-card)]">
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary-soft text-primary">
+                <Heart className="h-6 w-6" />
+              </span>
+              <p className="mt-3 text-sm font-semibold">No saved listings yet</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Tap the heart on any listing to save it for later.
+              </p>
+              <Button asChild className="mt-5 rounded-full">
+                <Link to="/listings">Browse listings</Link>
+              </Button>
+            </div>
           ) : (
-            <ListingGrid listings={rows} emptyMessage="You haven't saved any listings yet." />
+            <ListingGrid listings={rows} />
           )}
         </div>
       </div>

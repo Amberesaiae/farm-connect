@@ -5,6 +5,8 @@ import { PhotoCarousel } from "@/components/listing/PhotoCarousel";
 import { SellerCard } from "@/components/listing/SellerCard";
 import { WhatsAppCTA } from "@/components/listing/WhatsAppCTA";
 import { SaveButton } from "@/components/listing/SaveButton";
+import { SpecsPanel } from "@/components/listing/SpecsPanel";
+import { StickyContactBar } from "@/components/listing/StickyContactBar";
 import { BadgeChip } from "@/components/listing/BadgeChip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
@@ -52,7 +54,7 @@ export const Route = createFileRoute("/listings/$id")({
         <div className="mx-auto max-w-2xl px-4 py-12 text-center">
           <h1 className="text-xl font-bold">Couldn't load this listing</h1>
           <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
-          <Button className="mt-6" onClick={() => router.invalidate()}>
+          <Button className="mt-6 rounded-full" onClick={() => router.invalidate()}>
             Try again
           </Button>
         </div>
@@ -63,10 +65,8 @@ export const Route = createFileRoute("/listings/$id")({
     <AppShell>
       <div className="mx-auto max-w-2xl px-4 py-12 text-center">
         <h1 className="text-xl font-bold">Listing not found</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          It may have been removed or sold.
-        </p>
-        <Button asChild className="mt-6">
+        <p className="mt-2 text-sm text-muted-foreground">It may have been removed or sold.</p>
+        <Button asChild className="mt-6 rounded-full">
           <Link to="/listings">Browse listings</Link>
         </Button>
       </div>
@@ -114,7 +114,7 @@ function ListingDetail() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-4xl px-4 py-4 md:py-8">
+      <div className="mx-auto max-w-5xl px-4 py-4 md:py-8">
         <Link
           to="/listings"
           className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -123,72 +123,41 @@ function ListingDetail() {
         </Link>
 
         <div className="grid gap-6 md:grid-cols-[1fr_360px]">
-          <div>
+          <div className="space-y-5">
             <PhotoCarousel paths={photos} alt={listing.title} />
-          </div>
 
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-start justify-between gap-2">
-                <h1 className="text-2xl font-bold leading-tight">{listing.title}</h1>
-                <BadgeChip tier={seller?.badge_tier} />
-              </div>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="text-3xl font-bold">{formatGhs(listing.price_ghs)}</span>
-                <span className="text-sm text-muted-foreground">
-                  {formatPriceUnit(listing.price_unit)}
-                </span>
-              </div>
-              <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-4 w-4" />
-                  {listing.district ? `${listing.district}, ` : ""}
-                  {listing.region}
-                </span>
-                <span>·</span>
-                <span>{formatRelative(listing.created_at)}</span>
-                <span>·</span>
-                <span className="flex items-center gap-1">
-                  <Eye className="h-4 w-4" />
-                  {listing.view_count} views
-                </span>
-              </div>
+            <div className="md:hidden">
+              <Header listing={listing} sellerBadge={seller?.badge_tier ?? null} />
             </div>
 
-            <dl className="grid grid-cols-2 gap-2 rounded-xl border border-border p-3 text-sm">
-              <div>
-                <dt className="text-muted-foreground">Category</dt>
-                <dd className="font-medium capitalize">{listing.category}</dd>
-              </div>
-              {listing.breed && (
-                <div>
-                  <dt className="text-muted-foreground">Breed</dt>
-                  <dd className="font-medium">{listing.breed}</dd>
-                </div>
-              )}
-              <div>
-                <dt className="text-muted-foreground">Quantity</dt>
-                <dd className="font-medium">{listing.quantity}</dd>
-              </div>
-              {listing.sex && (
-                <div>
-                  <dt className="text-muted-foreground">Sex</dt>
-                  <dd className="font-medium capitalize">{listing.sex}</dd>
-                </div>
-              )}
-              {listing.age_months != null && (
-                <div>
-                  <dt className="text-muted-foreground">Age</dt>
-                  <dd className="font-medium">{listing.age_months} months</dd>
-                </div>
-              )}
-              {listing.weight_kg != null && (
-                <div>
-                  <dt className="text-muted-foreground">Weight</dt>
-                  <dd className="font-medium">{Number(listing.weight_kg).toFixed(1)} kg</dd>
-                </div>
-              )}
-            </dl>
+            <SpecsPanel
+              specs={[
+                { label: "Category", value: listing.category },
+                { label: "Breed", value: listing.breed },
+                { label: "Sex", value: listing.sex },
+                { label: "Age", value: listing.age_months != null ? `${listing.age_months} mo` : null },
+                {
+                  label: "Weight",
+                  value: listing.weight_kg != null ? `${Number(listing.weight_kg).toFixed(1)} kg` : null,
+                },
+                { label: "Quantity", value: listing.quantity },
+              ]}
+            />
+
+            {listing.description && (
+              <section>
+                <h2 className="text-lg font-bold">About this listing</h2>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
+                  {listing.description}
+                </p>
+              </section>
+            )}
+          </div>
+
+          <aside className="space-y-4 md:sticky md:top-20 md:self-start">
+            <div className="hidden md:block">
+              <Header listing={listing} sellerBadge={seller?.badge_tier ?? null} />
+            </div>
 
             {seller && (
               <SellerCard
@@ -201,7 +170,7 @@ function ListingDetail() {
               />
             )}
 
-            <div className="space-y-2">
+            <div className="hidden space-y-2 md:block">
               <WhatsAppCTA
                 listingId={listing.id}
                 listingTitle={listing.title}
@@ -211,18 +180,65 @@ function ListingDetail() {
                 <SaveButton listingId={listing.id} initialSaved={savedInitial} variant="full" />
               )}
             </div>
-          </div>
+          </aside>
         </div>
-
-        {listing.description && (
-          <section className="mt-8">
-            <h2 className="text-lg font-bold">Description</h2>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-              {listing.description}
-            </p>
-          </section>
-        )}
       </div>
+
+      {savedLoaded && seller?.whatsapp_e164 && (
+        <StickyContactBar>
+          <div className="flex-1">
+            <WhatsAppCTA
+              listingId={listing.id}
+              listingTitle={listing.title}
+              sellerWhatsappE164={seller.whatsapp_e164}
+            />
+          </div>
+          <SaveButton listingId={listing.id} initialSaved={savedInitial} variant="square" />
+        </StickyContactBar>
+      )}
     </AppShell>
+  );
+}
+
+function Header({
+  listing,
+  sellerBadge,
+}: {
+  listing: {
+    title: string;
+    price_ghs: number | string;
+    price_unit: string;
+    district: string | null;
+    region: string;
+    created_at: string;
+    view_count: number;
+  };
+  sellerBadge: string | null;
+}) {
+  return (
+    <div>
+      <div className="flex items-start justify-between gap-2">
+        <h1 className="text-2xl font-bold leading-tight">{listing.title}</h1>
+        <BadgeChip tier={sellerBadge} />
+      </div>
+      <div className="mt-2 flex items-baseline gap-2">
+        <span className="text-3xl font-bold">{formatGhs(listing.price_ghs)}</span>
+        <span className="text-sm text-muted-foreground">{formatPriceUnit(listing.price_unit)}</span>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+        <span className="flex items-center gap-1">
+          <MapPin className="h-4 w-4" />
+          {listing.district ? `${listing.district}, ` : ""}
+          {listing.region}
+        </span>
+        <span>·</span>
+        <span>{formatRelative(listing.created_at)}</span>
+        <span>·</span>
+        <span className="flex items-center gap-1">
+          <Eye className="h-4 w-4" />
+          {listing.view_count} views
+        </span>
+      </div>
+    </div>
   );
 }

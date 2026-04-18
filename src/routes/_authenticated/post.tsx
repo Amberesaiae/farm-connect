@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { AppShell } from "@/components/layout/AppShell";
-import { WizardProgress } from "@/components/wizard/WizardProgress";
+import { Stepper } from "@/components/wizard/Stepper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,12 +14,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { GHANA_REGIONS, LIVESTOCK_CATEGORIES, PRICE_UNITS, SEX_OPTIONS, LISTING_PHOTOS_BUCKET } from "@/lib/constants";
+import {
+  GHANA_REGIONS,
+  LIVESTOCK_CATEGORIES,
+  PRICE_UNITS,
+  SEX_OPTIONS,
+  LISTING_PHOTOS_BUCKET,
+} from "@/lib/constants";
 import { useServerFn } from "@tanstack/react-start";
 import { createListing } from "@/server/listings.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { listingPhotoUrl } from "@/lib/photo-url";
 import { toast } from "sonner";
 import { ImagePlus, X } from "lucide-react";
 
@@ -32,6 +37,8 @@ export const Route = createFileRoute("/_authenticated/post")({
   }),
   component: PostWizard,
 });
+
+const STEP_LABELS = ["Animal", "Pricing & location", "Photos & description"];
 
 const step1 = z.object({
   category: z.string().min(1, "Pick a category"),
@@ -74,7 +81,6 @@ function PostWizard() {
     description: "",
   });
 
-  // Photos held locally until listing is created (then uploaded under listingId/)
   const fileRef = useRef<HTMLInputElement>(null);
   const [photos, setPhotos] = useState<File[]>([]);
   const previews = photos.map((f) => URL.createObjectURL(f));
@@ -100,8 +106,7 @@ function PostWizard() {
     setPhotos((p) => [...p, ...files].slice(0, 8));
     if (fileRef.current) fileRef.current.value = "";
   };
-  const removePhoto = (i: number) =>
-    setPhotos((p) => p.filter((_, idx) => idx !== i));
+  const removePhoto = (i: number) => setPhotos((p) => p.filter((_, idx) => idx !== i));
 
   const submit = async () => {
     const r3 = step3.safeParse(data);
@@ -128,7 +133,6 @@ function PostWizard() {
         },
       });
 
-      // Upload photos under {listingId}/...
       for (let i = 0; i < photos.length; i++) {
         const f = photos[i];
         const ext = f.name.split(".").pop() || "jpg";
@@ -159,25 +163,32 @@ function PostWizard() {
     }
   };
 
+  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <section className="rounded-2xl bg-background p-5 shadow-[var(--shadow-card)]">
+      <h2 className="text-sm font-semibold tracking-tight text-foreground">{title}</h2>
+      <div className="mt-4 space-y-4">{children}</div>
+    </section>
+  );
+
   return (
     <AppShell>
-      <div className="mx-auto max-w-2xl px-4 py-6">
+      <div className="mx-auto max-w-2xl px-4 pb-32 pt-5 md:pb-12 md:pt-8">
         <h1 className="text-2xl font-bold tracking-tight">Post a listing</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          It only takes a minute. Your listing is live for 60 days.
+          It only takes a minute. Your listing stays live for 60 days.
         </p>
 
-        <div className="mt-5">
-          <WizardProgress step={step} total={3} />
+        <div className="mt-6">
+          <Stepper step={step} steps={STEP_LABELS} />
         </div>
 
-        <div className="mt-6 space-y-4 rounded-2xl border border-border bg-background p-5">
+        <div className="mt-6 space-y-4">
           {step === 1 && (
-            <>
+            <Section title="Tell us about the animal">
               <div>
                 <Label>Category *</Label>
                 <Select value={data.category} onValueChange={(v) => update("category", v)}>
-                  <SelectTrigger className="mt-1 w-full">
+                  <SelectTrigger className="mt-1.5 w-full rounded-xl">
                     <SelectValue placeholder="Choose category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -190,13 +201,13 @@ function PostWizard() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="title">Title *</Label>
+                <Label htmlFor="title">Listing title *</Label>
                 <Input
                   id="title"
                   value={data.title}
                   onChange={(e) => update("title", e.target.value)}
                   placeholder="2 healthy Sanga bulls, 18 months"
-                  className="mt-1"
+                  className="mt-1.5 rounded-xl"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -206,8 +217,8 @@ function PostWizard() {
                     id="breed"
                     value={data.breed}
                     onChange={(e) => update("breed", e.target.value)}
-                    placeholder="Sanga, Boer, Sokoto…"
-                    className="mt-1"
+                    placeholder="Sanga, Boer…"
+                    className="mt-1.5 rounded-xl"
                   />
                 </div>
                 <div>
@@ -217,7 +228,7 @@ function PostWizard() {
                     type="number"
                     value={data.age_months}
                     onChange={(e) => update("age_months", e.target.value)}
-                    className="mt-1"
+                    className="mt-1.5 rounded-xl"
                   />
                 </div>
               </div>
@@ -228,7 +239,7 @@ function PostWizard() {
                     value={data.sex || "unset"}
                     onValueChange={(v) => update("sex", v === "unset" ? "" : v)}
                   >
-                    <SelectTrigger className="mt-1 w-full">
+                    <SelectTrigger className="mt-1.5 w-full rounded-xl">
                       <SelectValue placeholder="Any" />
                     </SelectTrigger>
                     <SelectContent>
@@ -249,98 +260,111 @@ function PostWizard() {
                     min={1}
                     value={data.quantity}
                     onChange={(e) => update("quantity", e.target.value)}
-                    className="mt-1"
+                    className="mt-1.5 rounded-xl"
                   />
                 </div>
               </div>
-            </>
+            </Section>
           )}
 
           {step === 2 && (
             <>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="weight">Weight (kg)</Label>
-                  <Input
-                    id="weight"
-                    type="number"
-                    step="0.1"
-                    value={data.weight_kg}
-                    onChange={(e) => update("weight_kg", e.target.value)}
-                    className="mt-1"
-                  />
+              <Section title="Pricing">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="weight">Weight (kg)</Label>
+                    <Input
+                      id="weight"
+                      type="number"
+                      step="0.1"
+                      value={data.weight_kg}
+                      onChange={(e) => update("weight_kg", e.target.value)}
+                      className="mt-1.5 rounded-xl"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="price">Price (GH₵) *</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      value={data.price_ghs}
+                      onChange={(e) => update("price_ghs", e.target.value)}
+                      className="mt-1.5 rounded-xl"
+                    />
+                  </div>
                 </div>
                 <div>
-                  <Label htmlFor="price">Price (GH₵) *</Label>
+                  <Label>Price unit *</Label>
+                  <Select
+                    value={data.price_unit}
+                    onValueChange={(v) => update("price_unit", v as typeof data.price_unit)}
+                  >
+                    <SelectTrigger className="mt-1.5 w-full rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PRICE_UNITS.map((p) => (
+                        <SelectItem key={p.value} value={p.value}>
+                          {p.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </Section>
+
+              <Section title="Location">
+                <div>
+                  <Label>Region *</Label>
+                  <Select value={data.region} onValueChange={(v) => update("region", v)}>
+                    <SelectTrigger className="mt-1.5 w-full rounded-xl">
+                      <SelectValue placeholder="Choose region" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {GHANA_REGIONS.map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {r}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="district">District / town</Label>
                   <Input
-                    id="price"
-                    type="number"
-                    value={data.price_ghs}
-                    onChange={(e) => update("price_ghs", e.target.value)}
-                    className="mt-1"
+                    id="district"
+                    value={data.district}
+                    onChange={(e) => update("district", e.target.value)}
+                    className="mt-1.5 rounded-xl"
+                    placeholder="Tamale, Kumasi…"
                   />
                 </div>
-              </div>
-              <div>
-                <Label>Price unit *</Label>
-                <Select
-                  value={data.price_unit}
-                  onValueChange={(v) =>
-                    update("price_unit", v as typeof data.price_unit)
-                  }
-                >
-                  <SelectTrigger className="mt-1 w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PRICE_UNITS.map((p) => (
-                      <SelectItem key={p.value} value={p.value}>
-                        {p.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Region *</Label>
-                <Select value={data.region} onValueChange={(v) => update("region", v)}>
-                  <SelectTrigger className="mt-1 w-full">
-                    <SelectValue placeholder="Choose region" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GHANA_REGIONS.map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {r}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="district">District / town</Label>
-                <Input
-                  id="district"
-                  value={data.district}
-                  onChange={(e) => update("district", e.target.value)}
-                  className="mt-1"
-                  placeholder="Tamale, Kumasi…"
-                />
-              </div>
+              </Section>
             </>
           )}
 
           {step === 3 && (
             <>
-              <div>
-                <Label>Photos * <span className="text-xs text-muted-foreground font-normal">(first photo becomes the cover)</span></Label>
-                <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
+              <Section title="Photos">
+                <p className="text-xs text-muted-foreground -mt-2">
+                  Add up to 8 photos. The first is your cover.
+                </p>
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                   {previews.map((src, i) => (
-                    <div key={src} className="relative aspect-square overflow-hidden rounded-lg bg-surface">
+                    <div
+                      key={src}
+                      className="relative aspect-square overflow-hidden rounded-xl bg-surface"
+                    >
                       <img src={src} alt="" className="h-full w-full object-cover" />
+                      {i === 0 && (
+                        <span className="absolute left-1.5 top-1.5 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                          Cover
+                        </span>
+                      )}
                       <button
                         type="button"
                         onClick={() => removePhoto(i)}
-                        className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-background/90"
+                        className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-background/90 shadow-sm"
                         aria-label="Remove photo"
                       >
                         <X className="h-3.5 w-3.5" />
@@ -351,9 +375,12 @@ function PostWizard() {
                     <button
                       type="button"
                       onClick={() => fileRef.current?.click()}
-                      className="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed border-border text-muted-foreground hover:bg-surface"
+                      className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors hover:bg-surface hover:text-foreground"
                     >
                       <ImagePlus className="h-6 w-6" />
+                      <span className="text-[11px] font-medium">
+                        {photos.length === 0 ? "Add cover" : "Add photo"}
+                      </span>
                     </button>
                   )}
                 </div>
@@ -365,35 +392,53 @@ function PostWizard() {
                   className="hidden"
                   onChange={onPick}
                 />
-              </div>
-              <div>
-                <Label htmlFor="desc">Description</Label>
+              </Section>
+
+              <Section title="Description">
                 <Textarea
                   id="desc"
                   rows={5}
                   value={data.description}
                   onChange={(e) => update("description", e.target.value)}
                   placeholder="Health status, feeding, vaccination, willingness to deliver…"
-                  className="mt-1"
+                  className="rounded-xl"
                 />
-              </div>
+              </Section>
             </>
           )}
-
-          <div className="flex items-center justify-between pt-2">
-            <Button variant="ghost" onClick={back} disabled={step === 1 || busy}>
-              Back
-            </Button>
-            {step < 3 ? (
-              <Button onClick={next}>Continue</Button>
-            ) : (
-              <Button onClick={submit} disabled={busy}>
-                {busy ? "Posting…" : "Post listing"}
-              </Button>
-            )}
-          </div>
         </div>
       </div>
+
+      {/* Sticky footer */}
+      <div
+        className="fixed inset-x-0 z-30 border-t border-border/60 bg-background/95 backdrop-blur"
+        style={{ bottom: "calc(env(safe-area-inset-bottom) + 64px)" }}
+      >
+        <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3">
+          <Button
+            variant="ghost"
+            onClick={back}
+            disabled={step === 1 || busy}
+            className="rounded-full"
+          >
+            Back
+          </Button>
+          {step < 3 ? (
+            <Button onClick={next} className="flex-1 rounded-full font-semibold sm:flex-none sm:px-8">
+              Continue
+            </Button>
+          ) : (
+            <Button
+              onClick={submit}
+              disabled={busy}
+              className="flex-1 rounded-full font-semibold sm:flex-none sm:px-8"
+            >
+              {busy ? "Posting…" : "Post listing"}
+            </Button>
+          )}
+        </div>
+      </div>
+      <style>{`@media (min-width: 768px) { .fixed.inset-x-0.z-30 { bottom: 0 !important; } }`}</style>
     </AppShell>
   );
 }

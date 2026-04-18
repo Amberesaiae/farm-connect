@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { MapPin } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { Heart } from "lucide-react";
 import { BadgeChip } from "./BadgeChip";
 import { formatGhs, formatPriceUnit, formatRelative } from "@/lib/format";
 import { listingPhotoUrl } from "@/lib/photo-url";
@@ -24,16 +23,16 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
     <Link
       to="/listings/$id"
       params={{ id: listing.id }}
-      className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-xl"
+      className="group block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <Card className="overflow-hidden border-border transition-shadow group-hover:shadow-md py-0 gap-0">
-        <div className="relative aspect-[4/3] bg-surface">
+      <div className="relative">
+        <div className="relative aspect-square overflow-hidden rounded-2xl bg-background shadow-[var(--shadow-card)] transition-shadow group-hover:shadow-[var(--shadow-card-hover)]">
           {cover ? (
             <img
               src={cover}
               alt={listing.title}
               loading="lazy"
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
@@ -41,35 +40,29 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
             </div>
           )}
           {listing.seller_badge && listing.seller_badge !== "none" && (
-            <div className="absolute left-2 top-2">
+            <div className="absolute bottom-2 left-2">
               <BadgeChip tier={listing.seller_badge} />
             </div>
           )}
-        </div>
-        <div className="p-3">
-          <div className="flex items-baseline justify-between gap-2">
-            <h3 className="line-clamp-1 font-semibold text-sm">{listing.title}</h3>
-          </div>
-          <div className="mt-1 flex items-baseline gap-1">
-            <span className="text-base font-bold text-foreground">
-              {formatGhs(listing.price_ghs)}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {formatPriceUnit(listing.price_unit)}
-            </span>
-          </div>
-          <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
-            <span className="flex items-center gap-1 truncate">
-              <MapPin className="h-3 w-3 shrink-0" />
-              <span className="truncate">
-                {listing.district ? `${listing.district}, ` : ""}
-                {listing.region}
-              </span>
-            </span>
-            <span className="shrink-0">{formatRelative(listing.created_at)}</span>
+          <div
+            aria-hidden
+            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-background/90 text-muted-foreground shadow-sm backdrop-blur"
+          >
+            <Heart className="h-4 w-4" />
           </div>
         </div>
-      </Card>
+      </div>
+      <div className="px-1 pt-2.5">
+        <h3 className="line-clamp-1 text-sm font-semibold text-foreground">{listing.title}</h3>
+        <div className="mt-0.5 flex items-baseline gap-1">
+          <span className="text-base font-bold text-foreground">{formatGhs(listing.price_ghs)}</span>
+          <span className="text-[11px] text-muted-foreground">{formatPriceUnit(listing.price_unit)}</span>
+        </div>
+        <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">
+          {listing.district ? `${listing.district}, ` : ""}
+          {listing.region} · {formatRelative(listing.created_at)}
+        </p>
+      </div>
     </Link>
   );
 }
