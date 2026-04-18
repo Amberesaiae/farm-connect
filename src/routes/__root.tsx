@@ -37,7 +37,7 @@ export const Route = createRootRoute({
           "Buy and sell cattle, goats, sheep, poultry and more across Ghana. Direct contact with farmers via WhatsApp.",
       },
       { name: "author", content: "Farmlink" },
-      { name: "theme-color", content: "#00B354" },
+      { name: "theme-color", content: "#14532d" },
       { property: "og:title", content: "Farmlink — Ghana's livestock marketplace" },
       {
         property: "og:description",
@@ -52,7 +52,7 @@ export const Route = createRootRoute({
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700;800&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap",
       },
     ],
   }),
