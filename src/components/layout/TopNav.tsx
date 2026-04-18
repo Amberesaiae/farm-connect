@@ -1,7 +1,6 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Leaf, LogOut, Plus, Search, User as UserIcon, ShieldCheck, Bell } from "lucide-react";
+import { LogOut, Plus, Search, ShieldCheck, Bell, MapPin, Sprout } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,7 +30,7 @@ export function TopNav() {
       <Link
         to={to}
         className={cn(
-          "text-sm font-medium transition-colors",
+          "text-[13.5px] font-semibold transition-colors",
           active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
         )}
       >
@@ -41,47 +40,73 @@ export function TopNav() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 md:h-16">
-        <Link to="/" className="flex items-center gap-2 shrink-0">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Leaf className="h-4 w-4" />
+    <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+      <div className="mx-auto flex h-[60px] max-w-7xl items-center gap-3 px-4 md:px-8">
+        <Link to="/" className="flex shrink-0 items-center gap-2">
+          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <Sprout className="h-4 w-4" />
           </span>
-          <span className="text-lg font-bold tracking-tight">Farmlink</span>
+          <span className="font-display text-[20px] font-extrabold tracking-tight">
+            Farm<span className="text-primary">link</span>
+          </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-5 ml-4">
+        <nav className="ml-4 hidden items-center gap-5 md:flex">
           <NavLink to="/listings">Browse</NavLink>
           <NavLink to="/post">Sell</NavLink>
         </nav>
 
-        <form onSubmit={onSearch} className="hidden md:flex flex-1 max-w-sm ml-2">
-          <div className="relative w-full">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
+        <form onSubmit={onSearch} className="mx-3 hidden max-w-[480px] flex-1 md:flex">
+          <div className="flex w-full items-center overflow-hidden rounded-xl border-[1.5px] border-border bg-background transition-colors focus-within:border-primary">
+            <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search livestock, region…"
-              className="pl-10 h-10 rounded-full bg-surface border-transparent focus-visible:bg-background"
+              placeholder="Search livestock, breed, region…"
+              className="flex-1 bg-transparent px-3.5 py-2 text-[13.5px] text-foreground outline-none placeholder:text-muted-foreground/70"
             />
+            <button
+              type="submit"
+              aria-label="Search"
+              className="flex items-center gap-1.5 bg-primary px-4 py-2 text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <Search className="h-3.5 w-3.5" />
+              <span className="hidden lg:inline">Search</span>
+            </button>
           </div>
         </form>
 
         <div className="ml-auto flex items-center gap-1.5 md:gap-2">
+          <button
+            type="button"
+            className="hidden items-center gap-1 rounded-md border border-input bg-surface px-2.5 py-1.5 text-[12.5px] font-medium text-muted-foreground transition-colors hover:bg-surface-2 lg:inline-flex"
+          >
+            <MapPin className="h-3.5 w-3.5" />
+            All Ghana
+          </button>
+
           {isAuthenticated ? (
             <>
-              <Button asChild size="sm" className="hidden md:inline-flex rounded-full font-semibold">
+              <Button
+                asChild
+                size="sm"
+                className="hidden rounded-md bg-primary font-semibold text-primary-foreground hover:bg-primary/90 md:inline-flex"
+              >
                 <Link to="/post">
                   <Plus className="h-4 w-4" /> Post listing
                 </Link>
               </Button>
-              <Button variant="ghost" size="icon" aria-label="Notifications" className="rounded-full text-muted-foreground">
-                <Bell className="h-5 w-5" />
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Notifications"
+                className="rounded-md text-muted-foreground hover:text-foreground"
+              >
+                <Bell className="h-[18px] w-[18px]" />
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" aria-label="Account" className="rounded-full">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-soft text-primary font-semibold text-sm">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-soft text-[13px] font-bold text-primary">
                       {(user?.email?.[0] ?? "U").toUpperCase()}
                     </span>
                   </Button>
@@ -117,10 +142,14 @@ export function TopNav() {
             </>
           ) : (
             <>
-              <Button asChild variant="ghost" size="sm" className="rounded-full">
+              <Button asChild variant="ghost" size="sm" className="rounded-md font-semibold">
                 <Link to="/login">Sign in</Link>
               </Button>
-              <Button asChild size="sm" className="hidden sm:inline-flex rounded-full font-semibold">
+              <Button
+                asChild
+                size="sm"
+                className="hidden rounded-md bg-primary font-semibold text-primary-foreground hover:bg-primary/90 sm:inline-flex"
+              >
                 <Link to="/post">
                   <Plus className="h-4 w-4" /> Post listing
                 </Link>
