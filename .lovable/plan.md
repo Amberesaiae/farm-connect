@@ -1,84 +1,78 @@
 
-The user wants a pixel-perfect web clone of an Agriculture E-commerce mobile UI kit (Agri Farming). The mockups show a mobile app with green primary (#00B354), white background, Onest font, and rounded shapes. I'll build this as a mobile-first responsive web app with a phone-frame-style layout on desktop.
 
-Key screens visible in mockups:
-1. Home (greeting, search, promo banner, "Freshly Stocked" grid, bottom tab nav)
-2. Shop (categories grid: Vegetables, Fruits, Grains & Pulses, Machinery, Spices, Oil & Ghee, Dairy, Coffee & Tea)
-3. Freshly Stocked (full product grid)
-4. Product Detail (image carousel, description, qty selector, related products, Add to Cart)
-5. Top Market Moves (list view with prices)
-6. My Cart (line items with qty steppers, Checkout button)
-7. Checkout (order summary, promo, totals, Continue)
-8. E-Receipt (barcode, items, totals, Download)
-9. My Order (order history with status badges)
-10. My Favorite (favorites grid)
-11. Profile (placeholder)
+## Farmlink Livestock Marketplace — Full MVP Pivot
 
-Design tokens (from Design System slide):
-- Primary green #00B354, light green #E1F8EC
-- Secondary yellow #F9B327
-- Grayscale: #000, #5E5E5E, #B0B0B0, #F3F3F3, #F6F6F6, #FFF
-- Success #319D3E, Error #C93838
-- Font: Onest (Google Font)
-- Rounded buttons (pill), rounded image cards
+Replace the current produce e-commerce shell with the Ghana livestock marketplace described in your docs. Frontend in TanStack Start, backend on Lovable Cloud (Supabase) with email + Google auth, RLS on every table, Cloudinary-style storage via Supabase Storage, and a separate `/admin` area gated by an allowlist.
 
-## Plan
+### Backend (Lovable Cloud)
 
-### 1. Design system & fonts
-- Update `src/styles.css` with the Agri Farming palette in oklch (primary green, light green, yellow, grays, success, destructive). Set radius to match pill/rounded card style.
-- Load Onest from Google Fonts in `__root.tsx` head links and set as default sans family.
+**Profiles** — yes, we need them (display_name, whatsapp_number, avatar, badge_tier, trade_count, listing_count, status). Auto-created from `auth.users` via trigger. Roles live in a separate `user_roles` table with `app_role` enum (`admin`, `user`) and a `has_role()` security-definer function — never on profiles.
 
-### 2. Shared layout
-- Create `src/components/PhoneFrame.tsx` — centers content in a max-w-[420px] mobile column with subtle device shadow on desktop, full-width on mobile.
-- Create `src/components/BottomTabBar.tsx` — fixed bottom nav with Home / Shop / Cart / Profile, active state in primary green.
-- Create `src/components/TopBar.tsx` — reusable header with back button + centered title (used on inner pages).
+**Tables** (all RLS-on, owner-scoped policies + admin-via-`has_role`):
+- `profiles`, `user_roles`
+- `listings` (status enum, price_unit enum, region/district, search_vector generated tsvector + GIN index, view_count, contact_count, expires_at)
+- `listing_photos` (display_order, is_cover, storage path)
+- `listing_events` (view / contact_whatsapp / save — actor_id nullable for view)
+- `verification_submissions` (ghana_card_url, selfie_url, status, rejection_reason, reviewed_by)
+- `saved_listings` (unique on user+listing)
+- `notifications` (enquiry / verification_* / listing_expiring)
 
-### 3. Mock data
-- `src/lib/data.ts` — products (id, name, price, image, category, description), categories, market-moves, orders, favorites. Use Unsplash URLs matching produce shown (cabbage, paprika, peas, ladyfinger, cauliflower, spinach, broccoli, apple, cherry, lime, avocado, wheat, onion, cardamom, rice, corn, oat, quinoa, garlic, pumpkin).
+**Storage buckets**: `listing-photos` (public read), `verification-docs` (private, owner + admin read only).
 
-### 4. Routes (each its own file with proper head metadata)
-- `src/routes/index.tsx` — Home: avatar greeting, location, bell, search input, promo carousel card ("Fresh Sales, Fast Profits 25% Off" with Start Shopping button), "Freshly Stocked" header + View all link, 2-col product grid with heart icon overlay, "Top Market Moves" preview list.
-- `src/routes/shop.tsx` — Shop: centered title, 3-col category grid with rounded square images and labels.
-- `src/routes/freshly-stocked.tsx` — full product grid with filter icon.
-- `src/routes/product.$id.tsx` — Product detail: hero image with carousel dots, title overlay header, description, price, qty stepper, Related Products row, sticky Add to Cart button.
-- `src/routes/market-moves.tsx` — list rows: thumbnail + name + brand + price.
-- `src/routes/cart.tsx` — cart line items with qty steppers, sticky Checkout button.
-- `src/routes/checkout.tsx` — items summary, order date, promo code, subtotal/discount/tax/total, Continue.
-- `src/routes/receipt.tsx` — back header, barcode (SVG), items, order details, Download E-Receipt.
-- `src/routes/orders.tsx` — order history with status pills (Pending/Cancelled/Completed colored).
-- `src/routes/favorites.tsx` — 2-col favorites grid.
-- `src/routes/profile.tsx` — simple profile placeholder with avatar and menu items.
+**Server functions** (TanStack Start `createServerFn` with `requireSupabaseAuth`): create/update/relist listing, log contact-tap, submit verification, admin approve/reject, mark sold (badge tier recompute). `pg_cron` nightly job sets expired listings.
 
-Each route gets its own title/description meta. Per-route og:image set to the most prominent image where applicable.
-
-### 5. Reusable UI pieces
-- `ProductCard` (image + heart toggle + name + price)
-- `CategoryTile` (square image + label)
-- `QtyStepper` (− count +)
-- `StatusBadge` (Pending/Cancelled/Completed)
-- `SectionHeader` (title + optional "View all" link)
-
-### 6. Polish
-- All buttons use pill radius and primary green with white text matching mockup.
-- Heart icons toggle local state (no backend in v1).
-- Bottom tab bar shows on main tabs (Home, Shop, Cart, Profile); inner pages use TopBar with back arrow instead.
-- Smooth hover/active states; focus rings using ring color.
-
-### Notes
-- This is frontend-only with mock data — no auth, no DB. If you want real product/cart/order persistence later, we can add Lovable Cloud + Stripe/Shopify in a follow-up.
-- Images sourced from Unsplash (free, hotlinkable) to match the produce shown in mockups.
+### Frontend route map
 
 ```text
-Routes:
-/                     Home (tab)
-/shop                 Shop (tab)
-/cart                 Cart (tab)
-/profile              Profile (tab)
-/freshly-stocked      Full product grid
-/product/$id          Product detail
-/market-moves         Market list
-/checkout             Checkout
-/receipt              E-Receipt
-/orders               Order history
-/favorites            Favorites
+/                       Landing → redirects to /listings
+/listings               Browse: search + category/region/price/verified filters, cursor pagination
+/listings/$id           Detail: photo carousel, seller card with badge, WhatsApp CTA, save, more from seller
+/login                  Email + Google, redirect-back via search param
+/post                   3-step wizard (Animal → Pricing/Location → Photos/Description) [auth]
+/dashboard              Seller: active / expired / sold tabs + enquiries inbox [auth]
+/dashboard/listings/$id/edit
+/dashboard/verification Submit Ghana Card + selfie, see status [auth]
+/saved                  Saved listings [auth]
+/admin                  Login gate (allowlist via user_roles)
+/admin/verifications    Queue: approve / reject with reason
+/admin/listings         Moderation: hide / restore / delete
+/admin/users            Suspend / unsuspend
 ```
+
+Pathless layout routes `_authenticated.tsx` and `_admin.tsx` (nested under `_authenticated`) enforce guards in `beforeLoad` via router context.
+
+### Atomic component inventory
+- Layout: `AppShell`, `TopNav` (logo + search + Sign in / Post listing), `MobileTabBar` (Browse / Saved / Post / Dashboard)
+- Listings: `ListingCard`, `ListingGrid`, `FilterBar`, `PhotoCarousel`, `SellerCard`, `BadgeChip`, `WhatsAppCTA`, `SaveButton`
+- Wizard: `WizardProgress`, `Step1Animal`, `Step2Pricing`, `Step3Photos`, `PhotoUploader` (direct-to-storage with progress)
+- Dashboard: `ListingRow`, `EnquiryItem`, `StatusTabs`, `RelistButton`
+- Verification: `VerificationStatusCard`, `IdUploader`, `RejectionBanner`
+- Admin: `QueueRow`, `DecisionDialog`, `ModerationActions`
+- Primitives reuse existing shadcn/ui (Button, Input, Select, Dialog, Tabs, Badge, Card, Sheet, Toast)
+
+### Visual direction
+Replace the green/white phone-frame mock with a clean web layout: white surface, neutral slate text, single accent (Farmlink green for primary, WhatsApp green `#25D366` only on the contact CTA). Onest stays. Mobile-first responsive — no fake phone bezel; the app is a real website that looks great on a 360px Android browser and scales up to desktop.
+
+### Validation & security
+- Zod schemas on every form, mirrored on the server function `inputValidator`
+- WhatsApp numbers normalised to E.164, `wa.me/` URLs use `encodeURIComponent` for prefilled message
+- Storage RLS restricts verification-doc reads to owner + admins
+- `has_role()` security-definer function for all admin checks (no role-on-profile)
+- Leaked password check enabled
+
+### Build phases
+1. Cloud + schema + RLS + storage + seed admin role
+2. Auth (email + Google) + profile bootstrap trigger
+3. Public browse + detail + WhatsApp CTA (read-only)
+4. Post-listing wizard + photo upload + dashboard
+5. Save listings + enquiries + relist + 60-day expiry
+6. Verification submission + admin queue + badge tier logic
+7. Admin moderation + user suspension
+8. Polish: empty states, loading skeletons, error boundaries on every loader route, og:image per listing detail
+
+### Out of scope (stays out per your docs)
+SMS (Arkesel), Paystack/escrow, reviews, AI features, semantic search, market price ticker.
+
+### Open question to confirm before building
+Google OAuth needs the redirect URL configured in Google Cloud Console. I'll wire the code path; you'll need to add the redirect URL after the first deploy. Email + password works immediately.
+
