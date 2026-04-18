@@ -65,7 +65,7 @@ interface Row {
   created_at: string;
   seller_id: string;
   listing_photos: { storage_path: string; is_cover: boolean; display_order: number }[];
-  profiles: { badge_tier: string | null } | null;
+  profiles: { badge_tier: string | null; display_name: string | null } | null;
 }
 
 function ListingsPage() {
@@ -81,7 +81,7 @@ function ListingsPage() {
       let query = supabase
         .from("listings")
         .select(
-          "id,title,category,price_ghs,price_unit,region,district,created_at,seller_id,listing_photos(storage_path,is_cover,display_order),profiles!listings_seller_id_fkey(badge_tier)",
+          "id,title,category,price_ghs,price_unit,region,district,created_at,seller_id,listing_photos(storage_path,is_cover,display_order),profiles!listings_seller_id_fkey(badge_tier,display_name)",
         )
         .eq("status", "active")
         .order("created_at", { ascending: false })
@@ -116,6 +116,7 @@ function ListingsPage() {
             created_at: r.created_at,
             cover_path: photos[0]?.storage_path ?? null,
             seller_badge: r.profiles?.badge_tier ?? null,
+            seller_name: r.profiles?.display_name ?? null,
           };
         });
         const filtered = search.verifiedOnly
@@ -146,36 +147,41 @@ function ListingsPage() {
   );
 
   return (
-    <AppShell>
-      <div className="mx-auto max-w-6xl space-y-8 px-4 py-5 md:py-8">
+    <AppShell showTrust>
+      <div className="mx-auto max-w-7xl space-y-10 px-4 py-6 md:px-8 md:py-10">
         <HeroOffer />
 
         <section>
           <div className="flex items-baseline justify-between">
-            <h2 className="text-base font-semibold tracking-tight md:text-lg">Shop by category</h2>
+            <h2 className="font-display text-[20px] font-extrabold tracking-tight md:text-[22px]">
+              Shop by category
+            </h2>
+            <p className="hidden text-[12px] text-muted-foreground md:block">
+              Tap a category to filter the marketplace
+            </p>
           </div>
-          <div className="mt-3">
+          <div className="mt-4">
             <CategoryStrip active={search.category} />
           </div>
         </section>
 
         <section>
-          <div className="flex items-baseline justify-between gap-3">
+          <div className="flex items-end justify-between gap-3">
             <div>
-              <h2 className="text-lg font-bold tracking-tight md:text-xl">
+              <h2 className="font-display text-[22px] font-extrabold tracking-tight md:text-[26px]">
                 {search.category
                   ? `${search.category[0].toUpperCase()}${search.category.slice(1)} listings`
                   : "Latest listings"}
               </h2>
-              <p className="mt-0.5 text-xs text-muted-foreground">
+              <p className="mt-1 text-[12.5px] text-muted-foreground">
                 {rows.length} listing{rows.length === 1 ? "" : "s"} from sellers across Ghana
               </p>
             </div>
             <MobileFilterSheet activeCount={activeCount}>{FiltersPanel}</MobileFilterSheet>
           </div>
 
-          <div className="mt-4 grid gap-5 md:grid-cols-[240px_1fr]">
-            <aside className="hidden self-start rounded-2xl bg-background p-5 shadow-[var(--shadow-card)] md:block">
+          <div className="mt-5 grid gap-6 md:grid-cols-[260px_1fr]">
+            <aside className="hidden self-start rounded-2xl border-[1.5px] border-border bg-card p-5 md:block">
               {FiltersPanel}
             </aside>
 
@@ -183,7 +189,10 @@ function ListingsPage() {
               {loading ? (
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                   {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="aspect-square animate-pulse rounded-2xl bg-background" />
+                    <div
+                      key={i}
+                      className="aspect-[4/3] animate-pulse rounded-2xl border-[1.5px] border-border bg-card"
+                    />
                   ))}
                 </div>
               ) : (
