@@ -32,13 +32,13 @@ export const Route = createFileRoute("/listings/$id")({
   },
   head: ({ loaderData }) => {
     const l = loaderData?.listing;
-    if (!l) return { meta: [{ title: "Listing — Farmlink" }] };
+    if (!l) return { meta: [{ title: "Listing — farmlink" }] };
     const cover = l.listing_photos?.[0]?.storage_path;
     const ogImage = cover ? listingPhotoUrl(cover) : undefined;
     const desc = `${l.title} for ${formatGhs(l.price_ghs)} ${formatPriceUnit(l.price_unit)} in ${l.region}, Ghana.`;
     return {
       meta: [
-        { title: `${l.title} — Farmlink` },
+        { title: `${l.title} — farmlink` },
         { name: "description", content: desc },
         { property: "og:title", content: l.title },
         { property: "og:description", content: desc },
@@ -52,9 +52,9 @@ export const Route = createFileRoute("/listings/$id")({
     return (
       <AppShell>
         <div className="mx-auto max-w-2xl px-4 py-12 text-center">
-          <h1 className="text-xl font-bold">Couldn't load this listing</h1>
+          <h1 className="font-display text-xl font-extrabold">Couldn't load this listing</h1>
           <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
-          <Button className="mt-6 rounded-full" onClick={() => router.invalidate()}>
+          <Button className="mt-6 rounded-xl" onClick={() => router.invalidate()}>
             Try again
           </Button>
         </div>
@@ -64,9 +64,9 @@ export const Route = createFileRoute("/listings/$id")({
   notFoundComponent: () => (
     <AppShell>
       <div className="mx-auto max-w-2xl px-4 py-12 text-center">
-        <h1 className="text-xl font-bold">Listing not found</h1>
+        <h1 className="font-display text-xl font-extrabold">Listing not found</h1>
         <p className="mt-2 text-sm text-muted-foreground">It may have been removed or sold.</p>
-        <Button asChild className="mt-6 rounded-full">
+        <Button asChild className="mt-6 rounded-xl">
           <Link to="/listings">Browse listings</Link>
         </Button>
       </div>
@@ -130,24 +130,33 @@ function ListingDetail() {
               <Header listing={listing} sellerBadge={seller?.badge_tier ?? null} />
             </div>
 
-            <SpecsPanel
-              specs={[
-                { label: "Category", value: listing.category },
-                { label: "Breed", value: listing.breed },
-                { label: "Sex", value: listing.sex },
-                { label: "Age", value: listing.age_months != null ? `${listing.age_months} mo` : null },
-                {
-                  label: "Weight",
-                  value: listing.weight_kg != null ? `${Number(listing.weight_kg).toFixed(1)} kg` : null,
-                },
-                { label: "Quantity", value: listing.quantity },
-              ]}
-            />
+            <div className="rounded-2xl border-[1.5px] border-border bg-card p-5">
+              <h2 className="font-display text-[16px] font-extrabold tracking-tight">
+                Specifications
+              </h2>
+              <div className="mt-3">
+                <SpecsPanel
+                  specs={[
+                    { label: "Category", value: listing.category },
+                    { label: "Breed", value: listing.breed },
+                    { label: "Sex", value: listing.sex },
+                    { label: "Age", value: listing.age_months != null ? `${listing.age_months} mo` : null },
+                    {
+                      label: "Weight",
+                      value: listing.weight_kg != null ? `${Number(listing.weight_kg).toFixed(1)} kg` : null,
+                    },
+                    { label: "Quantity", value: listing.quantity },
+                  ]}
+                />
+              </div>
+            </div>
 
             {listing.description && (
-              <section>
-                <h2 className="text-lg font-bold">About this listing</h2>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
+              <section className="rounded-2xl border-[1.5px] border-border bg-card p-5">
+                <h2 className="font-display text-[16px] font-extrabold tracking-tight">
+                  About this listing
+                </h2>
+                <p className="mt-2 whitespace-pre-wrap text-[14px] leading-relaxed text-foreground/90">
                   {listing.description}
                 </p>
               </section>
@@ -218,11 +227,15 @@ function Header({
   return (
     <div>
       <div className="flex items-start justify-between gap-2">
-        <h1 className="text-2xl font-bold leading-tight">{listing.title}</h1>
+        <h1 className="font-display text-[26px] font-extrabold leading-tight tracking-tight">
+          {listing.title}
+        </h1>
         <BadgeChip tier={sellerBadge} />
       </div>
       <div className="mt-2 flex items-baseline gap-2">
-        <span className="text-3xl font-bold">{formatGhs(listing.price_ghs)}</span>
+        <span className="font-mono text-[28px] font-bold text-foreground">
+          {formatGhs(listing.price_ghs)}
+        </span>
         <span className="text-sm text-muted-foreground">{formatPriceUnit(listing.price_unit)}</span>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">

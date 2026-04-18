@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { AdminGate } from "@/components/layout/AdminGate";
+import { AdminNav } from "@/components/layout/AdminNav";
 import { ShieldCheck, ListChecks, Users } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  head: () => ({ meta: [{ title: "Admin — Farmlink" }] }),
+  head: () => ({ meta: [{ title: "Admin — farmlink" }] }),
   component: AdminHome,
 });
 
@@ -17,17 +18,25 @@ function AdminHome() {
   return (
     <AdminGate>
       <AppShell>
-        <div className="mx-auto max-w-4xl px-4 py-6">
-          <h1 className="text-2xl font-bold tracking-tight">Admin</h1>
+        <div className="mx-auto max-w-5xl px-4 py-6 md:py-8">
+          <h1 className="font-display text-[28px] font-extrabold tracking-tight">Admin</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Operations dashboard for the farmlink team.
+          </p>
+          <div className="mt-5">
+            <AdminNav />
+          </div>
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             {cards.map((c) => (
               <Link
                 key={c.to}
                 to={c.to}
-                className="rounded-2xl border border-border p-5 hover:bg-surface transition-colors"
+                className="rounded-2xl border-[1.5px] border-border bg-card p-5 transition-colors hover:border-primary/40"
               >
-                <c.Icon className="h-6 w-6 text-primary" />
-                <p className="mt-3 font-semibold">{c.title}</p>
+                <c.Icon className="h-6 w-6 text-primary" strokeWidth={1.75} />
+                <p className="font-display mt-3 text-[16px] font-extrabold tracking-tight">
+                  {c.title}
+                </p>
                 <p className="mt-1 text-sm text-muted-foreground">{c.desc}</p>
               </Link>
             ))}
