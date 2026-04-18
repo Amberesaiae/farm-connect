@@ -1,11 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, ShieldCheck } from "lucide-react";
-import heroImage from "@/assets/hero-livestock.jpg";
+import { heroForCategory } from "@/lib/hero-image";
 
-export function HeroOffer() {
+export function HeroOffer({ category }: { category?: string }) {
+  const hero = heroForCategory(category);
   return (
     <section className="relative overflow-hidden rounded-3xl bg-primary text-primary-foreground">
-      {/* Radial highlight to add depth on the right side */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
@@ -18,15 +18,15 @@ export function HeroOffer() {
         <div className="px-6 pt-10 pb-8 md:px-12 md:py-14">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/90 ring-1 ring-inset ring-white/15">
             <ShieldCheck className="h-3 w-3" />
-            Verified farmers · 16 regions
+            {hero.eyebrow}
           </span>
           <h1 className="font-display mt-4 text-[34px] font-extrabold leading-[1.05] tracking-tight md:text-[46px]">
-            Ghana's livestock<br />
-            <span className="text-emerald-300">marketplace.</span>
+            {hero.headline}
+            <br />
+            <span className="text-emerald-300">{hero.highlight}</span>
           </h1>
           <p className="mt-4 max-w-md text-[14.5px] leading-relaxed text-white/80 md:text-[15.5px]">
-            Cattle, goats, sheep, poultry — listed by farmers, priced transparently,
-            one WhatsApp tap away. No middlemen. No guesswork.
+            {hero.subcopy}
           </p>
           <div className="mt-6 flex flex-wrap gap-2.5">
             <Link
@@ -46,8 +46,8 @@ export function HeroOffer() {
 
         <div className="relative h-64 md:h-full md:min-h-[360px]">
           <img
-            src={heroImage}
-            alt="West African cattle in a Ghanaian savanna at golden hour"
+            src={hero.src}
+            alt={hero.alt}
             className="absolute inset-0 h-full w-full object-cover"
             width={1280}
             height={960}

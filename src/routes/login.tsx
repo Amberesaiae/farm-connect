@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import { Leaf } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Wordmark } from "@/components/brand/Wordmark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,8 +18,8 @@ export const Route = createFileRoute("/login")({
   }),
   head: () => ({
     meta: [
-      { title: "Sign in — Farmlink" },
-      { name: "description", content: "Sign in to post livestock listings on Farmlink." },
+      { title: "Sign in — farmlink" },
+      { name: "description", content: "Sign in to post or save livestock listings on farmlink." },
     ],
   }),
   component: LoginPage,
@@ -71,22 +71,19 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center p-4">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm">
-        <Link to="/" className="mb-6 flex flex-col items-center gap-2">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/30">
-            <Leaf className="h-6 w-6" />
-          </span>
-          <span className="text-xl font-bold tracking-tight">Farmlink</span>
+        <div className="mb-6 flex flex-col items-center gap-1.5">
+          <Wordmark size="text-[26px]" />
           <span className="text-xs text-muted-foreground">
             Sell or save livestock listings across Ghana
           </span>
-        </Link>
+        </div>
 
-        <div className="rounded-3xl bg-background p-6 shadow-[var(--shadow-card)]">
+        <div className="rounded-3xl border-[1.5px] border-border bg-card p-6">
           <Button
             variant="outline"
-            className="w-full rounded-full font-semibold"
+            className="w-full rounded-xl border-[1.5px] font-semibold"
             onClick={onGoogle}
             disabled={busy}
           >
@@ -96,18 +93,18 @@ function LoginPage() {
 
           <div className="my-4 flex items-center gap-3">
             <div className="h-px flex-1 bg-border" />
-            <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
+            <span className="text-[10.5px] uppercase tracking-wider text-muted-foreground">
               or with email
             </span>
             <div className="h-px flex-1 bg-border" />
           </div>
 
           <Tabs defaultValue="signin">
-            <TabsList className="grid w-full grid-cols-2 rounded-full bg-surface p-1">
-              <TabsTrigger value="signin" className="rounded-full">
+            <TabsList className="grid w-full grid-cols-2 rounded-xl bg-surface p-1">
+              <TabsTrigger value="signin" className="rounded-lg">
                 Sign in
               </TabsTrigger>
-              <TabsTrigger value="signup" className="rounded-full">
+              <TabsTrigger value="signup" className="rounded-lg">
                 Create account
               </TabsTrigger>
             </TabsList>
@@ -136,7 +133,7 @@ function LoginPage() {
                     className="mt-1.5 rounded-xl"
                   />
                 </div>
-                <Button type="submit" className="w-full rounded-full font-semibold" disabled={busy}>
+                <Button type="submit" className="w-full rounded-xl font-semibold" disabled={busy}>
                   Sign in
                 </Button>
               </form>
@@ -178,7 +175,7 @@ function LoginPage() {
                   />
                   <p className="mt-1 text-xs text-muted-foreground">At least 8 characters.</p>
                 </div>
-                <Button type="submit" className="w-full rounded-full font-semibold" disabled={busy}>
+                <Button type="submit" className="w-full rounded-xl font-semibold" disabled={busy}>
                   Create account
                 </Button>
               </form>
@@ -187,7 +184,11 @@ function LoginPage() {
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          By continuing, you agree to Farmlink's Terms and acknowledge the Privacy Policy.
+          By continuing, you agree to{" "}
+          <Link to="/about" className="underline hover:text-foreground">
+            farmlink's terms
+          </Link>
+          .
         </p>
       </div>
     </div>

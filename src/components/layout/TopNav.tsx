@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { LogOut, Plus, Search, ShieldCheck, Bell, MapPin, Sprout } from "lucide-react";
+import { LogOut, Plus, Search, ShieldCheck, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,9 +9,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Wordmark } from "@/components/brand/Wordmark";
 import { useAuth } from "@/lib/auth-context";
 import { useState, type FormEvent } from "react";
 import { cn } from "@/lib/utils";
+
+type NavTo = "/listings" | "/services" | "/hatcheries" | "/post";
 
 export function TopNav() {
   const { isAuthenticated, isAdmin, user, signOut } = useAuth();
@@ -24,8 +27,10 @@ export function TopNav() {
     navigate({ to: "/listings", search: { q: q.trim() || undefined } as never });
   };
 
-  const NavLink = ({ to, children }: { to: "/listings" | "/post"; children: React.ReactNode }) => {
-    const active = location.pathname === to || (to !== "/listings" && location.pathname.startsWith(to));
+  const NavLink = ({ to, children }: { to: NavTo; children: React.ReactNode }) => {
+    const active =
+      location.pathname === to ||
+      (to !== "/listings" && location.pathname.startsWith(to));
     return (
       <Link
         to={to}
@@ -42,21 +47,16 @@ export function TopNav() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
       <div className="mx-auto flex h-[60px] max-w-7xl items-center gap-3 px-4 md:px-8">
-        <Link to="/" className="flex shrink-0 items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <Sprout className="h-4 w-4" />
-          </span>
-          <span className="font-display text-[20px] font-extrabold tracking-tight">
-            Farm<span className="text-primary">link</span>
-          </span>
-        </Link>
+        <Wordmark />
 
         <nav className="ml-4 hidden items-center gap-5 md:flex">
           <NavLink to="/listings">Browse</NavLink>
+          <NavLink to="/services">Services</NavLink>
+          <NavLink to="/hatcheries">Hatcheries</NavLink>
           <NavLink to="/post">Sell</NavLink>
         </nav>
 
-        <form onSubmit={onSearch} className="mx-3 hidden max-w-[480px] flex-1 md:flex">
+        <form onSubmit={onSearch} className="mx-3 hidden max-w-[420px] flex-1 md:flex">
           <div className="flex w-full items-center overflow-hidden rounded-xl border-[1.5px] border-border bg-background transition-colors focus-within:border-primary">
             <input
               value={q}
@@ -76,14 +76,6 @@ export function TopNav() {
         </form>
 
         <div className="ml-auto flex items-center gap-1.5 md:gap-2">
-          <button
-            type="button"
-            className="hidden items-center gap-1 rounded-md border border-input bg-surface px-2.5 py-1.5 text-[12.5px] font-medium text-muted-foreground transition-colors hover:bg-surface-2 lg:inline-flex"
-          >
-            <MapPin className="h-3.5 w-3.5" />
-            All Ghana
-          </button>
-
           {isAuthenticated ? (
             <>
               <Button
@@ -122,6 +114,16 @@ export function TopNav() {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard/verification">Verification</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/services">Services</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/hatcheries">Hatcheries</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/how-it-works">How it works</Link>
                   </DropdownMenuItem>
                   {isAdmin && (
                     <>
