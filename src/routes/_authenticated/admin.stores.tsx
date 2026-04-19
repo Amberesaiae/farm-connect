@@ -74,8 +74,6 @@ function Inner() {
   const signed = useServerFn(getAgroStoreLicenceUrl);
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pending, setPending] = useState<{ id: string; action: "approve" | "reject" | "suspend" | "reinstate"; name: string } | null>(null);
-  const [busy, setBusy] = useState(false);
 
   const refresh = async () => {
     setLoading(true);
@@ -93,16 +91,18 @@ function Inner() {
     } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
   }
 
-  async function confirmAction(reason: string) {
-    if (!pending) return;
-    setBusy(true);
+  async function runAction(
+    storeId: string,
+    action: "approve" | "reject" | "suspend" | "reinstate",
+    reason: string,
+  ) {
     try {
-      await moderate({ data: { store_id: pending.id, action: pending.action, reason: reason || null } });
-      toast.success(`Shop ${pending.action}d`);
-      setPending(null);
+      await moderate({ data: { store_id: storeId, action, reason: reason || null } });
+      toast.success(`Shop ${action}d`);
       await refresh();
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
-    finally { setBusy(false); }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    }
   }
 
   const filterToneFor = (s: AgroStoreStatus) => AGRO_STORE_STATUS_TONE[s];
@@ -129,13 +129,49 @@ function Inner() {
                 </dl>
               </div>
               <div className="flex flex-wrap gap-2">
-                {r.licence_doc_path && (<Button size="sm" variant="outline" className="rounded-xl" onClick={() => viewLicence(r.id)}>View licence</Button>)}
-                {r.status === "pending_review" && (<>
-                  <Button size="sm" className="rounded-xl" onClick={() => setPending({ id: r.id, action: "approve", name: r.business_name })}>Approve</Button>
-                  <Button size="sm" variant="destructive" className="rounded-xl" onClick={() => setPending({ id: r.id, action: "reject", name: r.business_name })}>Reject</Button>
-                </>)}
-                {r.status === "approved" && (<Button size="sm" variant="destructive" className="rounded-xl" onClick={() => setPending({ id: r.id, action: "suspend", name: r.business_name })}>Suspend</Button>)}
-                {r.status === "suspended" && (<Button size="sm" className="rounded-xl" onClick={() => setPending({ id: r.id, action: "reinstate", name: r.business_name })}>Reinstate</Button>)}
+                {r.licence_doc_path && (
+                  <Button size="sm" variant="outline" className="rounded-xl" onClick={() => viewLicence(r.id)}>View licence</Button>
+                )}
+                {r.status === "pending_review" && (
+                  <>
+                    <ActionConfirmDialog
+                      trigger={<Button size="sm" className="rounded-xl">Approve</Button>}
+                      title={`Approve ${r.business_name}`}
+                      description="Owner will be notified and listings auto-link to the shop."
+                      confirmLabel="Approve shop"
+                      reasonRequired={false}
+                      onConfirm={(reason) => runAction(r.id, "approve", reason)}
+                    />
+                    <ActionConfirmDialog
+                      trigger={<Button size="sm" variant="destructive" className="rounded-xl">Reject</Button>}
+                      title={`Reject ${r.business_name}`}
+                      description="Owner will be notified with the reason."
+                      confirmLabel="Reject shop"
+                      destructive
+                      onConfirm={(reason) => runAction(r.id, "reject", reason)}
+                    />
+                  </>
+                )}
+                {r.status === "approved" && (
+                  <ActionConfirmDialog
+                    trigger={<Button size="sm" variant="destructive" className="rounded-xl">Suspend</Button>}
+                    title={`Suspend ${r.business_name}`}
+                    description="Shop will be hidden from public discovery."
+                    confirmLabel="Suspend shop"
+                    destructive
+                    onConfirm={(reason) => runAction(r.id, "suspend", reason)}
+                  />
+                )}
+                {r.status === "suspended" && (
+                  <ActionConfirmDialog
+                    trigger={<Button size="sm" className="rounded-xl">Reinstate</Button>}
+                    title={`Reinstate ${r.business_name}`}
+                    description="Shop will appear in the public directory again."
+                    confirmLabel="Reinstate shop"
+                    reasonRequired={false}
+                    onConfirm={(reason) => runAction(r.id, "reinstate", reason)}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -143,18 +179,7 @@ function Inner() {
       )}
 
       <AdminAuditLog targetType="agro_store" />
-
-      <ActionConfirmDialog
-        open={!!pending}
-        onOpenChange={(o) => !o && setPending(null)}
-        title={pending ? `${pending.action[0].toUpperCase()}${pending.action.slice(1)} shop` : ""}
-        description={pending ? `${pending.name}` : ""}
-        reasonRequired={pending?.action === "reject" || pending?.action === "suspend"}
-        confirmLabel={pending?.action === "approve" || pending?.action === "reinstate" ? "Confirm" : "Confirm"}
-        destructive={pending?.action === "reject" || pending?.action === "suspend"}
-        busy={busy}
-        onConfirm={confirmAction}
-      />
     </div>
   );
 }
+
