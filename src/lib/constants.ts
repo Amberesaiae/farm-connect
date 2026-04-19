@@ -45,3 +45,6 @@ export const SEX_OPTIONS = [
 
 export const LISTING_PHOTOS_BUCKET = "listing-photos";
 export const VERIFICATION_DOCS_BUCKET = "verification-docs";
+export const HATCHERY_PHOTOS_BUCKET = "hatchery-photos";
+export const HATCHERY_PERMITS_BUCKET = "hatchery-permits";
+export const SERVICE_ATTACHMENTS_BUCKET = "service-attachments";

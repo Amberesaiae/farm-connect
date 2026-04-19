@@ -18,6 +18,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ListingsIdRouteImport } from './routes/listings.$id'
+import { Route as HatcheriesSlugRouteImport } from './routes/hatcheries.$slug'
 import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
 import { Route as AuthenticatedPostRouteImport } from './routes/_authenticated/post'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -26,6 +27,7 @@ import { Route as AuthenticatedDashboardVerificationRouteImport } from './routes
 import { Route as AuthenticatedAdminVerificationsRouteImport } from './routes/_authenticated/admin.verifications'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminListingsRouteImport } from './routes/_authenticated/admin.listings'
+import { Route as HatcheriesSlugBatchesBatchIdRouteImport } from './routes/hatcheries.$slug.batches.$batchId'
 
 const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
@@ -71,6 +73,11 @@ const ListingsIdRoute = ListingsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => ListingsRoute,
 } as any)
+const HatcheriesSlugRoute = HatcheriesSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => HatcheriesRoute,
+} as any)
 const AuthenticatedSavedRoute = AuthenticatedSavedRouteImport.update({
   id: '/saved',
   path: '/saved',
@@ -114,11 +121,17 @@ const AuthenticatedAdminListingsRoute =
     path: '/listings',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const HatcheriesSlugBatchesBatchIdRoute =
+  HatcheriesSlugBatchesBatchIdRouteImport.update({
+    id: '/batches/$batchId',
+    path: '/batches/$batchId',
+    getParentRoute: () => HatcheriesSlugRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/hatcheries': typeof HatcheriesRoute
+  '/hatcheries': typeof HatcheriesRouteWithChildren
   '/how-it-works': typeof HowItWorksRoute
   '/listings': typeof ListingsRouteWithChildren
   '/login': typeof LoginRoute
@@ -127,16 +140,18 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/post': typeof AuthenticatedPostRoute
   '/saved': typeof AuthenticatedSavedRoute
+  '/hatcheries/$slug': typeof HatcheriesSlugRouteWithChildren
   '/listings/$id': typeof ListingsIdRoute
   '/admin/listings': typeof AuthenticatedAdminListingsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/dashboard/verification': typeof AuthenticatedDashboardVerificationRoute
+  '/hatcheries/$slug/batches/$batchId': typeof HatcheriesSlugBatchesBatchIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/hatcheries': typeof HatcheriesRoute
+  '/hatcheries': typeof HatcheriesRouteWithChildren
   '/how-it-works': typeof HowItWorksRoute
   '/listings': typeof ListingsRouteWithChildren
   '/login': typeof LoginRoute
@@ -145,18 +160,20 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/post': typeof AuthenticatedPostRoute
   '/saved': typeof AuthenticatedSavedRoute
+  '/hatcheries/$slug': typeof HatcheriesSlugRouteWithChildren
   '/listings/$id': typeof ListingsIdRoute
   '/admin/listings': typeof AuthenticatedAdminListingsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/dashboard/verification': typeof AuthenticatedDashboardVerificationRoute
+  '/hatcheries/$slug/batches/$batchId': typeof HatcheriesSlugBatchesBatchIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
-  '/hatcheries': typeof HatcheriesRoute
+  '/hatcheries': typeof HatcheriesRouteWithChildren
   '/how-it-works': typeof HowItWorksRoute
   '/listings': typeof ListingsRouteWithChildren
   '/login': typeof LoginRoute
@@ -165,11 +182,13 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/_authenticated/post': typeof AuthenticatedPostRoute
   '/_authenticated/saved': typeof AuthenticatedSavedRoute
+  '/hatcheries/$slug': typeof HatcheriesSlugRouteWithChildren
   '/listings/$id': typeof ListingsIdRoute
   '/_authenticated/admin/listings': typeof AuthenticatedAdminListingsRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/_authenticated/dashboard/verification': typeof AuthenticatedDashboardVerificationRoute
+  '/hatcheries/$slug/batches/$batchId': typeof HatcheriesSlugBatchesBatchIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -185,11 +204,13 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/post'
     | '/saved'
+    | '/hatcheries/$slug'
     | '/listings/$id'
     | '/admin/listings'
     | '/admin/users'
     | '/admin/verifications'
     | '/dashboard/verification'
+    | '/hatcheries/$slug/batches/$batchId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -203,11 +224,13 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/post'
     | '/saved'
+    | '/hatcheries/$slug'
     | '/listings/$id'
     | '/admin/listings'
     | '/admin/users'
     | '/admin/verifications'
     | '/dashboard/verification'
+    | '/hatcheries/$slug/batches/$batchId'
   id:
     | '__root__'
     | '/'
@@ -222,18 +245,20 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/post'
     | '/_authenticated/saved'
+    | '/hatcheries/$slug'
     | '/listings/$id'
     | '/_authenticated/admin/listings'
     | '/_authenticated/admin/users'
     | '/_authenticated/admin/verifications'
     | '/_authenticated/dashboard/verification'
+    | '/hatcheries/$slug/batches/$batchId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
-  HatcheriesRoute: typeof HatcheriesRoute
+  HatcheriesRoute: typeof HatcheriesRouteWithChildren
   HowItWorksRoute: typeof HowItWorksRoute
   ListingsRoute: typeof ListingsRouteWithChildren
   LoginRoute: typeof LoginRoute
@@ -305,6 +330,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ListingsIdRouteImport
       parentRoute: typeof ListingsRoute
     }
+    '/hatcheries/$slug': {
+      id: '/hatcheries/$slug'
+      path: '/$slug'
+      fullPath: '/hatcheries/$slug'
+      preLoaderRoute: typeof HatcheriesSlugRouteImport
+      parentRoute: typeof HatcheriesRoute
+    }
     '/_authenticated/saved': {
       id: '/_authenticated/saved'
       path: '/saved'
@@ -361,6 +393,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminListingsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/hatcheries/$slug/batches/$batchId': {
+      id: '/hatcheries/$slug/batches/$batchId'
+      path: '/batches/$batchId'
+      fullPath: '/hatcheries/$slug/batches/$batchId'
+      preLoaderRoute: typeof HatcheriesSlugBatchesBatchIdRouteImport
+      parentRoute: typeof HatcheriesSlugRoute
+    }
   }
 }
 
@@ -412,6 +451,30 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface HatcheriesSlugRouteChildren {
+  HatcheriesSlugBatchesBatchIdRoute: typeof HatcheriesSlugBatchesBatchIdRoute
+}
+
+const HatcheriesSlugRouteChildren: HatcheriesSlugRouteChildren = {
+  HatcheriesSlugBatchesBatchIdRoute: HatcheriesSlugBatchesBatchIdRoute,
+}
+
+const HatcheriesSlugRouteWithChildren = HatcheriesSlugRoute._addFileChildren(
+  HatcheriesSlugRouteChildren,
+)
+
+interface HatcheriesRouteChildren {
+  HatcheriesSlugRoute: typeof HatcheriesSlugRouteWithChildren
+}
+
+const HatcheriesRouteChildren: HatcheriesRouteChildren = {
+  HatcheriesSlugRoute: HatcheriesSlugRouteWithChildren,
+}
+
+const HatcheriesRouteWithChildren = HatcheriesRoute._addFileChildren(
+  HatcheriesRouteChildren,
+)
+
 interface ListingsRouteChildren {
   ListingsIdRoute: typeof ListingsIdRoute
 }
@@ -428,7 +491,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
-  HatcheriesRoute: HatcheriesRoute,
+  HatcheriesRoute: HatcheriesRouteWithChildren,
   HowItWorksRoute: HowItWorksRoute,
   ListingsRoute: ListingsRouteWithChildren,
   LoginRoute: LoginRoute,
