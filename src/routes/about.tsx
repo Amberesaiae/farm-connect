@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
-import { Compass, MessageCircle, Sprout } from "lucide-react";
+import { CompassIcon, ChatBubbleIcon, SeedlingIcon } from "@/components/icons";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -23,17 +23,17 @@ export const Route = createFileRoute("/about")({
 
 const STEPS = [
   {
-    Icon: Compass,
+    Icon: CompassIcon,
     title: "Browse",
     body: "Filter cattle, goats, sheep, poultry and more by region, breed and price.",
   },
   {
-    Icon: MessageCircle,
+    Icon: ChatBubbleIcon,
     title: "Contact",
     body: "Tap WhatsApp to start a conversation directly with the seller — no platform middleman.",
   },
   {
-    Icon: Sprout,
+    Icon: SeedlingIcon,
     title: "Trade",
     body: "Inspect, negotiate and pay the seller directly. We log the trade for trust scores.",
   },
@@ -68,7 +68,7 @@ function AboutPage() {
               <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 Step {i + 1}
               </span>
-              <s.Icon className="mt-3 h-7 w-7 text-primary" strokeWidth={1.75} />
+              <s.Icon size={28} strokeWidth={1.7} className="mt-3 text-primary" />
               <h2 className="font-display mt-3 text-[20px] font-extrabold tracking-tight">
                 {s.title}
               </h2>

@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { CheckIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 interface StepperProps {
@@ -24,7 +24,7 @@ export function Stepper({ step, steps }: StepperProps) {
                   !isDone && !isCurrent && "border-border bg-background text-muted-foreground",
                 )}
               >
-                {isDone ? <Check className="h-4 w-4" /> : idx}
+                {isDone ? <CheckIcon size={16} strokeWidth={2.2} /> : idx}
               </span>
               {i < steps.length - 1 && (
                 <span

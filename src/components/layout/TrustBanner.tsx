@@ -1,10 +1,19 @@
-import { ShieldCheck, Truck, MessageCircle, Sprout } from "lucide-react";
+import {
+  ShieldIcon,
+  TruckIcon,
+  ChatBubbleIcon,
+  SeedlingIcon,
+} from "@/components/icons";
+import type { IconProps } from "@/components/icons/Icon";
+import type { ComponentType } from "react";
 
-const ITEMS = [
-  { Icon: ShieldCheck, label: "ID-verified sellers" },
-  { Icon: MessageCircle, label: "Direct WhatsApp contact" },
-  { Icon: Truck, label: "16-region coverage" },
-  { Icon: Sprout, label: "No middlemen, ever" },
+type IconCmp = ComponentType<IconProps>;
+
+const ITEMS: { Icon: IconCmp; label: string }[] = [
+  { Icon: ShieldIcon, label: "ID-verified sellers" },
+  { Icon: ChatBubbleIcon, label: "Direct WhatsApp contact" },
+  { Icon: TruckIcon, label: "16-region coverage" },
+  { Icon: SeedlingIcon, label: "No middlemen, ever" },
 ];
 
 export function TrustBanner() {
@@ -17,7 +26,7 @@ export function TrustBanner() {
               key={label}
               className="flex items-center gap-1.5 text-[12.5px] font-semibold text-warning-foreground"
             >
-              <Icon className="h-3.5 w-3.5 shrink-0" />
+              <Icon size={14} />
               {label}
             </div>
           ))}

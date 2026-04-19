@@ -1,4 +1,4 @@
-import { Heart } from "lucide-react";
+import { HeartIcon } from "@/components/icons";
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,7 +60,7 @@ export function SaveButton({ listingId, initialSaved, variant = "icon" }: SaveBu
             : "border-border bg-background hover:bg-surface",
         )}
       >
-        <Heart className={cn("h-4 w-4", saved && "fill-current")} />
+        <HeartIcon size={16} className={cn(saved && "fill-current")} />
         {saved ? "Saved" : "Save listing"}
       </button>
     );
@@ -77,7 +77,7 @@ export function SaveButton({ listingId, initialSaved, variant = "icon" }: SaveBu
           saved ? "border-primary text-primary" : "border-border text-foreground",
         )}
       >
-        <Heart className={cn("h-5 w-5", saved && "fill-current")} />
+        <HeartIcon size={20} className={cn(saved && "fill-current")} />
       </button>
     );
   }
@@ -92,7 +92,7 @@ export function SaveButton({ listingId, initialSaved, variant = "icon" }: SaveBu
         saved ? "border-primary text-primary" : "border-border text-foreground",
       )}
     >
-      <Heart className={cn("h-5 w-5", saved && "fill-current")} />
+      <HeartIcon size={20} className={cn(saved && "fill-current")} />
     </button>
   );
 }
