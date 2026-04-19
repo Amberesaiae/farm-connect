@@ -22,13 +22,18 @@ export const Route = createFileRoute("/listings/$id")({
     const { data, error } = await supabase
       .from("listings")
       .select(
-        "id,title,category,breed,age_months,sex,quantity,weight_kg,price_ghs,price_unit,region,district,description,status,view_count,created_at,seller_id,listing_photos(storage_path,is_cover,display_order),profiles!listings_seller_id_fkey(display_name,avatar_url,badge_tier,trade_count,listing_count,whatsapp_e164)",
+        "id,title,category,breed,age_months,sex,quantity,weight_kg,price_ghs,price_unit,region,district,description,status,view_count,created_at,seller_id,listing_photos(storage_path,is_cover,display_order)",
       )
       .eq("id", params.id)
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!data) throw notFound();
-    return { listing: data };
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name,avatar_url,badge_tier,trade_count,listing_count,whatsapp_e164")
+      .eq("id", data.seller_id)
+      .maybeSingle();
+    return { listing: { ...data, profiles: profile ?? null } };
   },
   head: ({ loaderData }) => {
     const l = loaderData?.listing;

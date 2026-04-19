@@ -24,34 +24,47 @@ function SavedPage() {
     void supabase
       .from("saved_listings")
       .select(
-        "listing:listings(id,title,category,price_ghs,price_unit,region,district,created_at,seller_id,listing_photos(storage_path,is_cover,display_order),profiles!listings_seller_id_fkey(badge_tier,display_name))",
+        "listing:listings(id,title,category,price_ghs,price_unit,region,district,created_at,seller_id,listing_photos(storage_path,is_cover,display_order))",
       )
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         if (cancelled) return;
-        const mapped: ListingCardData[] = ((data ?? []) as { listing: any }[])
-          .filter((s) => s.listing)
-          .map((s) => {
-            const r = s.listing;
-            const photos = [...(r.listing_photos ?? [])].sort(
-              (a: any, b: any) =>
-                (b.is_cover ? 1 : 0) - (a.is_cover ? 1 : 0) || a.display_order - b.display_order,
-            );
-            return {
-              id: r.id,
-              title: r.title,
-              category: r.category,
-              price_ghs: r.price_ghs,
-              price_unit: r.price_unit,
-              region: r.region,
-              district: r.district,
-              created_at: r.created_at,
-              cover_path: photos[0]?.storage_path ?? null,
-              seller_badge: r.profiles?.badge_tier ?? null,
-              seller_name: r.profiles?.display_name ?? null,
-            };
-          });
+        const listings = ((data ?? []) as { listing: any }[])
+          .map((s) => s.listing)
+          .filter(Boolean);
+        const sellerIds = Array.from(new Set(listings.map((l: any) => l.seller_id)));
+        const profilesById = new Map<string, { badge_tier: string | null; display_name: string | null }>();
+        if (sellerIds.length) {
+          const { data: profs } = await supabase
+            .from("profiles")
+            .select("id,badge_tier,display_name")
+            .in("id", sellerIds);
+          for (const p of profs ?? []) {
+            profilesById.set(p.id, { badge_tier: p.badge_tier, display_name: p.display_name });
+          }
+        }
+        if (cancelled) return;
+        const mapped: ListingCardData[] = listings.map((r: any) => {
+          const photos = [...(r.listing_photos ?? [])].sort(
+            (a: any, b: any) =>
+              (b.is_cover ? 1 : 0) - (a.is_cover ? 1 : 0) || a.display_order - b.display_order,
+          );
+          const prof = profilesById.get(r.seller_id);
+          return {
+            id: r.id,
+            title: r.title,
+            category: r.category,
+            price_ghs: r.price_ghs,
+            price_unit: r.price_unit,
+            region: r.region,
+            district: r.district,
+            created_at: r.created_at,
+            cover_path: photos[0]?.storage_path ?? null,
+            seller_badge: prof?.badge_tier ?? null,
+            seller_name: prof?.display_name ?? null,
+          };
+        });
         setRows(mapped);
         setLoading(false);
       });
