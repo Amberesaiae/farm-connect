@@ -76,7 +76,6 @@ interface Row {
   created_at: string;
   seller_id: string;
   listing_photos: { storage_path: string; is_cover: boolean; display_order: number }[];
-  profiles: { badge_tier: string | null; display_name: string | null } | null;
 }
 
 function ListingsPage() {
