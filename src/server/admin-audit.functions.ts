@@ -80,15 +80,18 @@ export const setUserStatusWithAudit = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
 
     const status = data.action === "suspend" ? "suspended" : "active";
-    const patch: Record<string, unknown> = { status };
-    if (data.action === "suspend") {
-      patch.suspension_reason = data.reason ?? null;
-      patch.suspended_at = new Date().toISOString();
-    } else {
-      patch.suspension_reason = null;
-      patch.suspended_at = null;
-    }
-    const { error } = await supabaseAdmin.from("profiles").update(patch).eq("id", data.user_id);
+    const patch =
+      data.action === "suspend"
+        ? {
+            status,
+            suspension_reason: data.reason ?? null,
+            suspended_at: new Date().toISOString(),
+          }
+        : { status, suspension_reason: null, suspended_at: null };
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update(patch as never)
+      .eq("id", data.user_id);
     if (error) throw new Error(error.message);
 
     if (data.action === "suspend") {

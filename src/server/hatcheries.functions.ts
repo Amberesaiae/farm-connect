@@ -74,7 +74,6 @@ export const submitHatcheryApplication = createServerFn({ method: "POST" })
     }
 
     // Add 'hatchery' to user's roles array
-    await supabaseAdmin.rpc("noop").catch(() => undefined); // safe no-op
     const { data: prof } = await supabaseAdmin
       .from("profiles")
       .select("roles")
@@ -133,9 +132,13 @@ export const reviewHatcheryApplication = createServerFn({ method: "POST" })
     else if (data.action === "reject") status = "rejected";
     else status = "suspended";
 
-    const patch: Record<string, unknown> = { status, rejection_reason: data.reason ?? null };
-    if (status === "approved")
-      Object.assign(patch, { approved_at: new Date().toISOString(), approved_by: context.userId });
+    const patch = {
+      status,
+      rejection_reason: data.reason ?? null,
+      ...(status === "approved"
+        ? { approved_at: new Date().toISOString(), approved_by: context.userId }
+        : {}),
+    } as never;
 
     const { data: hatchery, error } = await supabaseAdmin
       .from("hatcheries")
