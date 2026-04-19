@@ -15,6 +15,8 @@ export interface ListingCardData {
   cover_path: string | null;
   seller_badge?: string | null;
   seller_name?: string | null;
+  store_name?: string | null;
+  store_slug?: string | null;
 }
 
 export function ListingCard({ listing }: { listing: ListingCardData }) {
@@ -97,7 +99,14 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
             {initials}
           </span>
           <span className="flex-1 truncate text-[11.5px] font-semibold text-muted-foreground">
-            {sellerName}
+            {listing.store_name ? (
+              <span className="inline-flex items-center gap-1">
+                <span className="rounded-full bg-primary-soft px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-primary">Shop</span>
+                <span className="truncate text-foreground">{listing.store_name}</span>
+              </span>
+            ) : (
+              sellerName
+            )}
           </span>
           {verified ? (
             <span
