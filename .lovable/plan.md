@@ -1,118 +1,112 @@
 
 
-## Farmlink — Schema-First Expansion: Hatcheries (Deep) + Services & Agro Categories (Foundation)
+The user is reframing: instead of stores being only for the three agro pillars, **every vendor type gets a storefront**, but each pillar's storefront has pillar-specific aspects matching what's already been built.
 
-Land the canonical schema from the technical pack in one migration, build the **hatchery batch + reservation experience end-to-end**, ship **service profiles + quote requests** as a working second pillar, and wire **agromed / agrofeed / equipment** into the existing `listings` table via `top_category` + `subcategory_slug` so they share discovery, dashboards and admin moderation. WhatsApp stays only as the contact rail for product categories — hatcheries use reservations, services use quote requests.
+Today's reality:
+- Hatcheries already have storefronts (`hatcheries` table, `/hatcheries/$slug`) — sell **batches + reservations**.
+- Service providers already have storefronts (`service_profiles`, `/services/$slug`) — sell **quote requests**.
+- Agro pillars (feed, agromed, equipment) sell **catalogued listings + WhatsApp**.
+- Livestock sellers are peer-to-peer with no shop identity.
 
-### 1. One database migration (everything aligned to the spec)
+So the user's question is really: should we unify these under one "Vendor Store" umbrella so every seller has a public profile page, with pillar-specific commerce mechanics layered on top?
 
-**Extend existing tables**
-- `profiles` → add `roles text[] default '{buyer}'`, `active_role text default 'buyer'`, `is_suspended bool`, `suspension_reason text`, `suspended_at timestamptz`. Allowed `active_role`: `buyer | seller | provider | hatchery | admin`.
-- `listings` → add `top_category text not null default 'livestock'` (CHECK in `livestock | agrofeed_supplements | agromed_veterinary | agro_equipment_tools`), `subcategory_slug text`, `condition text`, `stock_quantity int`, `min_order_qty int default 1`, `expires_on date`, `metadata jsonb default '{}'`. Backfill all existing rows to `livestock`.
+Yes — this is a cleaner mental model. One identity layer, three commerce mechanics. Plan below.
 
-**New tables**
-- `hatcheries` (operator profile, region/district, blurb, cover, capacity, **permit_number / permit_authority / permit_doc_path** for the documented compliance trail, status: `draft | pending_review | approved | suspended | rejected`, `whatsapp_e164` fallback only).
-- `hatchery_batches` (per the spec: `batch_type`, `breed`, `hatch_date`, `pickup_start/end_date`, `min_order_qty`, `total_quantity`, `reserved_quantity`, generated `available_quantity`, `price_per_unit`, `unit_label`, region, fulfillment flags, `status: draft|open|full|closed|cancelled`).
-- `hatchery_batch_photos` (mirrors `listing_photos`).
-- `batch_reservations` (the reservation state machine: `pending | confirmed | waitlisted | cancelled_by_buyer | cancelled_by_hatchery | fulfilled`; carries `requested_qty`, `confirmed_qty`, pickup date, mode, contact, both-sides notes).
-- `service_profiles` (provider business identity, categories, coverage regions/districts, pricing model, badge, ratings).
-- `service_requests` (quote inbox: `submitted | viewed | responded | accepted | declined | expired`).
-- `admin_audit_logs` (every privileged action — actor, action, target, reason).
+---
 
-**Triggers & functions**
-- `touch_updated_at` on all new tables.
-- `confirm_reservation(reservation_id, confirmed_qty)` SECURITY DEFINER plpgsql function that does `SELECT … FOR UPDATE` on the batch, checks `confirmed_qty ≤ total - reserved`, atomically updates reservation + increments `reserved_quantity`, and flips batch to `full` when zero remains. Same pattern for `cancel_reservation` (decrements safely).
-- Extend `has_role` (already present) — no change. Add helper `is_hatchery_owner(uid, hatchery_id)` and `owns_batch(uid, batch_id)` for clean RLS.
+## Unified Vendor Stores — one identity, pillar-specific commerce
 
-**RLS (mirrors existing patterns, never recursive)**
-- `hatcheries`: public read where `status='approved'`; owner full RW on own row; admin all.
-- `hatchery_batches` / `_photos`: public read when parent approved AND batch.status in (`open`,`full`); owner write own; admin all.
-- `batch_reservations`: buyer reads own; hatchery owner reads where they own the batch; buyer inserts own (`pending` only); only `confirm_reservation` / `cancel_reservation` functions mutate status.
-- `service_profiles`: public read where `is_active=true` AND owner not suspended; owner RW; admin all.
-- `service_requests`: buyer reads own; provider reads where `provider_user_id=uid`; buyer inserts; provider patches status.
-- `admin_audit_logs`: admin-only read & insert via SECURITY DEFINER helper.
+Every vendor in Farmlink gets a public storefront. The storefront identity (cover, blurb, location, badge, hours) is shared across all vendor types. The **commerce surface** inside each store differs by pillar — that's what's already been built and we keep it.
 
-**Storage buckets**
-- `hatchery-photos` (public) — covers, batch images.
-- `hatchery-permits` (private) — owner + admin signed-URL only.
-- `service-attachments` (private) — quote request files.
+### Mental model
 
-### 2. Hatchery operator journey (deep)
+```text
+                     ┌──────────────────────┐
+                     │   vendor_stores      │  ← one identity layer
+                     │   (slug, cover,      │     for everyone
+                     │    blurb, location,  │
+                     │    contact, hours)   │
+                     └──────────┬───────────┘
+                                │ pillar
+            ┌───────────────────┼─────────────────────┐
+            ▼                   ▼                     ▼
+   ┌──────────────┐    ┌──────────────────┐   ┌────────────────┐
+   │  hatchery    │    │  services        │   │  agro pillars  │
+   │  → batches + │    │  → quote         │   │  → listings +  │
+   │  reservations│    │    requests      │   │   WhatsApp     │
+   └──────────────┘    └──────────────────┘   └────────────────┘
+   (livestock peer sellers stay flat — no store required)
+```
 
-**Onboarding wizard** — `/_authenticated/dashboard.hatchery.onboarding.tsx`, 4 steps each in its own atomic component (`StepBusiness`, `StepLocation`, `StepCapacityCategory`, `StepPermitReview`). Last step uploads permit doc to `hatchery-permits` and submits with `status='pending_review'`. UI clearly states: "MVP: permit reviewed manually by Farmlink admin. Automated registry checks coming."
+### What changes vs the previous plan
 
-**Operator dashboard** (`/_authenticated/dashboard.hatchery.tsx` with sub-tabs):
-- Overview — open batches count, pending reservations badge, fill-rate KPI tiles (v2 cream cards, `font-mono` numerals).
-- Batches list (`dashboard.hatchery.batches.tsx`) → create/edit batch in a sheet (`BatchForm.tsx`), close/cancel actions.
-- Batch detail (`dashboard.hatchery.batches.$batchId.tsx`) → reservation queue (`ReservationRow`), quick confirm/decline, waitlist toggle, batch event timeline (vaccination/grading notes for trust).
-- Reservation inbox (`dashboard.hatchery.bookings.tsx`) — chronological, filter by status, bulk confirm.
+- **No new `vendor_stores` table.** We'd be duplicating `hatcheries` + `service_profiles`. Instead we extend what exists and add **one** new table only for the agro pillars.
+- The unified surface is a **read model** (a view + shared component), not a new physical table. Each vendor type keeps its specialised columns.
 
-**Concurrency-safe confirm** — every confirm call goes through the `confirm_reservation` server function (TanStack `createServerFn` + `requireSupabaseAuth`) which calls the SQL function above; returns `INVENTORY_EXCEEDED` error if oversold; client shows the spec's "latest availability" conflict UI with adjusted-qty / waitlist options.
+### Schema (one migration, additive)
 
-### 3. Buyer hatchery journey (deep)
+1. **New table `agro_vendor_stores`** — for feed / agromed / equipment dealers (mirrors `hatcheries` shape exactly):
+   `id, owner_id, slug, business_name, pillar (CHECK in agrofeed/agromed/equipment), blurb, cover_path, logo_path, region, district, address, whatsapp_e164, phone_e164, email, delivers, delivery_regions[], min_order_ghs, business_hours jsonb, business_reg_number, vsd_licence_number, licence_doc_path, status (draft/pending_review/approved/suspended/rejected), approved_by, approved_at, rejection_reason, is_active, badge_tier, listing_count, created_at, updated_at`.
+2. **Extend `listings`** with `vendor_store_id uuid` (nullable). Trigger auto-links new agro listings to the seller's approved store + maintains `listing_count`.
+3. **Add shared columns to all three vendor tables** (only those missing):
+   - `hatcheries`, `service_profiles`, `agro_vendor_stores` all get: `logo_path`, `phone_e164`, `business_hours jsonb`, `address` (already on hatcheries — skip there).
+4. **New SQL view `public.vendor_stores_v`** — UNION ALL across the three tables exposing the **shared identity columns** (`store_kind`, `id`, `owner_id`, `slug`, `name`, `pillar_or_category`, `region`, `cover_path`, `logo_path`, `blurb`, `badge_tier`, `is_public`). Backs the unified `/stores` directory and search.
+5. **RLS** — copies the proven hatchery pattern on `agro_vendor_stores` (public read approved + active, owner RW, admin all). View inherits underlying RLS.
+6. **Storage** — reuse `listing-photos` for covers/logos, reuse `hatchery-permits` bucket renamed conceptually to "vendor-licences" by adding a second bucket `vendor-licences` (private).
+7. **Notifications enum** — additive: `agro_store_approved`, `agro_store_rejected`, `agro_store_suspended`.
 
-- `/hatcheries` — replaces the static directory: server-loaded approved hatcheries with category + region filters.
-- `/hatcheries/$slug` — profile hero, blurb, certifications, **open batches grid** (`BatchCard` shows hatch date, available qty progress bar, ready-from window, price), reviews (post-MVP placeholder section).
-- `/hatcheries/$slug/batches/$batchId` — batch detail with quantity-aware booking form (`ReservationForm`).
-- `/_authenticated/dashboard.reservations.tsx` — buyer's reservations with state pills (`ReservationStatusPill`), cancel-while-pending action, deep-links to hatchery.
+### Vendor experience — one entry, three flows
 
-### 4. Service profiles & quote requests (working v1)
+`/_authenticated/dashboard.store.tsx` becomes the **single vendor hub**. On first visit it asks "What do you sell?" → routes the user into the right onboarding wizard:
+- Hatchery → existing `dashboard.hatchery.onboarding` (already built).
+- Services → existing service profile editor (already built).
+- Feed / Agromed / Equipment → **new** `dashboard.store.agro.onboarding.tsx` (4 steps: business, location & delivery, commerce settings, compliance + review). Mirrors hatchery wizard structure.
 
-- `/services` — refactored from static list: real `service_profiles` cards (`ServiceProfileCard`).
-- `/services/$slug` — profile hero, coverage, pricing model, **Request Quote** CTA.
-- `/services/$slug/quote` — quote form (service_type, region/district, preferred date + window, budget range, notes). Uses `createServerFn` with idempotency key.
-- `/_authenticated/dashboard.provider.tsx` — provider onboarding gate + tabs: profile editor, quote inbox (`QuoteRow` with `viewed | responded | declined` actions and a response textarea).
-- `/_authenticated/dashboard.quotes.tsx` — buyer's submitted quotes with status timeline.
+A vendor can have **multiple stores** (e.g., a hatchery operator also runs a feed shop) — same `owner_id` across rows.
 
-### 5. Agro-categories on existing listings (foundation)
+The dashboard hub shows tiles for each store the user owns with status + quick links. Existing per-pillar dashboards (`dashboard.hatchery.*`, `dashboard.provider.*`) keep working unchanged.
 
-- **Post wizard** (`_authenticated/post.tsx`) becomes category-aware in Step 1: choose `top_category` → conditional dynamic fields:
-  - `livestock` (existing breed/age/weight/quantity).
-  - `agrofeed_supplements`: pack size + brand → `metadata`, optional `expires_on`.
-  - `agromed_veterinary`: **`expires_on` required**, active ingredient + dosage → `metadata`.
-  - `agro_equipment_tools`: **`condition` required (new|used)**, brand/model.
-- **Browse** (`/listings`) gets a top-category tab strip above the existing category strip. `validateSearch` extends with `topCategory` + `subcategory`. `ListingCard` shows the right unit label + condition/expiry chip per category.
-- All four product categories continue using the existing **WhatsApp CTA** + `listing_events('contact_whatsapp')` analytics path — fail-open redirect preserved.
+### Buyer experience — unified discovery
 
-### 6. Admin & audit
+- `/stores` — **new unified directory** powered by `vendor_stores_v`. Top tab strip: All · Hatcheries · Services · Feed · Agromed · Equipment. Region filter + search.
+- Each tile uses a single `<StoreCard kind="...">` that branches its CTA: hatchery → "View batches", services → "Request quote", agro → "Browse catalogue".
+- `/hatcheries/$slug`, `/services/$slug` keep their existing URLs (no breaking changes). New: `/stores/$slug` (agro) for feed/agromed/equipment shops with catalogue grid + WhatsApp CTA.
+- `/listings/$id` sidebar: when the listing belongs to an agro store, show `<StorefrontCard>` linking to the store; falls back to the existing `<SellerCard>` for peer-to-peer livestock.
+- `ListingCard` gets a "Sold by [Store]" chip only when `vendor_store_id` is set.
 
-- New `/_authenticated/admin.hatcheries.tsx` — pending-review queue with signed-URL permit preview, approve / reject (reason required), writes `admin_audit_logs`.
-- Existing admin pages (`admin.listings`, `admin.users`, `admin.verifications`) get a **suspend/unsuspend user** action, **hide/restore listing** with reason code, and write to `admin_audit_logs`.
-- Add `AdminAuditLog` component on each admin page showing the last 20 actions for transparency.
+### Admin & moderation
 
-### 7. Server functions (atomic, no monolith) — `src/server/`
+- Existing `/admin/hatcheries` queue stays.
+- New `/admin/stores` queue for agro stores (same UI shell as hatcheries: pending list, signed-URL licence preview, approve/reject with audited reason).
+- Suspending a user already cascades via `is_active` / `status` on the existing tables — extend the same logic to `agro_vendor_stores`.
+- `AdminAuditLog` picks up the new action types automatically (e.g., `agro_store.approve`).
 
-`hatcheries.functions.ts` · `hatchery-batches.functions.ts` · `reservations.functions.ts` (calls SQL `confirm_reservation`) · `service-profiles.functions.ts` · `service-requests.functions.ts` · `admin-audit.functions.ts` · `listings.functions.ts` extended with category-validated insert. All use `requireSupabaseAuth` middleware + zod validation per the spec's category-specific required fields.
+### Server functions
 
-### 8. Notifications
+`src/server/agro-stores.functions.ts` — `submitAgroStoreApplication`, `updateAgroStore`, `moderateAgroStore`, `linkListingToStore`. Same patterns as `hatcheries.functions.ts`.
 
-Extend `notifications.type` enum (additive) with: `reservation_received`, `reservation_confirmed`, `reservation_waitlisted`, `service_request_received`, `service_request_responded`, `listing_hidden_by_admin`. Triggers fire on each state transition. Existing `Notifications` UI picks them up via the deep-link field.
+### Why this is better than the previous proposal
 
-### 9. Components & files
+- **No duplicated identity** — we don't end up with `hatcheries.blurb` AND `vendor_stores.blurb` for the same business.
+- **Pillar-specific columns stay where they belong** — hatcheries keep `permit_authority`, services keep `coverage_regions`, agro stores get their own delivery + licence fields.
+- **One discovery surface** for buyers (`/stores`), three native commerce flows behind it.
+- **Backwards compatible** — every existing route, dashboard, and RLS policy keeps working.
 
-**New atomic components** (each ≤150 LOC):
-- `src/components/hatchery/`: `HatcheryProfileHero`, `BatchCard`, `BatchProgressBar`, `BatchForm`, `ReservationForm`, `ReservationRow`, `ReservationStatusPill`, `BatchEventTimeline`, `PermitUploadField`, onboarding step files.
-- `src/components/services/`: `ServiceProfileCard`, `ServiceProfileForm`, `QuoteRequestForm`, `QuoteRow`, `QuoteStatusPill`.
-- `src/components/admin/`: `AdminAuditLog`, `ActionConfirmDialog` (reason-required destructive action shell).
-- `src/components/post/CategoryFieldsSwitcher.tsx` — renders the right field set per `top_category`.
-- `src/lib/`: `categories.ts` (canonical enums + labels), `reservation-status.ts`, `quote-status.ts`, `idempotency.ts`, `audit.ts`.
+### Out of scope (documented in `docs/vendor-stores-roadmap.md`)
 
-**Deleted / replaced**:
-- `src/lib/hatcheries-data.ts` and `src/lib/services-data.ts` removed; seed rows ported into the migration as one-time `INSERT … ON CONFLICT DO NOTHING` for the existing curated names so the directory isn't empty on launch.
-
-**Compliance doc**:
-- `docs/hatchery-compliance.md` — Ghana VSD permits, Fisheries Commission aquaculture licence, EPA, district assembly permit; data fields we already capture (`permit_number`, `permit_authority`, `permit_doc_path`) for future automated registry checks. Documented but not enforced.
-
-### 10. Out of scope (documented only)
-
-Automated permit registry checks, escrow/payments, SMS/WhatsApp Business API push, dispute flows, waitlist auto-promotion, ratings/reviews submission UI (table exists but UI ships as read-only "Coming soon"). All captured in `docs/hatchery-compliance.md` and `docs/expanded-workflows-roadmap.md`.
+Multi-pillar single store, in-store search/sort, store ratings UI, in-app checkout, ad placements, store analytics dashboards, shared inventory/stock-sync. v2.
 
 ### Acceptance gates
 
-1. Hatchery onboarding → admin approval → batch creation → buyer reservation → hatchery confirm → buyer sees `confirmed` in dashboard. End-to-end on mobile + desktop.
-2. Two concurrent confirm calls on the same batch never oversell (SQL `FOR UPDATE` proven).
-3. Service request submitted → provider responds → buyer sees update.
-4. Posting an `agromed_veterinary` listing without `expires_on` is rejected with the spec's `VALIDATION_ERROR` envelope.
-5. Suspending a user hides their active listings + service profile + hatchery from public discovery.
-6. Every admin destructive action writes an `admin_audit_logs` row with reason.
+1. A user can own a hatchery + an agro store + a service profile under one account; all three appear on `/stores` filtered by kind.
+2. An agromed dealer onboards → admin approves → existing agromed listings auto-link → store appears with catalogue.
+3. Suspending a user removes all their stores (hatchery, services, agro) from `/stores` in one action.
+4. The same `slug` cannot be claimed across `hatcheries`, `service_profiles`, or `agro_vendor_stores` (cross-table uniqueness enforced via trigger).
+5. Livestock-only peer sellers still post and contact via WhatsApp without any storefront — store is opt-in.
+
+### Files (high-level)
+
+**New**: migration; `src/server/agro-stores.functions.ts`; `src/lib/agro-store-status.ts`; `src/components/store/{StoreCard,StoreHero,StoreCatalogueGrid,StorefrontCard,LicenceUploadField,AgroStoreOnboardingStep{1..4}}.tsx`; `src/routes/stores.tsx`; `src/routes/stores.$slug.tsx`; `src/routes/_authenticated/dashboard.store.tsx` (hub); `src/routes/_authenticated/dashboard.store.agro.onboarding.tsx`; `src/routes/_authenticated/admin.stores.tsx`; `docs/vendor-stores-roadmap.md`.
+
+**Edited**: `src/components/listing/ListingCard.tsx` (store chip); `src/routes/listings.$id.tsx` (StorefrontCard); `src/routes/_authenticated/post.tsx` ("Add to my store" toggle); `src/components/layout/{TopNav,AdminNav}.tsx`.
 
