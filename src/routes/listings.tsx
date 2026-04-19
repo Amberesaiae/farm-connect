@@ -98,6 +98,8 @@ function ListingsPage() {
         .order("created_at", { ascending: false })
         .limit(48);
 
+      if (search.topCategory) query = query.eq("top_category", search.topCategory);
+      if (search.subcategory) query = query.eq("subcategory_slug", search.subcategory);
       if (search.category) query = query.eq("category", search.category);
       if (search.region) query = query.eq("region", search.region);
       if (typeof search.minPrice === "number" && !Number.isNaN(search.minPrice))
@@ -141,7 +143,7 @@ function ListingsPage() {
     return () => {
       cancelled = true;
     };
-  }, [search.q, search.category, search.region, search.verifiedOnly, search.minPrice, search.maxPrice]);
+  }, [search.q, search.topCategory, search.subcategory, search.category, search.region, search.verifiedOnly, search.minPrice, search.maxPrice]);
 
   const update = (patch: Partial<ListingsSearch>) => {
     navigate({ to: "/listings", search: { ...search, ...patch } as never });
@@ -165,15 +167,20 @@ function ListingsPage() {
         <section>
           <div className="flex items-baseline justify-between">
             <h2 className="font-display text-[20px] font-extrabold tracking-tight md:text-[22px]">
-              Shop by category
+              Marketplace
             </h2>
             <p className="hidden text-[12px] text-muted-foreground md:block">
-              Tap a category to filter the marketplace
+              Filter by pillar, then drill into a category
             </p>
           </div>
           <div className="mt-4">
-            <CategoryStrip active={search.category} />
+            <TopCategoryTabs active={search.topCategory} />
           </div>
+          {search.topCategory === undefined || search.topCategory === "livestock" ? (
+            <div className="mt-4">
+              <CategoryStrip active={search.category} />
+            </div>
+          ) : null}
         </section>
 
         <section>
