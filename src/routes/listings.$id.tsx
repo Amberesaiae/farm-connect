@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PhotoCarousel } from "@/components/listing/PhotoCarousel";
 import { SellerCard } from "@/components/listing/SellerCard";
+import { StorefrontCard } from "@/components/store/StorefrontCard";
 import { WhatsAppCTA } from "@/components/listing/WhatsAppCTA";
 import { SaveButton } from "@/components/listing/SaveButton";
 import { SpecsPanel } from "@/components/listing/SpecsPanel";
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/listings/$id")({
     const { data, error } = await supabase
       .from("listings")
       .select(
-        "id,title,category,breed,age_months,sex,quantity,weight_kg,price_ghs,price_unit,region,district,description,status,view_count,created_at,seller_id,listing_photos(storage_path,is_cover,display_order)",
+        "id,title,category,breed,age_months,sex,quantity,weight_kg,price_ghs,price_unit,region,district,description,status,view_count,created_at,seller_id,vendor_store_id,listing_photos(storage_path,is_cover,display_order)",
       )
       .eq("id", params.id)
       .maybeSingle();
@@ -33,7 +34,18 @@ export const Route = createFileRoute("/listings/$id")({
       .select("display_name,avatar_url,badge_tier,trade_count,listing_count,whatsapp_e164")
       .eq("id", data.seller_id)
       .maybeSingle();
-    return { listing: { ...data, profiles: profile ?? null } };
+    let store: { slug: string; business_name: string; logo_path: string | null; region: string } | null = null;
+    if (data.vendor_store_id) {
+      const { data: s } = await supabase
+        .from("agro_vendor_stores")
+        .select("slug,business_name,logo_path,region,status,is_active")
+        .eq("id", data.vendor_store_id)
+        .maybeSingle();
+      if (s && s.status === "approved" && s.is_active) {
+        store = { slug: s.slug, business_name: s.business_name, logo_path: s.logo_path, region: s.region };
+      }
+    }
+    return { listing: { ...data, profiles: profile ?? null, store } };
   },
   head: ({ loaderData }) => {
     const l = loaderData?.listing;
@@ -172,6 +184,15 @@ function ListingDetail() {
             <div className="hidden md:block">
               <Header listing={listing} sellerBadge={seller?.badge_tier ?? null} />
             </div>
+
+            {listing.store ? (
+              <StorefrontCard
+                slug={listing.store.slug}
+                name={listing.store.business_name}
+                logo_path={listing.store.logo_path}
+                region={listing.store.region}
+              />
+            ) : null}
 
             {seller && (
               <SellerCard
