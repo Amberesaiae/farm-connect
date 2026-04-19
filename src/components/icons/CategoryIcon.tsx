@@ -5,6 +5,7 @@ import sheep from "@/assets/icons/sheep.png";
 import poultry from "@/assets/icons/poultry.png";
 import pig from "@/assets/icons/pig.png";
 import rabbit from "@/assets/icons/rabbit.png";
+import fish from "@/assets/icons/fish.png";
 import all from "@/assets/icons/all.png";
 import lot from "@/assets/icons/lot.png";
 
@@ -21,10 +22,10 @@ const MAP: Record<string, string> = {
   poultry,
   pig,
   rabbit,
+  fish,
   all,
   lot,
-  // Fallbacks (no dedicated illustration yet — reuse closest match)
-  fish: all,
+  // Fallback (no dedicated illustration yet)
   egg: poultry,
 };
 
