@@ -38,10 +38,40 @@ function ListingMod() {
     setLoading(true);
     const { data } = await supabase
       .from("listings")
-      .select("id,title,status,price_ghs,region,top_category,created_at,profiles!listings_seller_id_fkey(display_name)")
+      .select("id,title,status,price_ghs,region,top_category,created_at,seller_id")
       .order("created_at", { ascending: false })
       .limit(100);
-    setRows((data ?? []) as unknown as Row[]);
+    const listings = (data ?? []) as Array<{
+      id: string;
+      title: string;
+      status: string;
+      price_ghs: number | string;
+      region: string;
+      top_category: string;
+      created_at: string;
+      seller_id: string;
+    }>;
+    const sellerIds = Array.from(new Set(listings.map((l) => l.seller_id)));
+    const nameById = new Map<string, string>();
+    if (sellerIds.length) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id,display_name")
+        .in("id", sellerIds);
+      for (const p of profs ?? []) nameById.set(p.id, p.display_name);
+    }
+    setRows(
+      listings.map((l) => ({
+        id: l.id,
+        title: l.title,
+        status: l.status,
+        price_ghs: l.price_ghs,
+        region: l.region,
+        top_category: l.top_category,
+        created_at: l.created_at,
+        profiles: { display_name: nameById.get(l.seller_id) ?? "—" },
+      })),
+    );
     setLoading(false);
   };
   useEffect(() => {
