@@ -165,7 +165,7 @@ function HatcheryDashboard() {
             return (
               <Link
                 key={t.to}
-                to={t.to}
+                to={t.to as never}
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-[12.5px] font-semibold transition-colors",
                   active
