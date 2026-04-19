@@ -14,6 +14,300 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_logs: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          id: number
+          metadata: Json
+          reason: string | null
+          target_id: string
+          target_type: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          id?: number
+          metadata?: Json
+          reason?: string | null
+          target_id: string
+          target_type: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          id?: number
+          metadata?: Json
+          reason?: string | null
+          target_id?: string
+          target_type?: string
+        }
+        Relationships: []
+      }
+      batch_reservations: {
+        Row: {
+          batch_id: string
+          buyer_contact: string | null
+          buyer_id: string
+          buyer_note: string | null
+          cancelled_at: string | null
+          confirmed_at: string | null
+          confirmed_qty: number | null
+          created_at: string
+          delivery_address: string | null
+          fulfilled_at: string | null
+          fulfilment: Database["public"]["Enums"]["fulfilment_mode"]
+          hatchery_note: string | null
+          id: string
+          idempotency_key: string | null
+          pickup_date: string | null
+          requested_qty: number
+          status: Database["public"]["Enums"]["reservation_status"]
+          updated_at: string
+        }
+        Insert: {
+          batch_id: string
+          buyer_contact?: string | null
+          buyer_id: string
+          buyer_note?: string | null
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          confirmed_qty?: number | null
+          created_at?: string
+          delivery_address?: string | null
+          fulfilled_at?: string | null
+          fulfilment?: Database["public"]["Enums"]["fulfilment_mode"]
+          hatchery_note?: string | null
+          id?: string
+          idempotency_key?: string | null
+          pickup_date?: string | null
+          requested_qty: number
+          status?: Database["public"]["Enums"]["reservation_status"]
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string
+          buyer_contact?: string | null
+          buyer_id?: string
+          buyer_note?: string | null
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          confirmed_qty?: number | null
+          created_at?: string
+          delivery_address?: string | null
+          fulfilled_at?: string | null
+          fulfilment?: Database["public"]["Enums"]["fulfilment_mode"]
+          hatchery_note?: string | null
+          id?: string
+          idempotency_key?: string | null
+          pickup_date?: string | null
+          requested_qty?: number
+          status?: Database["public"]["Enums"]["reservation_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_reservations_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "hatchery_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hatcheries: {
+        Row: {
+          address: string | null
+          approved_at: string | null
+          approved_by: string | null
+          blurb: string | null
+          capacity_per_cycle: number | null
+          category: Database["public"]["Enums"]["hatchery_category"]
+          cover_path: string | null
+          created_at: string
+          district: string | null
+          id: string
+          name: string
+          owner_id: string | null
+          permit_authority:
+            | Database["public"]["Enums"]["permit_authority"]
+            | null
+          permit_doc_path: string | null
+          permit_number: string | null
+          region: string
+          rejection_reason: string | null
+          slug: string
+          status: Database["public"]["Enums"]["hatchery_status"]
+          updated_at: string
+          whatsapp_e164: string | null
+        }
+        Insert: {
+          address?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          blurb?: string | null
+          capacity_per_cycle?: number | null
+          category: Database["public"]["Enums"]["hatchery_category"]
+          cover_path?: string | null
+          created_at?: string
+          district?: string | null
+          id?: string
+          name: string
+          owner_id?: string | null
+          permit_authority?:
+            | Database["public"]["Enums"]["permit_authority"]
+            | null
+          permit_doc_path?: string | null
+          permit_number?: string | null
+          region: string
+          rejection_reason?: string | null
+          slug: string
+          status?: Database["public"]["Enums"]["hatchery_status"]
+          updated_at?: string
+          whatsapp_e164?: string | null
+        }
+        Update: {
+          address?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          blurb?: string | null
+          capacity_per_cycle?: number | null
+          category?: Database["public"]["Enums"]["hatchery_category"]
+          cover_path?: string | null
+          created_at?: string
+          district?: string | null
+          id?: string
+          name?: string
+          owner_id?: string | null
+          permit_authority?:
+            | Database["public"]["Enums"]["permit_authority"]
+            | null
+          permit_doc_path?: string | null
+          permit_number?: string | null
+          region?: string
+          rejection_reason?: string | null
+          slug?: string
+          status?: Database["public"]["Enums"]["hatchery_status"]
+          updated_at?: string
+          whatsapp_e164?: string | null
+        }
+        Relationships: []
+      }
+      hatchery_batch_photos: {
+        Row: {
+          batch_id: string
+          created_at: string
+          display_order: number
+          id: string
+          is_cover: boolean
+          storage_path: string
+        }
+        Insert: {
+          batch_id: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_cover?: boolean
+          storage_path: string
+        }
+        Update: {
+          batch_id?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_cover?: boolean
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hatchery_batch_photos_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "hatchery_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hatchery_batches: {
+        Row: {
+          allows_delivery: boolean
+          allows_pickup: boolean
+          available_quantity: number | null
+          batch_type: string
+          breed: string | null
+          created_at: string
+          hatch_date: string | null
+          hatchery_id: string
+          id: string
+          min_order_qty: number
+          notes: string | null
+          pickup_end_date: string
+          pickup_start_date: string
+          price_per_unit: number
+          region: string
+          reserved_quantity: number
+          status: Database["public"]["Enums"]["batch_status"]
+          total_quantity: number
+          unit_label: string
+          updated_at: string
+        }
+        Insert: {
+          allows_delivery?: boolean
+          allows_pickup?: boolean
+          available_quantity?: number | null
+          batch_type: string
+          breed?: string | null
+          created_at?: string
+          hatch_date?: string | null
+          hatchery_id: string
+          id?: string
+          min_order_qty?: number
+          notes?: string | null
+          pickup_end_date: string
+          pickup_start_date: string
+          price_per_unit: number
+          region: string
+          reserved_quantity?: number
+          status?: Database["public"]["Enums"]["batch_status"]
+          total_quantity: number
+          unit_label?: string
+          updated_at?: string
+        }
+        Update: {
+          allows_delivery?: boolean
+          allows_pickup?: boolean
+          available_quantity?: number | null
+          batch_type?: string
+          breed?: string | null
+          created_at?: string
+          hatch_date?: string | null
+          hatchery_id?: string
+          id?: string
+          min_order_qty?: number
+          notes?: string | null
+          pickup_end_date?: string
+          pickup_start_date?: string
+          price_per_unit?: number
+          region?: string
+          reserved_quantity?: number
+          status?: Database["public"]["Enums"]["batch_status"]
+          total_quantity?: number
+          unit_label?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hatchery_batches_hatchery_id_fkey"
+            columns: ["hatchery_id"]
+            isOneToOne: false
+            referencedRelation: "hatcheries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listing_events: {
         Row: {
           actor_id: string | null
@@ -89,12 +383,16 @@ export type Database = {
           age_months: number | null
           breed: string | null
           category: string
+          condition: string | null
           contact_count: number
           created_at: string
           description: string | null
           district: string | null
           expires_at: string
+          expires_on: string | null
           id: string
+          metadata: Json
+          min_order_qty: number
           price_ghs: number
           price_unit: Database["public"]["Enums"]["price_unit"]
           quantity: number
@@ -104,7 +402,10 @@ export type Database = {
           seller_id: string
           sex: string | null
           status: Database["public"]["Enums"]["listing_status"]
+          stock_quantity: number | null
+          subcategory_slug: string | null
           title: string
+          top_category: string
           updated_at: string
           view_count: number
           weight_kg: number | null
@@ -113,12 +414,16 @@ export type Database = {
           age_months?: number | null
           breed?: string | null
           category: string
+          condition?: string | null
           contact_count?: number
           created_at?: string
           description?: string | null
           district?: string | null
           expires_at?: string
+          expires_on?: string | null
           id?: string
+          metadata?: Json
+          min_order_qty?: number
           price_ghs: number
           price_unit?: Database["public"]["Enums"]["price_unit"]
           quantity?: number
@@ -128,7 +433,10 @@ export type Database = {
           seller_id: string
           sex?: string | null
           status?: Database["public"]["Enums"]["listing_status"]
+          stock_quantity?: number | null
+          subcategory_slug?: string | null
           title: string
+          top_category?: string
           updated_at?: string
           view_count?: number
           weight_kg?: number | null
@@ -137,12 +445,16 @@ export type Database = {
           age_months?: number | null
           breed?: string | null
           category?: string
+          condition?: string | null
           contact_count?: number
           created_at?: string
           description?: string | null
           district?: string | null
           expires_at?: string
+          expires_on?: string | null
           id?: string
+          metadata?: Json
+          min_order_qty?: number
           price_ghs?: number
           price_unit?: Database["public"]["Enums"]["price_unit"]
           quantity?: number
@@ -152,7 +464,10 @@ export type Database = {
           seller_id?: string
           sex?: string | null
           status?: Database["public"]["Enums"]["listing_status"]
+          stock_quantity?: number | null
+          subcategory_slug?: string | null
           title?: string
+          top_category?: string
           updated_at?: string
           view_count?: number
           weight_kg?: number | null
@@ -194,6 +509,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_role: string
           avatar_url: string | null
           badge_tier: Database["public"]["Enums"]["badge_tier"]
           created_at: string
@@ -202,12 +518,16 @@ export type Database = {
           id: string
           listing_count: number
           region: string | null
+          roles: string[]
           status: Database["public"]["Enums"]["user_status"]
+          suspended_at: string | null
+          suspension_reason: string | null
           trade_count: number
           updated_at: string
           whatsapp_e164: string | null
         }
         Insert: {
+          active_role?: string
           avatar_url?: string | null
           badge_tier?: Database["public"]["Enums"]["badge_tier"]
           created_at?: string
@@ -216,12 +536,16 @@ export type Database = {
           id: string
           listing_count?: number
           region?: string | null
+          roles?: string[]
           status?: Database["public"]["Enums"]["user_status"]
+          suspended_at?: string | null
+          suspension_reason?: string | null
           trade_count?: number
           updated_at?: string
           whatsapp_e164?: string | null
         }
         Update: {
+          active_role?: string
           avatar_url?: string | null
           badge_tier?: Database["public"]["Enums"]["badge_tier"]
           created_at?: string
@@ -230,7 +554,10 @@ export type Database = {
           id?: string
           listing_count?: number
           region?: string | null
+          roles?: string[]
           status?: Database["public"]["Enums"]["user_status"]
+          suspended_at?: string | null
+          suspension_reason?: string | null
           trade_count?: number
           updated_at?: string
           whatsapp_e164?: string | null
@@ -259,6 +586,152 @@ export type Database = {
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_profiles: {
+        Row: {
+          badge_tier: string
+          base_rate_ghs: number | null
+          blurb: string | null
+          business_name: string
+          category: string
+          cover_path: string | null
+          coverage_districts: string[]
+          coverage_regions: string[]
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          owner_id: string
+          pricing_model: string | null
+          rating_avg: number
+          rating_count: number
+          slug: string
+          updated_at: string
+          whatsapp_e164: string | null
+        }
+        Insert: {
+          badge_tier?: string
+          base_rate_ghs?: number | null
+          blurb?: string | null
+          business_name: string
+          category: string
+          cover_path?: string | null
+          coverage_districts?: string[]
+          coverage_regions?: string[]
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          owner_id: string
+          pricing_model?: string | null
+          rating_avg?: number
+          rating_count?: number
+          slug: string
+          updated_at?: string
+          whatsapp_e164?: string | null
+        }
+        Update: {
+          badge_tier?: string
+          base_rate_ghs?: number | null
+          blurb?: string | null
+          business_name?: string
+          category?: string
+          cover_path?: string | null
+          coverage_districts?: string[]
+          coverage_regions?: string[]
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          owner_id?: string
+          pricing_model?: string | null
+          rating_avg?: number
+          rating_count?: number
+          slug?: string
+          updated_at?: string
+          whatsapp_e164?: string | null
+        }
+        Relationships: []
+      }
+      service_requests: {
+        Row: {
+          budget_max_ghs: number | null
+          budget_min_ghs: number | null
+          buyer_contact: string | null
+          buyer_id: string
+          created_at: string
+          district: string | null
+          expires_at: string
+          id: string
+          idempotency_key: string | null
+          notes: string | null
+          preferred_date: string | null
+          preferred_window: string | null
+          provider_response: string | null
+          provider_user_id: string
+          region: string
+          responded_at: string | null
+          responded_price_ghs: number | null
+          service_profile_id: string
+          service_type: string
+          status: Database["public"]["Enums"]["service_request_status"]
+          updated_at: string
+        }
+        Insert: {
+          budget_max_ghs?: number | null
+          budget_min_ghs?: number | null
+          buyer_contact?: string | null
+          buyer_id: string
+          created_at?: string
+          district?: string | null
+          expires_at?: string
+          id?: string
+          idempotency_key?: string | null
+          notes?: string | null
+          preferred_date?: string | null
+          preferred_window?: string | null
+          provider_response?: string | null
+          provider_user_id: string
+          region: string
+          responded_at?: string | null
+          responded_price_ghs?: number | null
+          service_profile_id: string
+          service_type: string
+          status?: Database["public"]["Enums"]["service_request_status"]
+          updated_at?: string
+        }
+        Update: {
+          budget_max_ghs?: number | null
+          budget_min_ghs?: number | null
+          buyer_contact?: string | null
+          buyer_id?: string
+          created_at?: string
+          district?: string | null
+          expires_at?: string
+          id?: string
+          idempotency_key?: string | null
+          notes?: string | null
+          preferred_date?: string | null
+          preferred_window?: string | null
+          provider_response?: string | null
+          provider_user_id?: string
+          region?: string
+          responded_at?: string | null
+          responded_price_ghs?: number | null
+          service_profile_id?: string
+          service_type?: string
+          status?: Database["public"]["Enums"]["service_request_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_requests_service_profile_id_fkey"
+            columns: ["service_profile_id"]
+            isOneToOne: false
+            referencedRelation: "service_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -325,6 +798,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_reservation: {
+        Args: { _by_hatchery?: boolean; _reservation_id: string }
+        Returns: Json
+      }
+      confirm_reservation: {
+        Args: { _confirmed_qty: number; _reservation_id: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -332,10 +813,27 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_hatchery_owner: {
+        Args: { _hatchery_id: string; _user_id: string }
+        Returns: boolean
+      }
+      owns_batch: {
+        Args: { _batch_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "user"
       badge_tier: "none" | "verified" | "trusted" | "top_seller"
+      batch_status: "draft" | "open" | "full" | "closed" | "cancelled"
+      fulfilment_mode: "pickup" | "delivery"
+      hatchery_category: "poultry" | "fish" | "breeding"
+      hatchery_status:
+        | "draft"
+        | "pending_review"
+        | "approved"
+        | "suspended"
+        | "rejected"
       listing_event_type: "view" | "contact_whatsapp" | "save"
       listing_status: "draft" | "active" | "expired" | "sold" | "hidden"
       notification_type:
@@ -344,7 +842,37 @@ export type Database = {
         | "verification_rejected"
         | "listing_expiring"
         | "listing_expired"
+        | "reservation_received"
+        | "reservation_confirmed"
+        | "reservation_waitlisted"
+        | "reservation_cancelled"
+        | "reservation_fulfilled"
+        | "service_request_received"
+        | "service_request_responded"
+        | "listing_hidden_by_admin"
+        | "hatchery_approved"
+        | "hatchery_rejected"
+      permit_authority:
+        | "vsd"
+        | "fisheries_commission"
+        | "epa"
+        | "district_assembly"
+        | "other"
       price_unit: "per_head" | "per_kg" | "per_lb" | "lot"
+      reservation_status:
+        | "pending"
+        | "confirmed"
+        | "waitlisted"
+        | "cancelled_by_buyer"
+        | "cancelled_by_hatchery"
+        | "fulfilled"
+      service_request_status:
+        | "submitted"
+        | "viewed"
+        | "responded"
+        | "accepted"
+        | "declined"
+        | "expired"
       user_status: "active" | "suspended"
       verification_status: "pending" | "approved" | "rejected"
     }
@@ -476,6 +1004,16 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       badge_tier: ["none", "verified", "trusted", "top_seller"],
+      batch_status: ["draft", "open", "full", "closed", "cancelled"],
+      fulfilment_mode: ["pickup", "delivery"],
+      hatchery_category: ["poultry", "fish", "breeding"],
+      hatchery_status: [
+        "draft",
+        "pending_review",
+        "approved",
+        "suspended",
+        "rejected",
+      ],
       listing_event_type: ["view", "contact_whatsapp", "save"],
       listing_status: ["draft", "active", "expired", "sold", "hidden"],
       notification_type: [
@@ -484,8 +1022,41 @@ export const Constants = {
         "verification_rejected",
         "listing_expiring",
         "listing_expired",
+        "reservation_received",
+        "reservation_confirmed",
+        "reservation_waitlisted",
+        "reservation_cancelled",
+        "reservation_fulfilled",
+        "service_request_received",
+        "service_request_responded",
+        "listing_hidden_by_admin",
+        "hatchery_approved",
+        "hatchery_rejected",
+      ],
+      permit_authority: [
+        "vsd",
+        "fisheries_commission",
+        "epa",
+        "district_assembly",
+        "other",
       ],
       price_unit: ["per_head", "per_kg", "per_lb", "lot"],
+      reservation_status: [
+        "pending",
+        "confirmed",
+        "waitlisted",
+        "cancelled_by_buyer",
+        "cancelled_by_hatchery",
+        "fulfilled",
+      ],
+      service_request_status: [
+        "submitted",
+        "viewed",
+        "responded",
+        "accepted",
+        "declined",
+        "expired",
+      ],
       user_status: ["active", "suspended"],
       verification_status: ["pending", "approved", "rejected"],
     },
