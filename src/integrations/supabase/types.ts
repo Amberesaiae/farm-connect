@@ -47,6 +47,105 @@ export type Database = {
         }
         Relationships: []
       }
+      agro_vendor_stores: {
+        Row: {
+          address: string | null
+          approved_at: string | null
+          approved_by: string | null
+          badge_tier: string
+          blurb: string | null
+          business_hours: Json
+          business_name: string
+          business_reg_number: string | null
+          cover_path: string | null
+          created_at: string
+          delivers: boolean
+          delivery_regions: string[]
+          district: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          licence_doc_path: string | null
+          listing_count: number
+          logo_path: string | null
+          min_order_ghs: number | null
+          owner_id: string
+          phone_e164: string | null
+          pillar: string
+          region: string
+          rejection_reason: string | null
+          slug: string
+          status: Database["public"]["Enums"]["agro_store_status"]
+          updated_at: string
+          vsd_licence_number: string | null
+          whatsapp_e164: string | null
+        }
+        Insert: {
+          address?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          badge_tier?: string
+          blurb?: string | null
+          business_hours?: Json
+          business_name: string
+          business_reg_number?: string | null
+          cover_path?: string | null
+          created_at?: string
+          delivers?: boolean
+          delivery_regions?: string[]
+          district?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          licence_doc_path?: string | null
+          listing_count?: number
+          logo_path?: string | null
+          min_order_ghs?: number | null
+          owner_id: string
+          phone_e164?: string | null
+          pillar: string
+          region: string
+          rejection_reason?: string | null
+          slug: string
+          status?: Database["public"]["Enums"]["agro_store_status"]
+          updated_at?: string
+          vsd_licence_number?: string | null
+          whatsapp_e164?: string | null
+        }
+        Update: {
+          address?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          badge_tier?: string
+          blurb?: string | null
+          business_hours?: Json
+          business_name?: string
+          business_reg_number?: string | null
+          cover_path?: string | null
+          created_at?: string
+          delivers?: boolean
+          delivery_regions?: string[]
+          district?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          licence_doc_path?: string | null
+          listing_count?: number
+          logo_path?: string | null
+          min_order_ghs?: number | null
+          owner_id?: string
+          phone_e164?: string | null
+          pillar?: string
+          region?: string
+          rejection_reason?: string | null
+          slug?: string
+          status?: Database["public"]["Enums"]["agro_store_status"]
+          updated_at?: string
+          vsd_licence_number?: string | null
+          whatsapp_e164?: string | null
+        }
+        Relationships: []
+      }
       batch_reservations: {
         Row: {
           batch_id: string
@@ -124,12 +223,14 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           blurb: string | null
+          business_hours: Json
           capacity_per_cycle: number | null
           category: Database["public"]["Enums"]["hatchery_category"]
           cover_path: string | null
           created_at: string
           district: string | null
           id: string
+          logo_path: string | null
           name: string
           owner_id: string | null
           permit_authority:
@@ -137,6 +238,7 @@ export type Database = {
             | null
           permit_doc_path: string | null
           permit_number: string | null
+          phone_e164: string | null
           region: string
           rejection_reason: string | null
           slug: string
@@ -149,12 +251,14 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           blurb?: string | null
+          business_hours?: Json
           capacity_per_cycle?: number | null
           category: Database["public"]["Enums"]["hatchery_category"]
           cover_path?: string | null
           created_at?: string
           district?: string | null
           id?: string
+          logo_path?: string | null
           name: string
           owner_id?: string | null
           permit_authority?:
@@ -162,6 +266,7 @@ export type Database = {
             | null
           permit_doc_path?: string | null
           permit_number?: string | null
+          phone_e164?: string | null
           region: string
           rejection_reason?: string | null
           slug: string
@@ -174,12 +279,14 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           blurb?: string | null
+          business_hours?: Json
           capacity_per_cycle?: number | null
           category?: Database["public"]["Enums"]["hatchery_category"]
           cover_path?: string | null
           created_at?: string
           district?: string | null
           id?: string
+          logo_path?: string | null
           name?: string
           owner_id?: string | null
           permit_authority?:
@@ -187,6 +294,7 @@ export type Database = {
             | null
           permit_doc_path?: string | null
           permit_number?: string | null
+          phone_e164?: string | null
           region?: string
           rejection_reason?: string | null
           slug?: string
@@ -407,6 +515,7 @@ export type Database = {
           title: string
           top_category: string
           updated_at: string
+          vendor_store_id: string | null
           view_count: number
           weight_kg: number | null
         }
@@ -438,6 +547,7 @@ export type Database = {
           title: string
           top_category?: string
           updated_at?: string
+          vendor_store_id?: string | null
           view_count?: number
           weight_kg?: number | null
         }
@@ -469,6 +579,7 @@ export type Database = {
           title?: string
           top_category?: string
           updated_at?: string
+          vendor_store_id?: string | null
           view_count?: number
           weight_kg?: number | null
         }
@@ -592,64 +703,82 @@ export type Database = {
       }
       service_profiles: {
         Row: {
+          address: string | null
           badge_tier: string
           base_rate_ghs: number | null
           blurb: string | null
+          business_hours: Json
           business_name: string
           category: string
           cover_path: string | null
           coverage_districts: string[]
           coverage_regions: string[]
           created_at: string
+          district: string | null
           email: string | null
           id: string
           is_active: boolean
+          logo_path: string | null
           owner_id: string
+          phone_e164: string | null
           pricing_model: string | null
           rating_avg: number
           rating_count: number
+          region: string | null
           slug: string
           updated_at: string
           whatsapp_e164: string | null
         }
         Insert: {
+          address?: string | null
           badge_tier?: string
           base_rate_ghs?: number | null
           blurb?: string | null
+          business_hours?: Json
           business_name: string
           category: string
           cover_path?: string | null
           coverage_districts?: string[]
           coverage_regions?: string[]
           created_at?: string
+          district?: string | null
           email?: string | null
           id?: string
           is_active?: boolean
+          logo_path?: string | null
           owner_id: string
+          phone_e164?: string | null
           pricing_model?: string | null
           rating_avg?: number
           rating_count?: number
+          region?: string | null
           slug: string
           updated_at?: string
           whatsapp_e164?: string | null
         }
         Update: {
+          address?: string | null
           badge_tier?: string
           base_rate_ghs?: number | null
           blurb?: string | null
+          business_hours?: Json
           business_name?: string
           category?: string
           cover_path?: string | null
           coverage_districts?: string[]
           coverage_regions?: string[]
           created_at?: string
+          district?: string | null
           email?: string | null
           id?: string
           is_active?: boolean
+          logo_path?: string | null
           owner_id?: string
+          phone_e164?: string | null
           pricing_model?: string | null
           rating_avg?: number
           rating_count?: number
+          region?: string | null
           slug?: string
           updated_at?: string
           whatsapp_e164?: string | null
@@ -795,7 +924,25 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      vendor_stores_v: {
+        Row: {
+          badge_tier: string | null
+          blurb: string | null
+          cover_path: string | null
+          created_at: string | null
+          district: string | null
+          id: string | null
+          is_public: boolean | null
+          logo_path: string | null
+          name: string | null
+          owner_id: string | null
+          pillar_or_category: string | null
+          region: string | null
+          slug: string | null
+          store_kind: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       cancel_reservation: {
@@ -823,6 +970,12 @@ export type Database = {
       }
     }
     Enums: {
+      agro_store_status:
+        | "draft"
+        | "pending_review"
+        | "approved"
+        | "suspended"
+        | "rejected"
       app_role: "admin" | "user"
       badge_tier: "none" | "verified" | "trusted" | "top_seller"
       batch_status: "draft" | "open" | "full" | "closed" | "cancelled"
@@ -852,6 +1005,9 @@ export type Database = {
         | "listing_hidden_by_admin"
         | "hatchery_approved"
         | "hatchery_rejected"
+        | "agro_store_approved"
+        | "agro_store_rejected"
+        | "agro_store_suspended"
       permit_authority:
         | "vsd"
         | "fisheries_commission"
@@ -1002,6 +1158,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      agro_store_status: [
+        "draft",
+        "pending_review",
+        "approved",
+        "suspended",
+        "rejected",
+      ],
       app_role: ["admin", "user"],
       badge_tier: ["none", "verified", "trusted", "top_seller"],
       batch_status: ["draft", "open", "full", "closed", "cancelled"],
@@ -1032,6 +1195,9 @@ export const Constants = {
         "listing_hidden_by_admin",
         "hatchery_approved",
         "hatchery_rejected",
+        "agro_store_approved",
+        "agro_store_rejected",
+        "agro_store_suspended",
       ],
       permit_authority: [
         "vsd",
