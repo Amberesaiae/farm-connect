@@ -4,8 +4,8 @@ import {
   PlusIcon,
   SearchIcon,
   ShieldIcon,
-  BellIcon,
 } from "@/components/icons";
+import { NotificationsBell } from "@/components/notifications/NotificationsBell";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -93,14 +93,7 @@ export function TopNav() {
                   <PlusIcon size={16} strokeWidth={2} /> Post listing
                 </Link>
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Notifications"
-                className="rounded-md text-muted-foreground hover:text-foreground"
-              >
-                <BellIcon size={18} />
-              </Button>
+              <NotificationsBell />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" aria-label="Account" className="rounded-full">
