@@ -19,21 +19,32 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { GHANA_REGIONS } from "@/lib/constants";
 import type { ListingCardData } from "@/components/listing/ListingCard";
+import { TopCategoryTabs } from "@/components/listing/TopCategoryTabs";
+import { TOP_CATEGORIES, type TopCategory } from "@/lib/categories";
 import mixedHero from "@/assets/mixed-hero.jpg";
 
 interface ListingsSearch {
   q?: string;
+  topCategory?: TopCategory;
   category?: string;
+  subcategory?: string;
   region?: string;
   verifiedOnly?: boolean;
   minPrice?: number;
   maxPrice?: number;
 }
 
+const TOP_VALUES = TOP_CATEGORIES.map((c) => c.value) as readonly string[];
+
 export const Route = createFileRoute("/listings")({
   validateSearch: (s: Record<string, unknown>): ListingsSearch => ({
     q: typeof s.q === "string" ? s.q : undefined,
+    topCategory:
+      typeof s.topCategory === "string" && TOP_VALUES.includes(s.topCategory)
+        ? (s.topCategory as TopCategory)
+        : undefined,
     category: typeof s.category === "string" ? s.category : undefined,
+    subcategory: typeof s.subcategory === "string" ? s.subcategory : undefined,
     region: typeof s.region === "string" ? s.region : undefined,
     verifiedOnly: s.verifiedOnly === true || s.verifiedOnly === "true",
     minPrice: typeof s.minPrice === "string" ? Number(s.minPrice) : undefined,
@@ -87,6 +98,8 @@ function ListingsPage() {
         .order("created_at", { ascending: false })
         .limit(48);
 
+      if (search.topCategory) query = query.eq("top_category", search.topCategory);
+      if (search.subcategory) query = query.eq("subcategory_slug", search.subcategory);
       if (search.category) query = query.eq("category", search.category);
       if (search.region) query = query.eq("region", search.region);
       if (typeof search.minPrice === "number" && !Number.isNaN(search.minPrice))
@@ -130,7 +143,7 @@ function ListingsPage() {
     return () => {
       cancelled = true;
     };
-  }, [search.q, search.category, search.region, search.verifiedOnly, search.minPrice, search.maxPrice]);
+  }, [search.q, search.topCategory, search.subcategory, search.category, search.region, search.verifiedOnly, search.minPrice, search.maxPrice]);
 
   const update = (patch: Partial<ListingsSearch>) => {
     navigate({ to: "/listings", search: { ...search, ...patch } as never });
@@ -154,15 +167,20 @@ function ListingsPage() {
         <section>
           <div className="flex items-baseline justify-between">
             <h2 className="font-display text-[20px] font-extrabold tracking-tight md:text-[22px]">
-              Shop by category
+              Marketplace
             </h2>
             <p className="hidden text-[12px] text-muted-foreground md:block">
-              Tap a category to filter the marketplace
+              Filter by pillar, then drill into a category
             </p>
           </div>
           <div className="mt-4">
-            <CategoryStrip active={search.category} />
+            <TopCategoryTabs active={search.topCategory} />
           </div>
+          {search.topCategory === undefined || search.topCategory === "livestock" ? (
+            <div className="mt-4">
+              <CategoryStrip active={search.category} />
+            </div>
+          ) : null}
         </section>
 
         <section>

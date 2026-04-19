@@ -16,11 +16,14 @@ import {
 } from "@/components/ui/select";
 import {
   GHANA_REGIONS,
-  LIVESTOCK_CATEGORIES,
   PRICE_UNITS,
-  SEX_OPTIONS,
   LISTING_PHOTOS_BUCKET,
 } from "@/lib/constants";
+import { TOP_CATEGORIES, type TopCategory } from "@/lib/categories";
+import {
+  CategoryFieldsSwitcher,
+  type CategoryFieldsValue,
+} from "@/components/post/CategoryFieldsSwitcher";
 import { useServerFn } from "@tanstack/react-start";
 import { createListing } from "@/server/listings.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,24 +35,26 @@ export const Route = createFileRoute("/_authenticated/post")({
   head: () => ({
     meta: [
       { title: "Post a listing — farmlink" },
-      { name: "description", content: "List your livestock for sale on farmlink." },
+      { name: "description", content: "List livestock, feed, agromed or equipment for sale on farmlink." },
     ],
   }),
   component: PostWizard,
 });
 
-const STEP_LABELS = ["Animal", "Pricing & location", "Photos & description"];
+const STEP_LABELS = ["Category & details", "Pricing & location", "Photos & description"];
 
-const step1 = z.object({
-  category: z.string().min(1, "Pick a category"),
+const step1Base = z.object({
+  top_category: z.enum([
+    "livestock",
+    "agrofeed_supplements",
+    "agromed_veterinary",
+    "agro_equipment_tools",
+  ]),
   title: z.string().trim().min(3, "Title is too short").max(120),
-  breed: z.string().max(60).optional(),
-  age_months: z.coerce.number().int().min(0).max(600).optional(),
-  sex: z.enum(["male", "female", "mixed"]).optional(),
+  subcategory_slug: z.string().min(1, "Pick a subcategory"),
   quantity: z.coerce.number().int().min(1).max(10000),
 });
 const step2 = z.object({
-  weight_kg: z.coerce.number().positive().max(5000).optional(),
   price_ghs: z.coerce.number().positive().max(10_000_000),
   price_unit: z.enum(["per_head", "per_kg", "per_lb", "lot"]),
   region: z.string().min(1, "Region is required"),
@@ -66,35 +71,56 @@ function PostWizard() {
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
 
-  const [data, setData] = useState({
-    category: "",
-    title: "",
-    breed: "",
-    age_months: "" as string | number,
-    sex: "" as "" | "male" | "female" | "mixed",
-    quantity: 1 as number | string,
-    weight_kg: "" as string | number,
+  const [topCategory, setTopCategory] = useState<TopCategory>("livestock");
+  const [title, setTitle] = useState("");
+  const [quantity, setQuantity] = useState<number | string>(1);
+  const [catFields, setCatFields] = useState<CategoryFieldsValue>({});
+  const [pricing, setPricing] = useState({
     price_ghs: "" as string | number,
     price_unit: "per_head" as "per_head" | "per_kg" | "per_lb" | "lot",
     region: "",
     district: "",
-    description: "",
   });
+  const [description, setDescription] = useState("");
+
+  const updateCat = (patch: Partial<CategoryFieldsValue>) =>
+    setCatFields((p) => ({ ...p, ...patch }));
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [photos, setPhotos] = useState<File[]>([]);
   const previews = photos.map((f) => URL.createObjectURL(f));
   useEffect(() => () => previews.forEach((u) => URL.revokeObjectURL(u)), [previews]);
 
-  const update = (k: keyof typeof data, v: string | number) =>
-    setData((d) => ({ ...d, [k]: v }));
+  // When top_category changes, reset subcategory + clear category-specific fields
+  const onTopCategoryChange = (v: TopCategory) => {
+    setTopCategory(v);
+    setCatFields({});
+    // sensible default price unit per pillar
+    setPricing((p) => ({
+      ...p,
+      price_unit:
+        v === "livestock" ? "per_head" : v === "agrofeed_supplements" ? "per_kg" : "lot",
+    }));
+  };
 
   const next = () => {
     if (step === 1) {
-      const r = step1.safeParse(data);
+      const r = step1Base.safeParse({
+        top_category: topCategory,
+        title,
+        subcategory_slug: catFields.subcategory_slug,
+        quantity,
+      });
       if (!r.success) return toast.error(r.error.issues[0].message);
+      // category-specific guard rails (mirrored on the server)
+      if (topCategory === "agromed_veterinary" && !catFields.expires_on) {
+        return toast.error("Expiry date is required for veterinary medicines.");
+      }
+      if (topCategory === "agro_equipment_tools" && !catFields.condition) {
+        return toast.error("Condition is required for equipment listings.");
+      }
     } else if (step === 2) {
-      const r = step2.safeParse(data);
+      const r = step2.safeParse(pricing);
       if (!r.success) return toast.error(r.error.issues[0].message);
     }
     setStep((s) => s + 1);
@@ -109,27 +135,48 @@ function PostWizard() {
   const removePhoto = (i: number) => setPhotos((p) => p.filter((_, idx) => idx !== i));
 
   const submit = async () => {
-    const r3 = step3.safeParse(data);
+    const r3 = step3.safeParse({ description });
     if (!r3.success) return toast.error(r3.error.issues[0].message);
     if (!user) return toast.error("You must be signed in");
     if (photos.length === 0) return toast.error("Please add at least one photo");
 
     setBusy(true);
     try {
+      // metadata holds category-specific extras the listings table doesn't have first-class columns for
+      const metadata: Record<string, unknown> = {};
+      if (catFields.brand) metadata.brand = catFields.brand;
+      if (catFields.pack_size) metadata.pack_size = catFields.pack_size;
+      if (catFields.active_ingredient) metadata.active_ingredient = catFields.active_ingredient;
+      if (catFields.dosage) metadata.dosage = catFields.dosage;
+      if (catFields.model) metadata.model = catFields.model;
+
       const created = await create({
         data: {
-          title: data.title.trim(),
-          category: data.category,
-          breed: data.breed || null,
-          age_months: data.age_months === "" ? null : Number(data.age_months),
-          sex: data.sex || null,
-          quantity: Number(data.quantity) || 1,
-          weight_kg: data.weight_kg === "" ? null : Number(data.weight_kg),
-          price_ghs: Number(data.price_ghs),
-          price_unit: data.price_unit,
-          region: data.region,
-          district: data.district || null,
-          description: data.description || null,
+          title: title.trim(),
+          top_category: topCategory,
+          category: catFields.subcategory_slug ?? topCategory,
+          subcategory_slug: catFields.subcategory_slug ?? null,
+          breed: catFields.breed || null,
+          age_months:
+            catFields.age_months === undefined || catFields.age_months === ""
+              ? null
+              : Number(catFields.age_months),
+          sex: catFields.sex || null,
+          quantity: Number(quantity) || 1,
+          weight_kg:
+            catFields.weight_kg === undefined || catFields.weight_kg === ""
+              ? null
+              : Number(catFields.weight_kg),
+          price_ghs: Number(pricing.price_ghs),
+          price_unit: pricing.price_unit,
+          region: pricing.region,
+          district: pricing.district || null,
+          description: description || null,
+          condition: catFields.condition || null,
+          stock_quantity: null,
+          min_order_qty: 1,
+          expires_on: catFields.expires_on || null,
+          metadata,
         },
       });
 
@@ -188,15 +235,15 @@ function PostWizard() {
 
         <div className="mt-6 space-y-4">
           {step === 1 && (
-            <Section title="Tell us about the animal">
+            <Section title="What are you selling?">
               <div>
-                <Label>Category *</Label>
-                <Select value={data.category} onValueChange={(v) => update("category", v)}>
+                <Label>Marketplace pillar *</Label>
+                <Select value={topCategory} onValueChange={(v) => onTopCategoryChange(v as TopCategory)}>
                   <SelectTrigger className="mt-1.5 w-full rounded-xl">
-                    <SelectValue placeholder="Choose category" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {LIVESTOCK_CATEGORIES.map((c) => (
+                    {TOP_CATEGORIES.map((c) => (
                       <SelectItem key={c.value} value={c.value}>
                         {c.label}
                       </SelectItem>
@@ -208,100 +255,59 @@ function PostWizard() {
                 <Label htmlFor="title">Listing title *</Label>
                 <Input
                   id="title"
-                  value={data.title}
-                  onChange={(e) => update("title", e.target.value)}
-                  placeholder="2 healthy Sanga bulls, 18 months"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder={
+                    topCategory === "livestock"
+                      ? "2 healthy Sanga bulls, 18 months"
+                      : topCategory === "agrofeed_supplements"
+                        ? "Layer mash 50kg — premium brand"
+                        : topCategory === "agromed_veterinary"
+                          ? "Newcastle vaccine, 1000-dose vial"
+                          : "Used 1056-egg incubator, working"
+                  }
                   className="mt-1.5 rounded-xl"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="breed">Breed</Label>
-                  <Input
-                    id="breed"
-                    value={data.breed}
-                    onChange={(e) => update("breed", e.target.value)}
-                    placeholder="Sanga, Boer…"
-                    className="mt-1.5 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="age">Age (months)</Label>
-                  <Input
-                    id="age"
-                    type="number"
-                    value={data.age_months}
-                    onChange={(e) => update("age_months", e.target.value)}
-                    className="mt-1.5 rounded-xl"
-                  />
-                </div>
+              <div>
+                <Label htmlFor="qty">Quantity / units available *</Label>
+                <Input
+                  id="qty"
+                  type="number"
+                  min={1}
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  className="mt-1.5 rounded-xl"
+                />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Sex</Label>
-                  <Select
-                    value={data.sex || "unset"}
-                    onValueChange={(v) => update("sex", v === "unset" ? "" : v)}
-                  >
-                    <SelectTrigger className="mt-1.5 w-full rounded-xl">
-                      <SelectValue placeholder="Any" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="unset">—</SelectItem>
-                      {SEX_OPTIONS.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>
-                          {s.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="qty">Quantity *</Label>
-                  <Input
-                    id="qty"
-                    type="number"
-                    min={1}
-                    value={data.quantity}
-                    onChange={(e) => update("quantity", e.target.value)}
-                    className="mt-1.5 rounded-xl"
-                  />
-                </div>
-              </div>
+              <CategoryFieldsSwitcher
+                topCategory={topCategory}
+                value={catFields}
+                onChange={updateCat}
+              />
             </Section>
           )}
 
           {step === 2 && (
             <>
               <Section title="Pricing">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="weight">Weight (kg)</Label>
-                    <Input
-                      id="weight"
-                      type="number"
-                      step="0.1"
-                      value={data.weight_kg}
-                      onChange={(e) => update("weight_kg", e.target.value)}
-                      className="mt-1.5 rounded-xl"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="price">Price (GH₵) *</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      value={data.price_ghs}
-                      onChange={(e) => update("price_ghs", e.target.value)}
-                      className="mt-1.5 rounded-xl"
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="price">Price (GH₵) *</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    value={pricing.price_ghs}
+                    onChange={(e) => setPricing((p) => ({ ...p, price_ghs: e.target.value }))}
+                    className="mt-1.5 rounded-xl"
+                  />
                 </div>
                 <div>
                   <Label>Price unit *</Label>
                   <Select
-                    value={data.price_unit}
-                    onValueChange={(v) => update("price_unit", v as typeof data.price_unit)}
+                    value={pricing.price_unit}
+                    onValueChange={(v) =>
+                      setPricing((p) => ({ ...p, price_unit: v as typeof p.price_unit }))
+                    }
                   >
                     <SelectTrigger className="mt-1.5 w-full rounded-xl">
                       <SelectValue />
@@ -320,7 +326,10 @@ function PostWizard() {
               <Section title="Location">
                 <div>
                   <Label>Region *</Label>
-                  <Select value={data.region} onValueChange={(v) => update("region", v)}>
+                  <Select
+                    value={pricing.region}
+                    onValueChange={(v) => setPricing((p) => ({ ...p, region: v }))}
+                  >
                     <SelectTrigger className="mt-1.5 w-full rounded-xl">
                       <SelectValue placeholder="Choose region" />
                     </SelectTrigger>
@@ -337,8 +346,8 @@ function PostWizard() {
                   <Label htmlFor="district">District / town</Label>
                   <Input
                     id="district"
-                    value={data.district}
-                    onChange={(e) => update("district", e.target.value)}
+                    value={pricing.district}
+                    onChange={(e) => setPricing((p) => ({ ...p, district: e.target.value }))}
                     className="mt-1.5 rounded-xl"
                     placeholder="Tamale, Kumasi…"
                   />
@@ -402,9 +411,17 @@ function PostWizard() {
                 <Textarea
                   id="desc"
                   rows={5}
-                  value={data.description}
-                  onChange={(e) => update("description", e.target.value)}
-                  placeholder="Health status, feeding, vaccination, willingness to deliver…"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder={
+                    topCategory === "livestock"
+                      ? "Health status, feeding, vaccination, willingness to deliver…"
+                      : topCategory === "agrofeed_supplements"
+                        ? "Composition, nutrient profile, packaging, storage…"
+                        : topCategory === "agromed_veterinary"
+                          ? "Indication, withdrawal period, storage, batch number…"
+                          : "Year, hours used, condition notes, included accessories…"
+                  }
                   className="rounded-xl"
                 />
               </Section>
@@ -413,7 +430,6 @@ function PostWizard() {
         </div>
       </div>
 
-      {/* Sticky footer — sits above the mobile tab bar (66px), pinned to viewport on desktop */}
       <div
         className="fixed inset-x-0 z-30 border-t border-border bg-card/95 backdrop-blur"
         style={{ bottom: "calc(env(safe-area-inset-bottom) + 66px)" }}
