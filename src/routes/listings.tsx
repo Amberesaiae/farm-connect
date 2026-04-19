@@ -113,10 +113,23 @@ function ListingsPage() {
         console.error(error);
         setRows([]);
       } else {
-        const mapped: ListingCardData[] = (data as unknown as Row[]).map((r) => {
+        const listings = (data as unknown as Row[]) ?? [];
+        const sellerIds = Array.from(new Set(listings.map((l) => l.seller_id)));
+        const profilesById = new Map<string, { badge_tier: string | null; display_name: string | null }>();
+        if (sellerIds.length) {
+          const { data: profs } = await supabase
+            .from("profiles")
+            .select("id,badge_tier,display_name")
+            .in("id", sellerIds);
+          for (const p of profs ?? []) {
+            profilesById.set(p.id, { badge_tier: p.badge_tier, display_name: p.display_name });
+          }
+        }
+        const mapped: ListingCardData[] = listings.map((r) => {
           const photos = [...(r.listing_photos ?? [])].sort(
             (a, b) => (b.is_cover ? 1 : 0) - (a.is_cover ? 1 : 0) || a.display_order - b.display_order,
           );
+          const prof = profilesById.get(r.seller_id);
           return {
             id: r.id,
             title: r.title,
@@ -127,8 +140,8 @@ function ListingsPage() {
             district: r.district,
             created_at: r.created_at,
             cover_path: photos[0]?.storage_path ?? null,
-            seller_badge: r.profiles?.badge_tier ?? null,
-            seller_name: r.profiles?.display_name ?? null,
+            seller_badge: prof?.badge_tier ?? null,
+            seller_name: prof?.display_name ?? null,
           };
         });
         const filtered = search.verifiedOnly
