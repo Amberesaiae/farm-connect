@@ -19,21 +19,32 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { GHANA_REGIONS } from "@/lib/constants";
 import type { ListingCardData } from "@/components/listing/ListingCard";
+import { TopCategoryTabs } from "@/components/listing/TopCategoryTabs";
+import { TOP_CATEGORIES, type TopCategory } from "@/lib/categories";
 import mixedHero from "@/assets/mixed-hero.jpg";
 
 interface ListingsSearch {
   q?: string;
+  topCategory?: TopCategory;
   category?: string;
+  subcategory?: string;
   region?: string;
   verifiedOnly?: boolean;
   minPrice?: number;
   maxPrice?: number;
 }
 
+const TOP_VALUES = TOP_CATEGORIES.map((c) => c.value) as readonly string[];
+
 export const Route = createFileRoute("/listings")({
   validateSearch: (s: Record<string, unknown>): ListingsSearch => ({
     q: typeof s.q === "string" ? s.q : undefined,
+    topCategory:
+      typeof s.topCategory === "string" && TOP_VALUES.includes(s.topCategory)
+        ? (s.topCategory as TopCategory)
+        : undefined,
     category: typeof s.category === "string" ? s.category : undefined,
+    subcategory: typeof s.subcategory === "string" ? s.subcategory : undefined,
     region: typeof s.region === "string" ? s.region : undefined,
     verifiedOnly: s.verifiedOnly === true || s.verifiedOnly === "true",
     minPrice: typeof s.minPrice === "string" ? Number(s.minPrice) : undefined,
