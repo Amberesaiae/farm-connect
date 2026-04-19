@@ -92,7 +92,7 @@ function ListingsPage() {
       let query = supabase
         .from("listings")
         .select(
-          "id,title,category,price_ghs,price_unit,region,district,created_at,seller_id,listing_photos(storage_path,is_cover,display_order),profiles!listings_seller_id_fkey(badge_tier,display_name)",
+          "id,title,category,price_ghs,price_unit,region,district,created_at,seller_id,listing_photos(storage_path,is_cover,display_order)",
         )
         .eq("status", "active")
         .order("created_at", { ascending: false })
