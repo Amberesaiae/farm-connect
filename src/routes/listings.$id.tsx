@@ -14,7 +14,7 @@ import { formatGhs, formatPriceUnit, formatRelative } from "@/lib/format";
 import { listingPhotoUrl } from "@/lib/photo-url";
 import { useServerFn } from "@tanstack/react-start";
 import { logView } from "@/server/listings.functions";
-import { ArrowLeft, Eye, MapPin } from "lucide-react";
+import { ArrowLeftIcon, EyeIcon, MapPinIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/listings/$id")({
@@ -119,7 +119,7 @@ function ListingDetail() {
           to="/listings"
           className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" /> Back to listings
+          <ArrowLeftIcon size={16} /> Back to listings
         </Link>
 
         <div className="grid gap-6 md:grid-cols-[1fr_360px]">
@@ -240,7 +240,7 @@ function Header({
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
         <span className="flex items-center gap-1">
-          <MapPin className="h-4 w-4" />
+          <MapPinIcon size={16} />
           {listing.district ? `${listing.district}, ` : ""}
           {listing.region}
         </span>
@@ -248,7 +248,7 @@ function Header({
         <span>{formatRelative(listing.created_at)}</span>
         <span>·</span>
         <span className="flex items-center gap-1">
-          <Eye className="h-4 w-4" />
+          <EyeIcon size={16} />
           {listing.view_count} views
         </span>
       </div>

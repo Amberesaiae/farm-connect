@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageCircle } from "lucide-react";
+import { WhatsAppIcon } from "@/components/icons";
 import { useServerFn } from "@tanstack/react-start";
 import { logContactTap } from "@/server/listings.functions";
 import { whatsappLink } from "@/lib/format";
@@ -46,7 +46,7 @@ export function WhatsAppCTA({ listingId, listingTitle, sellerWhatsappE164 }: Wha
       className="flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-base font-semibold text-white shadow-sm transition-opacity disabled:opacity-60"
       style={{ backgroundColor: "#25D366" }}
     >
-      <MessageCircle className="h-5 w-5" />
+      <WhatsAppIcon size={20} />
       {isAuthenticated ? "Contact on WhatsApp" : "Contact seller on WhatsApp"}
     </button>
   );

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowRightIcon, ShieldIcon } from "@/components/icons";
 import { heroForCategory } from "@/lib/hero-image";
 
 export function HeroOffer({ category }: { category?: string }) {
@@ -17,7 +17,7 @@ export function HeroOffer({ category }: { category?: string }) {
       <div className="relative grid gap-0 md:grid-cols-[1.1fr_1fr] md:items-center">
         <div className="px-6 pt-10 pb-8 md:px-12 md:py-14">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-white/90 ring-1 ring-inset ring-white/15">
-            <ShieldCheck className="h-3 w-3" />
+            <ShieldIcon size={12} />
             {hero.eyebrow}
           </span>
           <h1 className="font-display mt-4 text-[34px] font-extrabold leading-[1.05] tracking-tight md:text-[46px]">
@@ -33,7 +33,7 @@ export function HeroOffer({ category }: { category?: string }) {
               to="/listings"
               className="inline-flex items-center gap-1.5 rounded-md bg-white px-5 py-2.5 text-[13.5px] font-semibold text-primary transition-colors hover:bg-white/90"
             >
-              Browse listings <ArrowRight className="h-4 w-4" />
+              Browse listings <ArrowRightIcon size={16} />
             </Link>
             <Link
               to="/post"

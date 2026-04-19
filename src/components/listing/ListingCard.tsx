@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, MapPin, Check } from "lucide-react";
+import { HeartIcon, MapPinIcon, CheckIcon } from "@/components/icons";
 import { formatGhs, formatPriceUnit, formatRelative } from "@/lib/format";
 import { listingPhotoUrl } from "@/lib/photo-url";
 
@@ -64,13 +64,13 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
           aria-hidden
           className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-muted-foreground backdrop-blur transition-colors group-hover:bg-white group-hover:text-destructive"
         >
-          <Heart className="h-3.5 w-3.5" />
+          <HeartIcon size={14} />
         </span>
       </div>
 
       <div className="flex flex-1 flex-col gap-1.5 p-3.5">
         <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-          <MapPin className="h-3 w-3 shrink-0" />
+          <MapPinIcon size={12} />
           <span className="truncate">
             {listing.district ? `${listing.district}, ` : ""}
             {listing.region}
@@ -104,7 +104,7 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
               aria-label="Verified seller"
               className="flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded-full bg-primary"
             >
-              <Check className="h-2 w-2 text-primary-foreground" strokeWidth={3.5} />
+              <CheckIcon size={9} strokeWidth={3} className="text-primary-foreground" />
             </span>
           ) : null}
         </div>

@@ -1,11 +1,11 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { ListChecks, ShieldCheck, Users } from "lucide-react";
+import { ListingsIcon, ShieldIcon, UserIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { to: "/admin/verifications", label: "Verifications", Icon: ShieldCheck },
-  { to: "/admin/listings", label: "Listings", Icon: ListChecks },
-  { to: "/admin/users", label: "Users", Icon: Users },
+  { to: "/admin/verifications", label: "Verifications", Icon: ShieldIcon },
+  { to: "/admin/listings", label: "Listings", Icon: ListingsIcon },
+  { to: "/admin/users", label: "Users", Icon: UserIcon },
 ] as const;
 
 export function AdminNav() {
@@ -28,7 +28,7 @@ export function AdminNav() {
                 : "text-muted-foreground hover:bg-surface hover:text-foreground",
             )}
           >
-            <t.Icon className="h-3.5 w-3.5" />
+            <t.Icon size={14} />
             {t.label}
           </Link>
         );

@@ -1,5 +1,11 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { LogOut, Plus, Search, ShieldCheck, Bell } from "lucide-react";
+import {
+  SignOutIcon,
+  PlusIcon,
+  SearchIcon,
+  ShieldIcon,
+  BellIcon,
+} from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -69,7 +75,7 @@ export function TopNav() {
               aria-label="Search"
               className="flex items-center gap-1.5 bg-primary px-4 py-2 text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
-              <Search className="h-3.5 w-3.5" />
+              <SearchIcon size={14} strokeWidth={2} />
               <span className="hidden lg:inline">Search</span>
             </button>
           </div>
@@ -84,7 +90,7 @@ export function TopNav() {
                 className="hidden rounded-md bg-primary font-semibold text-primary-foreground hover:bg-primary/90 md:inline-flex"
               >
                 <Link to="/post">
-                  <Plus className="h-4 w-4" /> Post listing
+                  <PlusIcon size={16} strokeWidth={2} /> Post listing
                 </Link>
               </Button>
               <Button
@@ -93,7 +99,7 @@ export function TopNav() {
                 aria-label="Notifications"
                 className="rounded-md text-muted-foreground hover:text-foreground"
               >
-                <Bell className="h-[18px] w-[18px]" />
+                <BellIcon size={18} />
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -130,14 +136,14 @@ export function TopNav() {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
                         <Link to="/admin">
-                          <ShieldCheck className="h-4 w-4" /> Admin
+                          <ShieldIcon size={16} /> Admin
                         </Link>
                       </DropdownMenuItem>
                     </>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => void signOut()}>
-                    <LogOut className="h-4 w-4" /> Sign out
+                    <SignOutIcon size={16} /> Sign out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -153,7 +159,7 @@ export function TopNav() {
                 className="hidden rounded-md bg-primary font-semibold text-primary-foreground hover:bg-primary/90 sm:inline-flex"
               >
                 <Link to="/post">
-                  <Plus className="h-4 w-4" /> Post listing
+                  <PlusIcon size={16} strokeWidth={2} /> Post listing
                 </Link>
               </Button>
             </>

@@ -1,4 +1,4 @@
-import { MapPin, MessageCircle } from "lucide-react";
+import { MapPinIcon, WhatsAppIcon } from "@/components/icons";
 import {
   SERVICE_CATEGORY_LABEL,
   type ServiceProvider,
@@ -17,7 +17,7 @@ export function ServiceCard({ service }: { service: ServiceProvider }) {
         {service.name}
       </h3>
       <p className="mt-1 inline-flex items-center gap-1 text-[12px] text-muted-foreground">
-        <MapPin className="h-3 w-3" />
+        <MapPinIcon size={12} />
         {service.region}
       </p>
       <p className="mt-3 flex-1 text-[13.5px] leading-relaxed text-foreground/80">
@@ -29,7 +29,7 @@ export function ServiceCard({ service }: { service: ServiceProvider }) {
         rel="noreferrer noopener"
         className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-md bg-[#25D366] px-3.5 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-[#20bd5a]"
       >
-        <MessageCircle className="h-4 w-4" />
+        <WhatsAppIcon size={16} />
         Contact on WhatsApp
       </a>
     </article>
