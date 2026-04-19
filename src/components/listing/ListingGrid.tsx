@@ -1,6 +1,6 @@
 import { ListingCard, type ListingCardData } from "./ListingCard";
 import { Link } from "@tanstack/react-router";
-import { PackageOpen } from "lucide-react";
+import { CategoryIcon } from "@/components/icons/CategoryIcon";
 
 export function ListingGrid({
   listings,
@@ -14,9 +14,7 @@ export function ListingGrid({
   if (!listings.length) {
     return (
       <div className="flex flex-col items-center gap-4 rounded-2xl border-[1.5px] border-dashed border-border bg-card p-12 text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface text-muted-foreground">
-          <PackageOpen className="h-5 w-5" />
-        </span>
+        <CategoryIcon name="lot" size={64} alt="Empty" />
         <p className="text-sm text-muted-foreground">{emptyMessage}</p>
         {showBrowseCta ? (
           <Link
