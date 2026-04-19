@@ -17,6 +17,7 @@ import {
 import { GHANA_REGIONS } from "@/lib/constants";
 import { AGRO_PILLAR_OPTIONS, type AgroPillar } from "@/lib/agro-store-status";
 import { LicenceUploadField } from "@/components/store/LicenceUploadField";
+import { CoverLogoUpload } from "@/components/store/CoverLogoUpload";
 import { useServerFn } from "@tanstack/react-start";
 import { submitAgroStoreApplication } from "@/server/agro-stores.functions";
 import { toast } from "sonner";
@@ -45,6 +46,8 @@ interface FormState {
   business_reg: string;
   vsd_licence: string;
   licence_doc_path: string | null;
+  cover_path: string | null;
+  logo_path: string | null;
 }
 
 const EMPTY: FormState = {
@@ -63,6 +66,8 @@ const EMPTY: FormState = {
   business_reg: "",
   vsd_licence: "",
   licence_doc_path: null,
+  cover_path: null,
+  logo_path: null,
 };
 
 function AgroOnboardingWizard() {
@@ -105,8 +110,8 @@ function AgroOnboardingWizard() {
           business_reg_number: v.business_reg.trim() || null,
           vsd_licence_number: v.vsd_licence.trim() || null,
           licence_doc_path: v.licence_doc_path,
-          cover_path: null,
-          logo_path: null,
+          cover_path: v.cover_path,
+          logo_path: v.logo_path,
         },
       });
       toast.success("Shop submitted — admin review within 1–2 days.");
@@ -155,6 +160,15 @@ function AgroOnboardingWizard() {
                 <div>
                   <Label htmlFor="blurb">About your shop</Label>
                   <Textarea id="blurb" rows={4} maxLength={800} value={v.blurb} onChange={(e) => update("blurb", e.target.value)} className="mt-1.5 rounded-xl" placeholder="Brands you stock, years in business, specialties…" />
+                </div>
+                <div>
+                  <Label className="mb-1.5 block">Cover image</Label>
+                  <CoverLogoUpload kind="cover" value={v.cover_path} onChange={(p) => update("cover_path", p)} />
+                  <p className="mt-1 text-[11px] text-muted-foreground">Wide banner shown on your shop page (16:9, up to 5MB).</p>
+                </div>
+                <div>
+                  <Label className="mb-1.5 block">Logo</Label>
+                  <CoverLogoUpload kind="logo" value={v.logo_path} onChange={(p) => update("logo_path", p)} />
                 </div>
               </div>
             </section>

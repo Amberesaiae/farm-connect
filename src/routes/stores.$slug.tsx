@@ -91,9 +91,10 @@ function StoreDetail() {
           <div>
             <h2 className="font-display text-[18px] font-extrabold tracking-tight">Catalogue</h2>
             <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {listings.map((l) => {
-                const cover = l.listing_photos?.find((p) => p.is_cover)?.storage_path
-                  ?? l.listing_photos?.[0]?.storage_path
+              {listings.map((l: typeof listings[number]) => {
+                const photos = l.listing_photos ?? [];
+                const cover = photos.find((p: { is_cover: boolean; storage_path: string }) => p.is_cover)?.storage_path
+                  ?? photos[0]?.storage_path
                   ?? null;
                 return (
                   <ListingCard
