@@ -54,8 +54,8 @@ function StoresIndex() {
   const [region, setRegion] = useState<string>("all");
   const [q, setQ] = useState("");
 
-  const filtered = useMemo(() => {
-    return stores.filter((s) => {
+  const filtered = useMemo<StoreCardData[]>(() => {
+    return stores.filter((s: StoreCardData) => {
       if (tab !== "all" && s.store_kind !== tab) return false;
       if (region !== "all" && s.region !== region) return false;
       if (q.trim() && !s.name.toLowerCase().includes(q.trim().toLowerCase())) return false;
@@ -104,7 +104,7 @@ function StoresIndex() {
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((s) => <StoreCard key={`${s.store_kind}:${s.id}`} store={s} />)}
+          {filtered.map((s: StoreCardData) => <StoreCard key={`${s.store_kind}:${s.id}`} store={s} />)}
         </div>
         {filtered.length === 0 && (
           <div className="mt-10 rounded-2xl border border-dashed border-border bg-surface p-10 text-center text-sm text-muted-foreground">
