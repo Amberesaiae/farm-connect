@@ -24,10 +24,16 @@ import { Route as AuthenticatedPostRouteImport } from './routes/_authenticated/p
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedDashboardVerificationRouteImport } from './routes/_authenticated/dashboard.verification'
+import { Route as AuthenticatedDashboardReservationsRouteImport } from './routes/_authenticated/dashboard.reservations'
+import { Route as AuthenticatedDashboardHatcheryRouteImport } from './routes/_authenticated/dashboard.hatchery'
 import { Route as AuthenticatedAdminVerificationsRouteImport } from './routes/_authenticated/admin.verifications'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminListingsRouteImport } from './routes/_authenticated/admin.listings'
 import { Route as HatcheriesSlugBatchesBatchIdRouteImport } from './routes/hatcheries.$slug.batches.$batchId'
+import { Route as AuthenticatedDashboardHatcheryOnboardingRouteImport } from './routes/_authenticated/dashboard.hatchery.onboarding'
+import { Route as AuthenticatedDashboardHatcheryBookingsRouteImport } from './routes/_authenticated/dashboard.hatchery.bookings'
+import { Route as AuthenticatedDashboardHatcheryBatchesRouteImport } from './routes/_authenticated/dashboard.hatchery.batches'
+import { Route as AuthenticatedDashboardHatcheryBatchesBatchIdRouteImport } from './routes/_authenticated/dashboard.hatchery.batches.$batchId'
 
 const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
@@ -104,6 +110,18 @@ const AuthenticatedDashboardVerificationRoute =
     path: '/verification',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardReservationsRoute =
+  AuthenticatedDashboardReservationsRouteImport.update({
+    id: '/reservations',
+    path: '/reservations',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardHatcheryRoute =
+  AuthenticatedDashboardHatcheryRouteImport.update({
+    id: '/hatchery',
+    path: '/hatchery',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
 const AuthenticatedAdminVerificationsRoute =
   AuthenticatedAdminVerificationsRouteImport.update({
     id: '/verifications',
@@ -127,6 +145,30 @@ const HatcheriesSlugBatchesBatchIdRoute =
     path: '/batches/$batchId',
     getParentRoute: () => HatcheriesSlugRoute,
   } as any)
+const AuthenticatedDashboardHatcheryOnboardingRoute =
+  AuthenticatedDashboardHatcheryOnboardingRouteImport.update({
+    id: '/onboarding',
+    path: '/onboarding',
+    getParentRoute: () => AuthenticatedDashboardHatcheryRoute,
+  } as any)
+const AuthenticatedDashboardHatcheryBookingsRoute =
+  AuthenticatedDashboardHatcheryBookingsRouteImport.update({
+    id: '/bookings',
+    path: '/bookings',
+    getParentRoute: () => AuthenticatedDashboardHatcheryRoute,
+  } as any)
+const AuthenticatedDashboardHatcheryBatchesRoute =
+  AuthenticatedDashboardHatcheryBatchesRouteImport.update({
+    id: '/batches',
+    path: '/batches',
+    getParentRoute: () => AuthenticatedDashboardHatcheryRoute,
+  } as any)
+const AuthenticatedDashboardHatcheryBatchesBatchIdRoute =
+  AuthenticatedDashboardHatcheryBatchesBatchIdRouteImport.update({
+    id: '/$batchId',
+    path: '/$batchId',
+    getParentRoute: () => AuthenticatedDashboardHatcheryBatchesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -145,8 +187,14 @@ export interface FileRoutesByFullPath {
   '/admin/listings': typeof AuthenticatedAdminListingsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
+  '/dashboard/hatchery': typeof AuthenticatedDashboardHatcheryRouteWithChildren
+  '/dashboard/reservations': typeof AuthenticatedDashboardReservationsRoute
   '/dashboard/verification': typeof AuthenticatedDashboardVerificationRoute
+  '/dashboard/hatchery/batches': typeof AuthenticatedDashboardHatcheryBatchesRouteWithChildren
+  '/dashboard/hatchery/bookings': typeof AuthenticatedDashboardHatcheryBookingsRoute
+  '/dashboard/hatchery/onboarding': typeof AuthenticatedDashboardHatcheryOnboardingRoute
   '/hatcheries/$slug/batches/$batchId': typeof HatcheriesSlugBatchesBatchIdRoute
+  '/dashboard/hatchery/batches/$batchId': typeof AuthenticatedDashboardHatcheryBatchesBatchIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -165,8 +213,14 @@ export interface FileRoutesByTo {
   '/admin/listings': typeof AuthenticatedAdminListingsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
+  '/dashboard/hatchery': typeof AuthenticatedDashboardHatcheryRouteWithChildren
+  '/dashboard/reservations': typeof AuthenticatedDashboardReservationsRoute
   '/dashboard/verification': typeof AuthenticatedDashboardVerificationRoute
+  '/dashboard/hatchery/batches': typeof AuthenticatedDashboardHatcheryBatchesRouteWithChildren
+  '/dashboard/hatchery/bookings': typeof AuthenticatedDashboardHatcheryBookingsRoute
+  '/dashboard/hatchery/onboarding': typeof AuthenticatedDashboardHatcheryOnboardingRoute
   '/hatcheries/$slug/batches/$batchId': typeof HatcheriesSlugBatchesBatchIdRoute
+  '/dashboard/hatchery/batches/$batchId': typeof AuthenticatedDashboardHatcheryBatchesBatchIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -187,8 +241,14 @@ export interface FileRoutesById {
   '/_authenticated/admin/listings': typeof AuthenticatedAdminListingsRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
+  '/_authenticated/dashboard/hatchery': typeof AuthenticatedDashboardHatcheryRouteWithChildren
+  '/_authenticated/dashboard/reservations': typeof AuthenticatedDashboardReservationsRoute
   '/_authenticated/dashboard/verification': typeof AuthenticatedDashboardVerificationRoute
+  '/_authenticated/dashboard/hatchery/batches': typeof AuthenticatedDashboardHatcheryBatchesRouteWithChildren
+  '/_authenticated/dashboard/hatchery/bookings': typeof AuthenticatedDashboardHatcheryBookingsRoute
+  '/_authenticated/dashboard/hatchery/onboarding': typeof AuthenticatedDashboardHatcheryOnboardingRoute
   '/hatcheries/$slug/batches/$batchId': typeof HatcheriesSlugBatchesBatchIdRoute
+  '/_authenticated/dashboard/hatchery/batches/$batchId': typeof AuthenticatedDashboardHatcheryBatchesBatchIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -209,8 +269,14 @@ export interface FileRouteTypes {
     | '/admin/listings'
     | '/admin/users'
     | '/admin/verifications'
+    | '/dashboard/hatchery'
+    | '/dashboard/reservations'
     | '/dashboard/verification'
+    | '/dashboard/hatchery/batches'
+    | '/dashboard/hatchery/bookings'
+    | '/dashboard/hatchery/onboarding'
     | '/hatcheries/$slug/batches/$batchId'
+    | '/dashboard/hatchery/batches/$batchId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -229,8 +295,14 @@ export interface FileRouteTypes {
     | '/admin/listings'
     | '/admin/users'
     | '/admin/verifications'
+    | '/dashboard/hatchery'
+    | '/dashboard/reservations'
     | '/dashboard/verification'
+    | '/dashboard/hatchery/batches'
+    | '/dashboard/hatchery/bookings'
+    | '/dashboard/hatchery/onboarding'
     | '/hatcheries/$slug/batches/$batchId'
+    | '/dashboard/hatchery/batches/$batchId'
   id:
     | '__root__'
     | '/'
@@ -250,8 +322,14 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/listings'
     | '/_authenticated/admin/users'
     | '/_authenticated/admin/verifications'
+    | '/_authenticated/dashboard/hatchery'
+    | '/_authenticated/dashboard/reservations'
     | '/_authenticated/dashboard/verification'
+    | '/_authenticated/dashboard/hatchery/batches'
+    | '/_authenticated/dashboard/hatchery/bookings'
+    | '/_authenticated/dashboard/hatchery/onboarding'
     | '/hatcheries/$slug/batches/$batchId'
+    | '/_authenticated/dashboard/hatchery/batches/$batchId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -372,6 +450,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardVerificationRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/reservations': {
+      id: '/_authenticated/dashboard/reservations'
+      path: '/reservations'
+      fullPath: '/dashboard/reservations'
+      preLoaderRoute: typeof AuthenticatedDashboardReservationsRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/hatchery': {
+      id: '/_authenticated/dashboard/hatchery'
+      path: '/hatchery'
+      fullPath: '/dashboard/hatchery'
+      preLoaderRoute: typeof AuthenticatedDashboardHatcheryRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
     '/_authenticated/admin/verifications': {
       id: '/_authenticated/admin/verifications'
       path: '/verifications'
@@ -400,6 +492,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HatcheriesSlugBatchesBatchIdRouteImport
       parentRoute: typeof HatcheriesSlugRoute
     }
+    '/_authenticated/dashboard/hatchery/onboarding': {
+      id: '/_authenticated/dashboard/hatchery/onboarding'
+      path: '/onboarding'
+      fullPath: '/dashboard/hatchery/onboarding'
+      preLoaderRoute: typeof AuthenticatedDashboardHatcheryOnboardingRouteImport
+      parentRoute: typeof AuthenticatedDashboardHatcheryRoute
+    }
+    '/_authenticated/dashboard/hatchery/bookings': {
+      id: '/_authenticated/dashboard/hatchery/bookings'
+      path: '/bookings'
+      fullPath: '/dashboard/hatchery/bookings'
+      preLoaderRoute: typeof AuthenticatedDashboardHatcheryBookingsRouteImport
+      parentRoute: typeof AuthenticatedDashboardHatcheryRoute
+    }
+    '/_authenticated/dashboard/hatchery/batches': {
+      id: '/_authenticated/dashboard/hatchery/batches'
+      path: '/batches'
+      fullPath: '/dashboard/hatchery/batches'
+      preLoaderRoute: typeof AuthenticatedDashboardHatcheryBatchesRouteImport
+      parentRoute: typeof AuthenticatedDashboardHatcheryRoute
+    }
+    '/_authenticated/dashboard/hatchery/batches/$batchId': {
+      id: '/_authenticated/dashboard/hatchery/batches/$batchId'
+      path: '/$batchId'
+      fullPath: '/dashboard/hatchery/batches/$batchId'
+      preLoaderRoute: typeof AuthenticatedDashboardHatcheryBatchesBatchIdRouteImport
+      parentRoute: typeof AuthenticatedDashboardHatcheryBatchesRoute
+    }
   }
 }
 
@@ -418,12 +538,54 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
 const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
+interface AuthenticatedDashboardHatcheryBatchesRouteChildren {
+  AuthenticatedDashboardHatcheryBatchesBatchIdRoute: typeof AuthenticatedDashboardHatcheryBatchesBatchIdRoute
+}
+
+const AuthenticatedDashboardHatcheryBatchesRouteChildren: AuthenticatedDashboardHatcheryBatchesRouteChildren =
+  {
+    AuthenticatedDashboardHatcheryBatchesBatchIdRoute:
+      AuthenticatedDashboardHatcheryBatchesBatchIdRoute,
+  }
+
+const AuthenticatedDashboardHatcheryBatchesRouteWithChildren =
+  AuthenticatedDashboardHatcheryBatchesRoute._addFileChildren(
+    AuthenticatedDashboardHatcheryBatchesRouteChildren,
+  )
+
+interface AuthenticatedDashboardHatcheryRouteChildren {
+  AuthenticatedDashboardHatcheryBatchesRoute: typeof AuthenticatedDashboardHatcheryBatchesRouteWithChildren
+  AuthenticatedDashboardHatcheryBookingsRoute: typeof AuthenticatedDashboardHatcheryBookingsRoute
+  AuthenticatedDashboardHatcheryOnboardingRoute: typeof AuthenticatedDashboardHatcheryOnboardingRoute
+}
+
+const AuthenticatedDashboardHatcheryRouteChildren: AuthenticatedDashboardHatcheryRouteChildren =
+  {
+    AuthenticatedDashboardHatcheryBatchesRoute:
+      AuthenticatedDashboardHatcheryBatchesRouteWithChildren,
+    AuthenticatedDashboardHatcheryBookingsRoute:
+      AuthenticatedDashboardHatcheryBookingsRoute,
+    AuthenticatedDashboardHatcheryOnboardingRoute:
+      AuthenticatedDashboardHatcheryOnboardingRoute,
+  }
+
+const AuthenticatedDashboardHatcheryRouteWithChildren =
+  AuthenticatedDashboardHatcheryRoute._addFileChildren(
+    AuthenticatedDashboardHatcheryRouteChildren,
+  )
+
 interface AuthenticatedDashboardRouteChildren {
+  AuthenticatedDashboardHatcheryRoute: typeof AuthenticatedDashboardHatcheryRouteWithChildren
+  AuthenticatedDashboardReservationsRoute: typeof AuthenticatedDashboardReservationsRoute
   AuthenticatedDashboardVerificationRoute: typeof AuthenticatedDashboardVerificationRoute
 }
 
 const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
   {
+    AuthenticatedDashboardHatcheryRoute:
+      AuthenticatedDashboardHatcheryRouteWithChildren,
+    AuthenticatedDashboardReservationsRoute:
+      AuthenticatedDashboardReservationsRoute,
     AuthenticatedDashboardVerificationRoute:
       AuthenticatedDashboardVerificationRoute,
   }

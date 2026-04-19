@@ -112,11 +112,11 @@ function HatcheryDashboard() {
     );
   }
 
-  const tabs = [
+  const tabs: { to: string; label: string; exact?: boolean }[] = [
     { to: "/dashboard/hatchery", label: "Overview", exact: true },
     { to: "/dashboard/hatchery/batches", label: "Batches" },
     { to: "/dashboard/hatchery/bookings", label: "Bookings" },
-  ] as const;
+  ];
 
   return (
     <AppShell>
