@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,12 +63,18 @@ function LoginPage() {
 
   const onGoogle = async () => {
     setBusy(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}${redirectTo}` },
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: `${window.location.origin}${redirectTo}`,
     });
+    if (result.error) {
+      setBusy(false);
+      toast.error(result.error.message);
+      return;
+    }
+    if (result.redirected) return; // browser will navigate to Google
     setBusy(false);
-    if (error) toast.error(error.message);
+    toast.success("Welcome back");
+    navigate({ to: redirectTo as never });
   };
 
   return (
