@@ -1,17 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAnyRole, requireRole } from "@/integrations/supabase/role-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-async function assertAdmin(supabase: any, userId: string) {
-  const { data } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "admin")
-    .maybeSingle();
-  if (!data) throw new Error("Forbidden");
-}
 
 const moderateInput = z.object({
   listing_id: z.string().uuid(),
@@ -19,10 +9,9 @@ const moderateInput = z.object({
 });
 
 export const moderateListing = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAnyRole(["admin", "moderator"])])
   .inputValidator((d: unknown) => moderateInput.parse(d))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async ({ data }) => {
     if (data.action === "delete") {
       const { error } = await supabaseAdmin.from("listings").delete().eq("id", data.listing_id);
       if (error) throw new Error(error.message);
@@ -43,10 +32,9 @@ const userActionInput = z.object({
 });
 
 export const setUserStatus = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireRole("admin")])
   .inputValidator((d: unknown) => userActionInput.parse(d))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async ({ data }) => {
     const status = data.action === "suspend" ? "suspended" : "active";
     const { error } = await supabaseAdmin
       .from("profiles")
