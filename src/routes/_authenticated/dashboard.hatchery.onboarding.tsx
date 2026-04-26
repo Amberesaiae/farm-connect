@@ -14,7 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { GHANA_REGIONS } from "@/lib/constants";
-import { HATCHERY_CATEGORIES, PERMIT_AUTHORITIES } from "@/lib/categories";
+import { PERMIT_AUTHORITIES } from "@/lib/categories";
+import { useTaxonomy } from "@/lib/taxonomy-context";
 import { PermitUploadField } from "@/components/hatchery/PermitUploadField";
 import { useServerFn } from "@tanstack/react-start";
 import { submitHatcheryApplication } from "@/server/hatcheries.functions";
@@ -59,6 +60,8 @@ const EMPTY: FormState = {
 function OnboardingWizard() {
   const navigate = useNavigate();
   const submit = useServerFn(submitHatcheryApplication);
+  const { taxonomy } = useTaxonomy();
+  const hatcheryCategories = taxonomy.categoriesFor("hatcheries");
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
   const [v, setV] = useState<FormState>(EMPTY);
@@ -155,8 +158,8 @@ function OnboardingWizard() {
                       <SelectValue placeholder="Pick what you produce" />
                     </SelectTrigger>
                     <SelectContent>
-                      {HATCHERY_CATEGORIES.map((c) => (
-                        <SelectItem key={c.value} value={c.value}>
+                      {hatcheryCategories.map((c) => (
+                        <SelectItem key={c.slug} value={c.slug}>
                           {c.label}
                         </SelectItem>
                       ))}
