@@ -1,166 +1,246 @@
-## The problem (taken seriously)
+## Why this needs a deeper rewrite
 
-Categories and "market types" right now are **not designed** — they are scattered hardcoded literals across files that disagree with each other, with no single source of truth and no DB-side guardrails. Concretely:
+What's in the DB right now is only a **flat** pillar → category list (6 pillars, ~40 categories, 4 synonyms). It's a lookup table, not a taxonomy. Every other concern is still hardcoded in React:
 
-1. **Three competing livestock vocabularies** that don't agree:
-   - `src/lib/constants.ts → LIVESTOCK_CATEGORIES` uses singular: `goat`, `pig`, `rabbit`.
-   - `src/lib/categories.ts → LIVESTOCK_SUBCATEGORIES` uses plural: `goats`, `pigs`, `rabbits`.
-   - `src/components/home/CategoryStrip.tsx` has its **own** inline list (singular: `goat`, `pig`).
-   - Result: the home `CategoryStrip` writes `?category=goat` to the URL, but listings posted via the wizard save `subcategory_slug=goats`. Filters silently miss everything. We just haven't seen it because the listings table is empty (confirmed: 0 rows).
+- **No depth.** "Poultry" can't have "Layers / Broilers / Local / Cockerels". "Vaccine" can't have "Newcastle / Gumboro / Marek's". The wizard, the filters, and the hero strip all live with a 2-level world.
+- **No attribute schema in the DB.** The wizard's per-pillar field sets (`breed`, `age_months`, `pack_size`, `active_ingredient`, `condition`…) are written into JSX, with no validation, no labels, no unit catalog, no per-category overrides. A new pillar means rewriting `CategoryFieldsSwitcher.tsx`.
+- **Breeds, units, conditions, sexes — all stringly typed.** `breed` is free-text, so "Sanga", "Sanga cattle", "sanga" and "Songa" are 4 different things. There is no catalog and no autocomplete.
+- **No locale / regional naming.** "Goat" in Twi is "Aponkye"; in Ga it's "Tewi". A buyer searching local terms finds nothing. Synonyms today only handle plural/singular.
+- **No facets.** `/listings` has no per-pillar filter set (e.g. for Agromed: "withdrawal period", "for poultry only"; for Equipment: "capacity", "power source"). Filters are ad-hoc text on top of a flat schema.
+- **No lifecycle / governance.** Categories can't be deprecated, merged, or split. There's no "promoted" flag for pinning the top 6 on the home strip. There's no audit of who changed what.
+- **Hatcheries and services use a different shape than listings.** The autolink trigger and the wizard treat pillar literals differently. There's no shared concept of "this category accepts vendor stores" vs "this is a directory only".
 
-2. **Two parallel concepts collide on the listings table**:
-   - `listings.category` (legacy free-text, e.g. `cattle`/`goat`) — written by the post wizard as `category: subcategory_slug ?? topCategory`, so it now stores either a livestock slug **or** a pillar string. It's used by `HeroOffer` (`heroForCategory`), the home strip filter, and the listing detail page.
-   - `listings.subcategory_slug` (new, per-pillar) — only used by the new wizard. Most older code ignores it.
-   - There's no enum/CHECK/lookup table — anything goes. Storage is `text` with no validation.
+The first migration unified labels. This plan finishes the job: **the database describes the shape of every listing**, and the frontend is a pure renderer of that shape.
 
-3. **Pillar enum exists in code only**. `top_category` is `text` with default `'livestock'`. The 4 valid values (`livestock`, `agrofeed_supplements`, `agromed_veterinary`, `agro_equipment_tools`) live in TS only — `agro_vendor_stores.pillar`, `listings.top_category`, and the autolink trigger all rely on string equality with no DB constraint.
+## Goals
 
-4. **Hatcheries and Services have their own siloed enums** (`HATCHERY_CATEGORIES`, `SERVICE_CATEGORIES`) duplicated between `src/lib/categories.ts` and the placeholder data files (`hatcheries-data.ts`, `services-data.ts`), with no link to the marketplace pillars or to the listings taxonomy. There is no concept of "Veterinary services" being related to "Agromed/Veterinary" listings, even though they're the same domain to a user.
+1. **One taxonomy, three depths.** `pillar → category → subcategory (optional)`, with hierarchy stored as an adjacency list so admins can re-parent without code changes.
+2. **Per-(category, attribute) field schema in the DB.** The post wizard, the detail page specs panel, the admin filter, and the search facets are all generated from this.
+3. **Catalog tables for breeds, vaccines, units, regions** — so free text becomes structured data with autocomplete, but free-text remains as a fallback.
+4. **Locale-aware labels** — every pillar/category/attribute carries `label_en`, `label_local` (Twi/Ga/Ewe/Hausa later), and a list of search synonyms in any language.
+5. **Faceted search at the DB layer**, on top of `listings.attributes JSONB` with GIN indexes, so `/listings` becomes a real marketplace not a name search.
+6. **Lifecycle**: `active | deprecated | merged_into`, audit log, admin UI, full CRUD on every layer.
+7. **Frontend is generated, not maintained.** No more hardcoded pillar literals, sex enums, condition strings, or per-pillar JSX in `CategoryFieldsSwitcher`.
 
-5. **Hardcoded UI lists everywhere.** `CategoryStrip`, `TopCategoryTabs`, hatchery filter chips, services filter chips, the wizard's `CategoryFieldsSwitcher`, `HeroOffer`, the post-wizard zod enum for `top_category`, and the admin filters — each rebuilds the list inline. Adding "Goose" or "Quail" today means editing 6+ files and hoping nothing drifts.
+## Section A — Backend-first schema (the source of truth)
 
-6. **No human-friendly labels on the data layer.** Filter chips and breadcrumbs rebuild labels by hand (`search.category[0].toUpperCase() + search.category.slice(1)` produces `"Goats"` from `"goats"` but `"Goat"` from `"goat"` — yet another silent fork).
-
-7. **No DB validation of valid combinations.** Nothing prevents a listing with `top_category=livestock` and `subcategory_slug=vaccine`, or `top_category=agromed_veterinary` and `category=cattle`. Required fields per pillar (e.g. `expires_on` for veterinary, `condition` for equipment) are enforced by the wizard alone — admin tools and a future API would bypass them.
-
-## The plan (one taxonomy, one source, end-to-end)
-
-### Section A — A single canonical taxonomy in the database
-
-Create three small lookup tables that define the marketplace shape. They are seeded data, RLS-public-read, admin-write. They become the source of truth for everything.
+Five new tables + one rewrite. Everything else in the app reads from these.
 
 ```text
-market_pillars                     (the 4 marketplace verticals)
-├─ slug PK            text         e.g. 'livestock', 'agromed_veterinary'
-├─ label              text         "Livestock"
-├─ short_label        text         "Livestock"
-├─ icon_key           text         "cattle" (for CategoryIcon)
-├─ sort_order         int
-├─ description        text
-└─ requires_*         bool flags   requires_expiry, requires_condition,
-                                   requires_licence (drives wizard rules)
+market_pillars                  ← already exists, gets new columns
+├─ slug PK
+├─ label_en, label_local jsonb           {tw: "...", ga: "..."}
+├─ icon_key, sort_order, is_marketplace
+├─ accepts_vendor_stores bool            (livestock=false; agrofeed/agromed/equipment=true)
+├─ has_directory bool                    (hatcheries/services=true → directory pages)
+├─ default_unit_slug fk → units          ("per_head", "per_kg", "per_bag")
+├─ allowed_units text[]                  (whitelist for the price-unit dropdown)
+└─ status active|deprecated
 
-market_categories                  (the second level, scoped per pillar)
-├─ id PK              uuid
-├─ pillar_slug FK     text → market_pillars.slug
-├─ slug               text         unique within pillar
-├─ label              text         "Cattle", "Layer mash", "Vaccine"
-├─ icon_key           text         optional
-├─ sort_order         int
-├─ is_active          bool
-└─ unique (pillar_slug, slug)
+market_categories               ← rewritten as a tree
+├─ id uuid PK
+├─ pillar_slug fk
+├─ parent_id uuid null fk → market_categories.id
+├─ slug                                  (unique within (pillar, parent))
+├─ canonical_path text                   (computed: "livestock/poultry/layers")
+├─ label_en, label_local jsonb
+├─ icon_key, sort_order
+├─ is_promoted bool                      (shown on home strip)
+├─ accepts_listings bool                 (leaves usually true; branches false)
+├─ status active|deprecated|merged
+└─ merged_into_id uuid null fk           (so old links keep working)
 
-market_category_synonyms           (legacy slug aliases → canonical)
-├─ pillar_slug + alias_slug PK     e.g. ('livestock','goat')   → 'goats'
-└─ canonical_slug FK               so old URLs and the home strip keep working
+category_synonyms               ← supersedes the current synonyms table
+├─ id uuid PK
+├─ pillar_slug fk
+├─ category_id uuid null fk              (null = applies to whole pillar)
+├─ alias text                            ("goat", "aponkye", "tewi", "broilers")
+├─ alias_locale text                     ("en"|"tw"|"ga"|"ee"|"ha")
+├─ alias_kind enum                       (singular_plural | local_name | trade_name | misspelling)
+└─ unique (pillar_slug, lower(alias))
+
+attribute_definitions           ← the schema for what each category collects
+├─ id uuid PK
+├─ key text                              ("breed", "age_months", "pack_size", "active_ingredient")
+├─ label_en, label_local jsonb
+├─ data_type enum                        (text | integer | decimal | enum | date | boolean | reference)
+├─ unit_slug fk → units null             ("kg","ml","months","l")
+├─ enum_values text[] null               (for short closed sets like sex)
+├─ reference_table text null             ("breeds","vaccines","feed_brands")
+├─ validation jsonb                      ({min:0,max:240} or {regex:"^[A-Z]"})
+└─ help_text_en text
+
+category_attributes             ← which attributes apply to which category
+├─ category_id fk
+├─ attribute_id fk
+├─ is_required bool
+├─ is_filterable bool                    (shown as a facet on /listings)
+├─ is_promoted bool                      (shown on listing card)
+├─ display_order int
+├─ default_value jsonb null
+└─ pk (category_id, attribute_id)
+
+units                           ← canonical units for price + measurements
+├─ slug PK ("per_head","per_kg","per_bag","kg","ml","months","l")
+├─ label_en, label_local
+├─ kind enum                             (price | weight | volume | duration | count)
+└─ sort_order
+
+breeds                          ← catalog (livestock pillar)
+├─ id uuid PK
+├─ category_id fk → market_categories     (the species: cattle/goats/poultry…)
+├─ slug, label_en, label_local
+├─ origin text                            ("Indigenous","Exotic","Cross")
+├─ status active|deprecated
+└─ unique (category_id, slug)
+
+vaccines                        ← catalog (agromed pillar)
+├─ id uuid PK
+├─ slug, label_en, label_local
+├─ target_species text[]                  ({"poultry","cattle"})
+├─ disease text                           ("Newcastle","Gumboro")
+├─ withdrawal_days int null
+└─ status
+
+feed_brands                     ← catalog (agrofeed pillar)
+├─ id uuid PK, slug, label
+├─ manufacturer text
+└─ status
+
+listings                        ← rewritten link to taxonomy
+├─ ... existing columns ...
+├─ pillar_slug          (renamed from top_category for clarity)
+├─ category_id fk → market_categories     (replaces subcategory_slug; keeps `category` text as denormalised label for back-compat reads)
+├─ attributes jsonb                       ({"breed_id":"...","age_months":7,"sex":"male","weight_kg":35})
+├─ price_unit_slug fk → units             (replaces the price_unit enum)
+└─ search_vector tsvector                 (recomputed from title+description+attributes+synonyms)
 ```
 
-A small set of helper rules:
+The hatcheries and services tables get the same treatment: `category_id fk` instead of free-text/enum `category`. No more two parallel taxonomies.
 
-- **Single canonical slug per concept**: `goats`, `pigs`, `rabbits`, `cattle`, `sheep`, `poultry`, `fish` (plural where biologically a group; canonical livestock list).
-- Synonyms table absorbs the mismatched legacy ones (`goat`, `pig`, `rabbit`) so old saved URLs / shared links still route correctly.
-- Hatchery and service categories also live in `market_categories` under new pillars `hatcheries` and `services` — so there's **one** taxonomy table, not three.
+### Constraints, triggers, governance
 
-Final pillar set:
+- **Trigger `tg_listings_normalize_taxonomy`** (BEFORE INSERT/UPDATE on `listings`):
+  1. Resolve `pillar_slug + category_id`. If the wizard sent a slug + alias path, look up the synonym table and re-target.
+  2. Reject if `accepts_listings = false` (i.e. someone tried to post to a branch).
+  3. Walk `category_attributes` for the resolved category; for every `is_required = true` attribute, assert it's present in `NEW.attributes` and conforms to `validation`.
+  4. Coerce numeric strings, normalise enums, lowercase free-text-with-controlled-vocab where applicable.
+  5. Mirror the canonical category label into `listings.category` for legacy readers (Option 1, kept).
+- **Trigger `tg_categories_recompute_path`** keeps `canonical_path` in sync when a node is re-parented.
+- **Trigger `tg_listings_search_vector`** rebuilds the `tsvector` from `title || description || attribute values || all synonyms for the resolved category` so a search for "aponkye" matches goat listings.
+- **Audit table `taxonomy_audit_log`** (actor, table, row_id, before, after, action, ts), written by triggers on `market_pillars`, `market_categories`, `category_synonyms`, `attribute_definitions`, `category_attributes`. Admin-only readable.
+- **`category_synonyms` uniqueness** is `unique (pillar_slug, lower(alias))` so casing/locale doesn't drift.
+- **RLS**: public SELECT on every taxonomy table; INSERT/UPDATE/DELETE gated by `has_role(auth.uid(), 'admin')`. Catalog tables (`breeds`, `vaccines`, `feed_brands`) also allow `seller`-role INSERT for new entries flagged `status=pending` (admin promotes to `active`); this is how new breeds appear without a deploy.
 
-```text
-livestock              · marketplace listings
-agrofeed_supplements   · marketplace listings
-agromed_veterinary     · marketplace listings  (requires expiry + licence)
-agro_equipment_tools   · marketplace listings  (requires condition)
-hatcheries             · hatchery directory
-services               · provider directory
+### Indexes for facets and search
+
+```sql
+create index on listings (pillar_slug, category_id, status, region);
+create index on listings using gin (attributes jsonb_path_ops);   -- facet filters
+create index on listings using gin (search_vector);
+create index on category_synonyms (pillar_slug, lower(alias));
+create index on market_categories (pillar_slug, parent_id, sort_order);
 ```
 
-### Section B — DB constraints to make invalid states unrepresentable
+### Seed data (real coverage, not stubs)
 
-- Add a CHECK on `listings`: `top_category` must be one of the 4 marketplace pillar slugs (validated by trigger against `market_pillars` since CHECK can't reference tables).
-- Add a trigger on `listings` BEFORE INSERT/UPDATE that:
-  - Looks up `(top_category, subcategory_slug)` in `market_categories`. If the pair doesn't match a row (after applying synonyms), reject with a clear error.
-  - Enforces `requires_*` flags (e.g. agromed → `expires_on NOT NULL`, equipment → `condition IN ('new','used')`).
-  - Normalizes `subcategory_slug` through the synonyms table (so an inbound `goat` is rewritten to `goats`).
-- Same trigger pattern on `agro_vendor_stores.pillar` (only the 3 sellable pillars allowed there: agrofeed, agromed, equipment).
-- Same trigger pattern on `hatcheries.category` and `service_profiles.category` against the relevant pillar's category set.
-- Drop or repurpose the legacy `listings.category` column. Two options here — please pick one in approval feedback or we go with **Option 1**:
-  - **Option 1 (recommended)**: keep `listings.category` populated by the trigger as a denormalized copy of the canonical `subcategory_slug` (or `top_category` when there is no sub). All reads should switch to `top_category` + `subcategory_slug`, but old code keeps working during the migration.
-  - **Option 2**: drop `listings.category` entirely after migrating all readers.
+- **Livestock**: cattle (Sanga, N'Dama, Friesian, Sokoto Gudali, Boran), goats (West African Dwarf, Sahel, Boer, Kalahari), sheep (Djallonké, Sahel), poultry (layers, broilers, local/sasso, cockerels, guinea fowl, ducks, turkeys, quail), pigs (Large White, Landrace, local), rabbits (NZ White, Chinchilla, Flemish), fish (tilapia, catfish), eggs (table eggs, fertile eggs, hatching eggs).
+- **Agrofeed**: existing list + maize, soya, wheat bran, layer concentrate, broiler concentrate, fish meal, dog/pet food.
+- **Agromed**: vaccines (Newcastle, Gumboro, Marek's, Fowl pox, Lasota), antibiotics, dewormers, tonics, antiparasitics, disinfectants, growth promoters, AI semen straws.
+- **Equipment**: incubators (capacity facet), feeders, drinkers, brooders, cages, milking parlours, sprayers, weighing scales, tractors / power tillers, generators.
+- **Hatcheries**: poultry, fish, breeding stock, semen / AI.
+- **Services**: vet, transport, feed, insurance, training, advisory, slaughter / abattoir, cold chain, AI / breeding, equipment maintenance.
+- **Synonyms**: every plural/singular pair, plus Twi/Ga local names for the 8 livestock species and the 4 pillars.
 
-### Section C — A single TypeScript module backed by the DB
+## Section B — Server access layer
 
-`src/lib/taxonomy.ts` becomes the **only** place the frontend talks about pillars and categories.
+A single server function set in `src/server/taxonomy.functions.ts`:
 
-- A server function `getTaxonomy()` (cached per request) returns a fully-typed snapshot:
+- `getTaxonomy()` — returns the full snapshot in one round trip:
   ```ts
-  type Taxonomy = {
-    pillars: Pillar[];                          // sorted
-    categoriesByPillar: Record<PillarSlug, Category[]>;
-    findCategory(pillar, slug | alias): Category | null;
-    labelFor(pillar, slug): string;
-    iconFor(pillar, slug): string;
+  type TaxonomySnapshot = {
+    pillars: Pillar[];
+    categoriesByPillar: Record<string, CategoryNode[]>; // tree
+    flatCategories: Record<string, Category>;           // by id
+    attributes: Record<string, AttributeDef>;           // by key
+    categoryAttributes: Record<string, CategoryAttrLink[]>; // by category_id
+    units: Unit[];
+    synonyms: SynonymIndex;                             // alias → {pillar, category_id}
+    catalogs: { breeds: Breed[]; vaccines: Vaccine[]; feedBrands: FeedBrand[] };
+    version: string;                                    // sha256 of the snapshot
   };
   ```
-- Loaded once in the root route's `beforeLoad` and stashed on router context, so every route/component gets it via `Route.useRouteContext()` — no fetch waterfall, no prop drilling.
-- TanStack Query caches it with a 1h `staleTime` so admin edits propagate quickly without per-page refetches.
-- Delete `LIVESTOCK_CATEGORIES` from `constants.ts`, delete the inline array in `CategoryStrip`, delete `LIVESTOCK_SUBCATEGORIES`/`AGROFEED_SUBCATEGORIES`/`AGROMED_SUBCATEGORIES`/`EQUIPMENT_SUBCATEGORIES`/`HATCHERY_CATEGORIES`/`SERVICE_CATEGORIES` from `categories.ts`. They all become derived views on the taxonomy snapshot.
+  Cached server-side with a 5-min TTL keyed by version; the trigger that writes `taxonomy_audit_log` bumps the version so it invalidates immediately.
+- `resolveAlias(pillar, term)` — a thin RPC for the search box autocomplete.
+- `searchListings(filters)` — unifies the listings page query: `pillar`, `category_id`, `region`, `priceMin/Max`, plus a generic `attributes: { [key]: value | range }` that the function compiles into JSONB containment / range queries against `listings.attributes`.
 
-### Section D — Wire every page to the taxonomy
+The browser client calls `getTaxonomy()` once via the root route's `beforeLoad` and stores the result in TanStack Query with `staleTime: 1h, gcTime: ∞`. Everything below reads from `Route.useRouteContext().taxonomy` — no per-page taxonomy fetches.
 
-Replace hardcoded lists in:
+## Section C — Frontend rebuild (no more hardcoded literals)
 
-- `src/components/home/CategoryStrip.tsx` — render from `taxonomy.categoriesByPillar.livestock`. Icons come from each row's `icon_key`.
-- `src/components/listing/TopCategoryTabs.tsx` — render from `taxonomy.pillars` filtered to the 4 marketplace pillars.
-- `src/routes/listings.tsx` — `validateSearch` validates `topCategory` and `subcategory` against the taxonomy (with synonym remap on read), the loader queries by canonical slugs, the heading uses `taxonomy.labelFor(...)` instead of the manual capitalisation hack, and a hero image map keyed on `icon_key`.
-- `src/routes/hatcheries.tsx` and `src/routes/services.tsx` — filter chips read from `taxonomy.categoriesByPillar.hatcheries` / `.services`.
-- `src/components/post/CategoryFieldsSwitcher.tsx` — subcategory `<Select>` is fed by `taxonomy.categoriesByPillar[topCategory]`. The conditional field sets stay (they're per-pillar UI), but they read `requires_*` flags from the pillar row to label fields with `*` and to choose `required` on the input.
-- `src/routes/_authenticated/post.tsx` — the zod schema for `top_category` is built from the taxonomy (e.g. `z.enum(taxonomy.pillars.map(p => p.slug) as [string, ...string[]])`). The wizard rejects invalid pairs client-side; the trigger in Section B is the server-side belt.
-- `src/components/services/ServiceProfileForm.tsx` and `src/routes/_authenticated/dashboard.hatchery.onboarding.tsx` — same treatment.
-- `src/lib/hero-image.ts` and `HeroOffer` — keyed off the canonical icon_key, with a graceful fallback. We also stop relying on the legacy `category` URL param: `HeroOffer` takes `topCategory` + `subcategory`.
-- Admin filter dropdowns in `admin.listings.tsx` / `admin.hatcheries.tsx` / `admin.stores.tsx` — same taxonomy source.
+These files lose all hardcoded category arrays:
 
-### Section E — Admin "Marketplace structure" screen
+- `src/lib/constants.ts` — drop `LIVESTOCK_CATEGORIES`, `SEX_OPTIONS`. Sex options come from the `sex` attribute's `enum_values`.
+- `src/lib/categories.ts` — kept only for the type re-exports it already exposes; no data.
+- `src/components/home/CategoryStrip.tsx` — render from `pillars` flagged `is_promoted` + their promoted children. Icons via `icon_key`.
+- `src/components/listing/TopCategoryTabs.tsx` — render from `marketplacePillars`.
+- `src/components/post/CategoryFieldsSwitcher.tsx` — **replaced** by a generic `<AttributeForm category={category} value={attrs} onChange={...} />` that walks `categoryAttributes[category.id]` and renders the right input per `data_type` (text / number+unit / enum / date / reference w/ Combobox autocomplete).
+- `src/routes/_authenticated/post.tsx` — Zod schema is built dynamically from `categoryAttributes`. Required attributes become required Zod fields. Submission shape is `{pillar_slug, category_id, attributes:{...}, price, price_unit_slug, region, district, ...}`.
+- `src/routes/listings.tsx` — `validateSearch` accepts `pillar`, `category` (slug, alias-resolved), `attrs` (compact `key:value` pairs). Hero, breadcrumb, and "no results" copy come from `taxonomy.labelFor()`. Filter sidebar is generated from `categoryAttributes` where `is_filterable = true` (e.g. Agromed gets a Vaccine combobox and a "withdrawal ≤ N days" range).
+- `src/routes/listings.$id.tsx` — `SpecsPanel` renders the listing's `attributes` keyed against `attribute_definitions` for labels/units, in `display_order`. Promoted attributes go on `ListingCard`.
+- `src/routes/hatcheries.tsx`, `services.tsx`, their dashboards/onboarding — use `categoriesByPillar.hatcheries` / `.services`. Filter chips come from the same source.
+- `src/components/home/HeroOffer.tsx`, `src/lib/hero-image.ts` — keyed off `icon_key`, with the resolution path being `category.icon_key ?? pillar.icon_key`.
+- Admin filter dropdowns (`admin.listings.tsx`, `admin.hatcheries.tsx`, `admin.stores.tsx`) — same source.
 
-A new page at `/admin/taxonomy` lets admins:
+The `CategoryStrip`, `TopCategoryTabs`, post wizard, listings filter, hero, services and hatcheries pages, and the admin filters **cannot** drift apart because they all render from the same snapshot.
 
-- Reorder pillars (drag handle → updates `sort_order`).
-- Add/rename/deactivate categories per pillar.
-- Edit `requires_*` rules per pillar.
-- Add a synonym (e.g. when migrating an existing slug).
+## Section D — Admin "Marketplace structure" UI
 
-This is the payoff: adding "Quail" under poultry, or splitting "Vaccines" into "Live vaccines" / "Inactivated vaccines", becomes a 30-second admin action with no deploy.
+`/admin/taxonomy` (4 tabs):
 
-### Section F — Migration path (safe, reversible, no broken links)
+1. **Tree** — drag-and-drop the category tree, edit labels & local names inline, toggle `is_promoted`, deprecate or merge a node into another (writes `merged_into_id`, leaves a synonym row so old URLs work).
+2. **Attributes** — full CRUD on `attribute_definitions` (data type, unit, enum values, validation, help text) and `category_attributes` (which attribute attaches to which category, required/filterable/promoted).
+3. **Synonyms** — bulk paste aliases with locale + kind; instant preview of which categories will be matched.
+4. **Catalogs** — breeds, vaccines, feed brands. Same CRUD pattern. Pending entries from sellers surface here for promotion.
 
-Do this in three database migrations and one code sweep:
+Every change writes to `taxonomy_audit_log` and bumps the snapshot version, so production picks up the change inside 5 minutes (or immediately on next page load via the cache-bust).
 
-1. **Migration 1**: create `market_pillars`, `market_categories`, `market_category_synonyms`, seed the canonical set, populate synonyms for the singular livestock slugs (`goat → goats`, `pig → pigs`, `rabbit → rabbits`). Add the validation triggers but in **warn-only mode** (RAISE WARNING) at first.
-2. **Code sweep**: refactor every file in Section D to use the taxonomy. No behaviour change for users; URLs continue to work via synonyms.
-3. **Migration 2**: flip the triggers to **reject** invalid combinations. Backfill `listings.category` from the canonical slugs (table is empty today, so this is a no-op risk-wise but the code path is still needed for safety).
-4. **Migration 3 (optional, follow-up)**: drop `listings.category` once we're confident, or keep it as a denormalized convenience column — see Option 1/2 in Section B.
+## Section E — Migration order (safe, reversible)
 
-### Section G — What this solves, concretely
+1. **Migration 1 — schema**: create the 6 new/changed tables, the audit log, the indexes, RLS, helper functions (`resolve_category(pillar, alias)`, `validate_listing_attributes`). Add `pillar_slug`, `category_id`, `attributes`, `price_unit_slug` columns to `listings`, `hatcheries`, `service_profiles`, but **don't** drop the old columns.
+2. **Migration 2 — backfill**: re-seed pillars with the new columns; rebuild `market_categories` as a tree (existing flat rows become depth-1 nodes); copy synonyms over with locale='en'/kind='singular_plural'; backfill `listings.category_id` from the existing `subcategory_slug` (resolving via synonyms); backfill `listings.attributes` from the columns the wizard currently writes (`breed`, `age_months`, `sex`, `weight_kg`, `condition`, `metadata`); set triggers in **warn-only** mode.
+3. **Code sweep** — every file in Section C, plus the admin UI in Section D. Ship.
+4. **Migration 3 — enforce**: flip triggers to `RAISE EXCEPTION`. Drop now-unused columns (`subcategory_slug`, the `price_unit` enum column, hatcheries' `category` enum, service_profiles' `category` text). Keep `listings.category` as denormalised label (Option 1).
+5. **Migration 4 — content**: load the full breed/vaccine/feed-brand catalogs and the Twi/Ga local-name synonym set (CSV → SQL).
 
-- One place to add a category. One place to rename. One place to reorder.
-- URLs like `/listings?category=goat` from old shares still resolve (synonym), but the canonical link going forward is `/listings?topCategory=livestock&subcategory=goats`.
-- The post wizard, the listings filter, the home strip, the admin panel, the hatchery directory, and the service directory **cannot** drift apart because they all read the same snapshot.
-- Per-pillar rules (expiry, condition, licence) are enforced at the database, not just by the wizard, so any future edge function or admin tool inherits them for free.
-- "Add a new pillar" (e.g. "Cold chain") becomes: add a row to `market_pillars`, add categories under it, optionally tweak the wizard's pillar-specific UI block. No frontend rewrites.
+Each migration is independently reversible because Migration 1/2 leave the legacy columns alive.
 
-### Technical details
+## Section F — What we deliberately are not doing (yet)
 
-- Tables: `market_pillars (slug PK)`, `market_categories (id PK, pillar_slug FK, slug, unique(pillar_slug, slug))`, `market_category_synonyms (pillar_slug, alias_slug, PK both, canonical_slug)`.
-- RLS: public SELECT on all three; admin INSERT/UPDATE/DELETE via `has_role(auth.uid(), 'admin')`.
-- Trigger function `validate_listing_category()` BEFORE INSERT/UPDATE on `listings`: normalize via synonyms, lookup `(top_category, subcategory_slug)` in `market_categories`, enforce `requires_*` rules from the pillar row, mirror canonical slug into `category`. Same pattern for `agro_vendor_stores`, `hatcheries`, `service_profiles`.
-- Server fn `getTaxonomy()` in `src/server/taxonomy.functions.ts`, cached via TanStack Query with a stable key. Loaded in `__root.tsx` `beforeLoad`. Exposed through router context typing so `Route.useRouteContext().taxonomy` is fully typed everywhere.
-- Files removed: hardcoded arrays in `src/lib/constants.ts` (`LIVESTOCK_CATEGORIES`), `src/components/home/CategoryStrip.tsx` (inline `CATEGORIES`), most of `src/lib/categories.ts` (kept only as type re-exports).
-- Files added: `supabase/migrations/<ts>_market_taxonomy.sql`, `src/lib/taxonomy.ts`, `src/server/taxonomy.functions.ts`, `src/routes/_authenticated/admin.taxonomy.tsx`.
-- Files refactored: `src/components/home/CategoryStrip.tsx`, `src/components/listing/TopCategoryTabs.tsx`, `src/components/post/CategoryFieldsSwitcher.tsx`, `src/components/services/ServiceProfileForm.tsx`, `src/routes/listings.tsx`, `src/routes/hatcheries.tsx`, `src/routes/services.tsx`, `src/routes/listings.$id.tsx`, `src/routes/_authenticated/post.tsx`, `src/routes/_authenticated/dashboard.hatchery.onboarding.tsx`, `src/lib/hero-image.ts`, admin filter screens.
-- Backwards compatibility: synonyms table makes `?category=goat`, `?category=pig`, `?category=rabbit` continue to work transparently.
+- **Multi-tenant taxonomy.** A single canonical taxonomy is enforced for all sellers. Vendor-specific subcategories are not supported — they create the exact drift we're getting rid of.
+- **AI auto-classification.** Out of scope for this pass; the structured wizard is enough.
+- **Region-specific category visibility** (e.g. "fish only in Volta"). Easy to add later via `category_regions` join — not needed for v2.
+- **Multi-currency / non-GHS pricing.** Unit table is ready for it; UI stays GHS only.
 
-### Open question for you before we build
+## Open decisions (please pick before we start)
 
-Two things worth confirming so the migration goes the way you want:
+1. **Catalog seeding scope.** Do we ship the full Ghana-specific catalogs (breeds, vaccines, feed brands) in Migration 4, or just the skeletons and let admins fill them in?
+2. **Locale support depth.** All UI strings stay English; only category/breed/synonym _data_ carries `label_local` and is searchable. Confirm that's enough for v2 (full UI i18n is a much bigger effort).
+3. **Wizard UX for new breeds/vaccines.** When a seller types a breed not in the catalog, should we (a) accept it as free-text into `attributes.breed_text` and queue it as `pending` in the catalog for admin promotion, or (b) hard-require picking from the list?
+4. **Old shareable links.** Confirm we keep `?category=goat` working forever via the synonym table (the design above does this; flagging in case you'd rather force-redirect to canonical URLs after a grace period).
 
-1. **Legacy `listings.category` column** — Option 1 (keep as denormalized canonical mirror, populated by trigger) or Option 2 (drop entirely after refactor). Option 1 is safer; Option 2 is cleaner.
-2. **Admin "Marketplace structure" screen (Section E)** — build it now as part of this work, or ship the taxonomy + refactor first and add the admin UI in a follow-up? The DB is ready either way; the screen is purely operational.
+If you have no strong preference, defaults are: (1) skeletons + bulk import follow-up, (2) data-only locale, (3) accept-and-queue, (4) keep forever.
 
-If you don't have a strong preference, we'll go with **Option 1** and **build the admin UI now** — it's the configuration that makes the whole investment pay off.
+## Technical summary (for the implementation pass)
+
+- **New tables**: `category_synonyms` (replaces `market_category_synonyms`), `attribute_definitions`, `category_attributes`, `units`, `breeds`, `vaccines`, `feed_brands`, `taxonomy_audit_log`.
+- **Rewritten table**: `market_categories` gains `parent_id`, `canonical_path`, `is_promoted`, `accepts_listings`, `status`, `merged_into_id`. `market_pillars` gains `accepts_vendor_stores`, `has_directory`, `default_unit_slug`, `allowed_units`, locale label JSON.
+- **Listings/hatcheries/service_profiles** gain `category_id`, `attributes jsonb`, `price_unit_slug`. Old columns kept until Migration 3.
+- **New triggers**: `tg_listings_normalize_taxonomy`, `tg_categories_recompute_path`, `tg_listings_search_vector`, audit triggers on the 5 taxonomy tables.
+- **New server functions**: `getTaxonomy`, `resolveAlias`, `searchListings` in `src/server/taxonomy.functions.ts` and `src/server/listings.functions.ts`.
+- **New UI**: `src/components/post/AttributeForm.tsx`, `src/components/listing/AttributeFacets.tsx`, `src/components/listing/AttributeSpecs.tsx`, `src/routes/_authenticated/admin.taxonomy.tsx` with 4 tabs.
+- **Refactored**: `CategoryStrip`, `TopCategoryTabs`, `CategoryFieldsSwitcher` (deleted, replaced), `listings.tsx`, `listings.$id.tsx`, `post.tsx`, `hatcheries.tsx`, `services.tsx`, `dashboard.hatchery.onboarding.tsx`, admin filters.
+- **Removed hardcoded data**: `LIVESTOCK_CATEGORIES`, `SEX_OPTIONS`, all per-pillar field-set JSX, the inline `CATEGORIES` arrays, `HATCHERY_CATEGORIES`, `SERVICE_CATEGORIES`.
+- **Performance**: GIN index on `listings.attributes` for facet queries; `tsvector` index for search; pillar/category/region B-tree for the listings page; snapshot version-keyed cache so 95% of taxonomy reads are local.
+
+That's the full backend-first, depth-aware, attribute-driven design. Once you approve (and answer the 4 questions), we ship it as the four migrations + code sweep above.
