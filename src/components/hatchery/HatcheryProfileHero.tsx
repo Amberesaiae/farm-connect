@@ -1,6 +1,7 @@
 import { MapPin, Award } from "lucide-react";
 import { hatcheryPhotoUrl } from "@/lib/hatchery-photo-url";
-import { HATCHERY_CATEGORY_LABEL, type HatcheryCategory } from "@/lib/categories";
+import { type HatcheryCategory } from "@/lib/categories";
+import { useTaxonomy } from "@/lib/taxonomy-context";
 
 export interface HatcheryHeroData {
   name: string;
@@ -15,6 +16,7 @@ export interface HatcheryHeroData {
 }
 
 export function HatcheryProfileHero({ hatchery }: { hatchery: HatcheryHeroData }) {
+  const { taxonomy } = useTaxonomy();
   const cover = hatcheryPhotoUrl(hatchery.cover_path);
   return (
     <section className="overflow-hidden rounded-3xl border-[1.5px] border-border bg-card">
@@ -36,7 +38,7 @@ export function HatcheryProfileHero({ hatchery }: { hatchery: HatcheryHeroData }
       <div className="p-5 md:p-7">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center rounded-full bg-secondary/15 px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wider text-secondary">
-            {HATCHERY_CATEGORY_LABEL[hatchery.category]}
+            {taxonomy.labelFor("hatcheries", hatchery.category)}
           </span>
           {hatchery.permit_number ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wider text-primary">

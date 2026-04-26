@@ -4,11 +4,8 @@ import { AppShell } from "@/components/layout/AppShell";
 import { MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { hatcheryPhotoUrl } from "@/lib/hatchery-photo-url";
-import {
-  HATCHERY_CATEGORIES,
-  HATCHERY_CATEGORY_LABEL,
-  type HatcheryCategory,
-} from "@/lib/categories";
+import { type HatcheryCategory } from "@/lib/categories";
+import { useTaxonomy } from "@/lib/taxonomy-context";
 import { GHANA_REGIONS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -42,16 +39,23 @@ interface HatcheryRow {
   cover_path: string | null;
 }
 
-const CATEGORY_FILTERS: { value: "all" | HatcheryCategory; label: string }[] = [
-  { value: "all", label: "All hatcheries" },
-  ...HATCHERY_CATEGORIES.map((c) => ({ value: c.value, label: c.label })),
-];
-
 function HatcheriesPage() {
+  const { taxonomy } = useTaxonomy();
   const [rows, setRows] = useState<HatcheryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [cat, setCat] = useState<"all" | HatcheryCategory>("all");
   const [region, setRegion] = useState<string>("all");
+
+  const categoryFilters = useMemo(
+    () => [
+      { value: "all" as const, label: "All hatcheries" },
+      ...taxonomy.categoriesFor("hatcheries").map((c) => ({
+        value: c.slug as HatcheryCategory,
+        label: c.label,
+      })),
+    ],
+    [taxonomy],
+  );
 
   useEffect(() => {
     void (async () => {
@@ -97,7 +101,7 @@ function HatcheriesPage() {
         </header>
 
         <div className="mt-6 flex flex-wrap gap-2">
-          {CATEGORY_FILTERS.map((f) => (
+          {categoryFilters.map((f) => (
             <button
               key={f.value}
               type="button"
@@ -179,7 +183,7 @@ function HatcheriesPage() {
                   </div>
                   <div className="flex flex-1 flex-col p-4">
                     <span className="inline-flex w-fit items-center rounded-full bg-secondary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-secondary">
-                      {HATCHERY_CATEGORY_LABEL[h.category]}
+                      {taxonomy.labelFor("hatcheries", h.category)}
                     </span>
                     <h3 className="font-display mt-2 text-[16px] font-extrabold tracking-tight text-foreground">
                       {h.name}

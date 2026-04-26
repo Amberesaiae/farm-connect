@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { GHANA_REGIONS } from "@/lib/constants";
-import { SERVICE_CATEGORIES } from "@/lib/categories";
+import { useTaxonomy } from "@/lib/taxonomy-context";
 import { useServerFn } from "@tanstack/react-start";
 import { upsertServiceProfile } from "@/server/service-profiles.functions";
 import { toast } from "sonner";
@@ -48,6 +48,8 @@ export function ServiceProfileForm({
   initial?: ServiceProfileFormValue;
   onDone: () => void;
 }) {
+  const { taxonomy } = useTaxonomy();
+  const serviceCategories = taxonomy.categoriesFor("services");
   const [v, setV] = useState<ServiceProfileFormValue>(initial ?? EMPTY);
   const [busy, setBusy] = useState(false);
   const upsert = useServerFn(upsertServiceProfile);
@@ -114,8 +116,8 @@ export function ServiceProfileForm({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {SERVICE_CATEGORIES.map((c) => (
-              <SelectItem key={c.value} value={c.value}>
+            {serviceCategories.map((c) => (
+              <SelectItem key={c.slug} value={c.slug}>
                 {c.label}
               </SelectItem>
             ))}

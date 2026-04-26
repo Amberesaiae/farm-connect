@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Egg, Inbox, ListChecks, MapPin, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { HATCHERY_CATEGORY_LABEL } from "@/lib/categories";
+import { useTaxonomy } from "@/lib/taxonomy-context";
 import type { HatcheryStatus } from "@/lib/hatchery-status";
 
 export const Route = createFileRoute("/_authenticated/dashboard/hatchery")({
@@ -29,6 +29,7 @@ interface HatcheryRow {
 }
 
 function HatcheryDashboard() {
+  const { taxonomy } = useTaxonomy();
   const { user } = useAuth();
   const location = useLocation();
   const [hatchery, setHatchery] = useState<HatcheryRow | null>(null);
@@ -130,7 +131,7 @@ function HatcheryDashboard() {
             <p className="mt-1 inline-flex items-center gap-1 text-[12.5px] text-muted-foreground">
               <MapPin className="h-3.5 w-3.5" />
               {hatchery.district ? `${hatchery.district}, ` : ""}
-              {hatchery.region} · {HATCHERY_CATEGORY_LABEL[hatchery.category]}
+              {hatchery.region} · {taxonomy.labelFor("hatcheries", hatchery.category)}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

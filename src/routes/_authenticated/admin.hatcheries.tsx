@@ -15,7 +15,7 @@ import {
 } from "@/server/hatcheries.functions";
 import { toast } from "sonner";
 import { formatRelative } from "@/lib/format";
-import { HATCHERY_CATEGORY_LABEL } from "@/lib/categories";
+import { useTaxonomy } from "@/lib/taxonomy-context";
 import { ExternalLink, MapPin } from "lucide-react";
 import type { HatcheryStatus } from "@/lib/hatchery-status";
 
@@ -42,6 +42,7 @@ interface Row {
 }
 
 function AdminHatcheries() {
+  const { taxonomy } = useTaxonomy();
   const [rows, setRows] = useState<Row[]>([]);
   const [filter, setFilter] = useState<"pending_review" | "approved" | "rejected" | "suspended">(
     "pending_review",
@@ -141,7 +142,7 @@ function AdminHatcheries() {
                         <p className="mt-1 inline-flex items-center gap-1 text-[12px] text-muted-foreground">
                           <MapPin className="h-3 w-3" />
                           {r.district ? `${r.district}, ` : ""}
-                          {r.region} · {HATCHERY_CATEGORY_LABEL[r.category]}
+                          {r.region} · {taxonomy.labelFor("hatcheries", r.category)}
                         </p>
                       </div>
                       <HatcheryStatusPill status={r.status} />
