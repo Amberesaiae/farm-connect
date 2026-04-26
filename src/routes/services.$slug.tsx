@@ -40,6 +40,7 @@ interface Profile {
 function ServiceDetail() {
   const { slug } = Route.useParams();
   const { isAuthenticated } = useAuth();
+  const { taxonomy } = useTaxonomy();
   const navigate = useNavigate();
   const [p, setP] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -109,7 +110,7 @@ function ServiceDetail() {
               <div className="p-5 md:p-7">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="inline-flex items-center rounded-full bg-secondary/15 px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wider text-secondary">
-                    {SERVICE_CATEGORY_LABEL[p.category] ?? p.category}
+                    {taxonomy.labelFor("services", p.category)}
                   </span>
                   {p.badge_tier && p.badge_tier !== "none" ? (
                     <span className="inline-flex items-center rounded-full bg-primary-soft px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wider text-primary">
@@ -154,7 +155,7 @@ function ServiceDetail() {
                       <div className="mt-4">
                         <QuoteRequestForm
                           serviceProfileId={p.id}
-                          defaultServiceType={SERVICE_CATEGORY_LABEL[p.category]}
+                          defaultServiceType={taxonomy.labelFor("services", p.category)}
                           onDone={() => {
                             setOpen(false);
                             navigate({ to: "/dashboard/quotes" });
