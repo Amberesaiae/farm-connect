@@ -33,6 +33,8 @@ interface ListingsSearch {
   verifiedOnly?: boolean;
   minPrice?: number;
   maxPrice?: number;
+  /** Dynamic per-category attribute filters keyed `attr_<key>`. */
+  attrs?: Record<string, string>;
 }
 
 const TOP_VALUES: readonly string[] = [
@@ -43,19 +45,28 @@ const TOP_VALUES: readonly string[] = [
 ];
 
 export const Route = createFileRoute("/listings")({
-  validateSearch: (s: Record<string, unknown>): ListingsSearch => ({
-    q: typeof s.q === "string" ? s.q : undefined,
-    topCategory:
-      typeof s.topCategory === "string" && TOP_VALUES.includes(s.topCategory)
-        ? (s.topCategory as TopCategory)
-        : undefined,
-    category: typeof s.category === "string" ? s.category : undefined,
-    subcategory: typeof s.subcategory === "string" ? s.subcategory : undefined,
-    region: typeof s.region === "string" ? s.region : undefined,
-    verifiedOnly: s.verifiedOnly === true || s.verifiedOnly === "true",
-    minPrice: typeof s.minPrice === "string" ? Number(s.minPrice) : undefined,
-    maxPrice: typeof s.maxPrice === "string" ? Number(s.maxPrice) : undefined,
-  }),
+  validateSearch: (s: Record<string, unknown>): ListingsSearch => {
+    const attrs: Record<string, string> = {};
+    for (const [k, v] of Object.entries(s)) {
+      if (k.startsWith("attr_") && typeof v === "string" && v.length > 0) {
+        attrs[k.slice(5)] = v;
+      }
+    }
+    return {
+      q: typeof s.q === "string" ? s.q : undefined,
+      topCategory:
+        typeof s.topCategory === "string" && TOP_VALUES.includes(s.topCategory)
+          ? (s.topCategory as TopCategory)
+          : undefined,
+      category: typeof s.category === "string" ? s.category : undefined,
+      subcategory: typeof s.subcategory === "string" ? s.subcategory : undefined,
+      region: typeof s.region === "string" ? s.region : undefined,
+      verifiedOnly: s.verifiedOnly === true || s.verifiedOnly === "true",
+      minPrice: typeof s.minPrice === "string" ? Number(s.minPrice) : undefined,
+      maxPrice: typeof s.maxPrice === "string" ? Number(s.maxPrice) : undefined,
+      attrs: Object.keys(attrs).length ? attrs : undefined,
+    };
+  },
   head: () => ({
     meta: [
       { title: "Browse livestock — farmlink" },
@@ -90,6 +101,12 @@ function ListingsPage() {
   const { taxonomy } = useTaxonomy();
   const [rows, setRows] = useState<ListingCardData[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Resolve the active category id (for filter rendering + JSONB query).
+  const pillarForCat = search.topCategory ?? "livestock";
+  const activeSlug = search.subcategory ?? search.category ?? null;
+  const activeCategory = taxonomy.resolveCategory(pillarForCat, activeSlug);
+  const filterableAttrs = taxonomy.filterableFor(activeCategory?.id);
 
   useEffect(() => {
     let cancelled = false;
@@ -126,6 +143,18 @@ function ListingsPage() {
       if (typeof search.maxPrice === "number" && !Number.isNaN(search.maxPrice))
         query = query.lte("price_ghs", search.maxPrice);
       if (search.q) query = query.textSearch("search_vector", search.q, { type: "websearch" });
+
+      // Dynamic attribute filters → JSONB containment (uses GIN index).
+      const attrEntries = Object.entries(search.attrs ?? {}).filter(([, v]) => v && v.length > 0);
+      if (attrEntries.length > 0) {
+        const obj: Record<string, unknown> = {};
+        for (const [k, v] of attrEntries) {
+          if (v === "true") obj[k] = true;
+          else if (v === "false") obj[k] = false;
+          else obj[k] = v;
+        }
+        query = query.contains("attributes", obj);
+      }
 
       const { data, error } = await query;
       if (cancelled) return;
