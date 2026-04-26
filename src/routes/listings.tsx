@@ -87,6 +87,7 @@ interface Row {
 function ListingsPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
+  const { taxonomy } = useTaxonomy();
   const [rows, setRows] = useState<ListingCardData[]>([]);
   const [loading, setLoading] = useState(true);
 
