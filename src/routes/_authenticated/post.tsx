@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { AppShell } from "@/components/layout/AppShell";
 import { Stepper } from "@/components/wizard/Stepper";
@@ -14,17 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  GHANA_REGIONS,
-  PRICE_UNITS,
-  LISTING_PHOTOS_BUCKET,
-} from "@/lib/constants";
-import { type TopCategory } from "@/lib/categories";
+import { GHANA_REGIONS, LISTING_PHOTOS_BUCKET } from "@/lib/constants";
 import { useTaxonomy } from "@/lib/taxonomy-context";
 import {
-  CategoryFieldsSwitcher,
-  type CategoryFieldsValue,
-} from "@/components/post/CategoryFieldsSwitcher";
+  AttributeForm,
+  validateAttributes,
+  type AttributesValue,
+} from "@/components/post/AttributeForm";
 import { useServerFn } from "@tanstack/react-start";
 import { createListing } from "@/server/listings.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,19 +41,14 @@ export const Route = createFileRoute("/_authenticated/post")({
 const STEP_LABELS = ["Category & details", "Pricing & location", "Photos & description"];
 
 const step1Base = z.object({
-  top_category: z.enum([
-    "livestock",
-    "agrofeed_supplements",
-    "agromed_veterinary",
-    "agro_equipment_tools",
-  ]),
+  pillar: z.string().min(1, "Pick a marketplace"),
   title: z.string().trim().min(3, "Title is too short").max(120),
-  subcategory_slug: z.string().min(1, "Pick a subcategory"),
+  category_slug: z.string().min(1, "Pick a subcategory"),
   quantity: z.coerce.number().int().min(1).max(10000),
 });
 const step2 = z.object({
   price_ghs: z.coerce.number().positive().max(10_000_000),
-  price_unit: z.enum(["per_head", "per_kg", "per_lb", "lot"]),
+  price_unit_slug: z.string().min(1, "Pick a price unit"),
   region: z.string().min(1, "Region is required"),
   district: z.string().max(60).optional(),
 });
@@ -65,62 +56,102 @@ const step3 = z.object({
   description: z.string().max(2000).optional(),
 });
 
+/**
+ * Map a price-unit slug to the legacy `price_unit` enum the listings table
+ * still requires. Slugs outside the legacy set fall back to "lot".
+ */
+function legacyPriceUnit(slug: string): "per_head" | "per_kg" | "per_lb" | "lot" {
+  if (slug === "per_head") return "per_head";
+  if (slug === "per_kg") return "per_kg";
+  if (slug === "per_lb") return "per_lb";
+  return "lot";
+}
+
 function PostWizard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const create = useServerFn(createListing);
-  const { taxonomy } = useTaxonomy();
+  const { taxonomy, loading: taxonomyLoading } = useTaxonomy();
   const topPillars = taxonomy.marketplacePillars;
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
 
-  const [topCategory, setTopCategory] = useState<TopCategory>("livestock");
+  const [pillarSlug, setPillarSlug] = useState<string>("");
+  const [categorySlug, setCategorySlug] = useState<string>("");
   const [title, setTitle] = useState("");
   const [quantity, setQuantity] = useState<number | string>(1);
-  const [catFields, setCatFields] = useState<CategoryFieldsValue>({});
+  const [attributes, setAttributes] = useState<AttributesValue>({});
   const [pricing, setPricing] = useState({
     price_ghs: "" as string | number,
-    price_unit: "per_head" as "per_head" | "per_kg" | "per_lb" | "lot",
+    price_unit_slug: "",
     region: "",
     district: "",
   });
   const [description, setDescription] = useState("");
 
-  const updateCat = (patch: Partial<CategoryFieldsValue>) =>
-    setCatFields((p) => ({ ...p, ...patch }));
+  // Default the pillar to the first marketplace pillar once taxonomy loads.
+  useEffect(() => {
+    if (!pillarSlug && topPillars.length > 0) {
+      setPillarSlug(topPillars[0].slug);
+    }
+  }, [pillarSlug, topPillars]);
+
+  const pillar = taxonomy.getPillar(pillarSlug);
+  const subcategories = taxonomy.categoriesFor(pillarSlug);
+  const category = taxonomy.resolveCategory(pillarSlug, categorySlug);
+  const categoryAttrs = taxonomy.attributesFor(category?.id ?? null);
+
+  // Allowed price units for the active pillar.
+  const priceUnits = useMemo(() => {
+    if (!pillar) return taxonomy.units.filter((u) => u.kind === "price");
+    const allowed = pillar.allowedUnits.length
+      ? pillar.allowedUnits
+      : taxonomy.units.filter((u) => u.kind === "price").map((u) => u.slug);
+    return taxonomy.units.filter((u) => allowed.includes(u.slug));
+  }, [pillar, taxonomy]);
+
+  // Reset category + attrs when pillar changes; default the price unit.
+  const onPillarChange = (slug: string) => {
+    setPillarSlug(slug);
+    setCategorySlug("");
+    setAttributes({});
+    const next = taxonomy.getPillar(slug);
+    setPricing((p) => ({
+      ...p,
+      price_unit_slug: next?.defaultUnitSlug ?? "",
+    }));
+  };
+
+  // Default the price unit on first load too.
+  useEffect(() => {
+    if (!pricing.price_unit_slug && pillar?.defaultUnitSlug) {
+      setPricing((p) => ({ ...p, price_unit_slug: pillar.defaultUnitSlug ?? "" }));
+    }
+  }, [pillar, pricing.price_unit_slug]);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [photos, setPhotos] = useState<File[]>([]);
   const previews = photos.map((f) => URL.createObjectURL(f));
   useEffect(() => () => previews.forEach((u) => URL.revokeObjectURL(u)), [previews]);
 
-  // When top_category changes, reset subcategory + clear category-specific fields
-  const onTopCategoryChange = (v: TopCategory) => {
-    setTopCategory(v);
-    setCatFields({});
-    // sensible default price unit per pillar
-    setPricing((p) => ({
-      ...p,
-      price_unit:
-        v === "livestock" ? "per_head" : v === "agrofeed_supplements" ? "per_kg" : "lot",
-    }));
-  };
-
   const next = () => {
     if (step === 1) {
       const r = step1Base.safeParse({
-        top_category: topCategory,
+        pillar: pillarSlug,
         title,
-        subcategory_slug: catFields.subcategory_slug,
+        category_slug: categorySlug,
         quantity,
       });
       if (!r.success) return toast.error(r.error.issues[0].message);
-      // category-specific guard rails (mirrored on the server)
-      if (topCategory === "agromed_veterinary" && !catFields.expires_on) {
-        return toast.error("Expiry date is required for veterinary medicines.");
+      // Per-attribute requireds (server trigger is authoritative; this is UX).
+      const attrError = validateAttributes(categoryAttrs, attributes);
+      if (attrError) return toast.error(attrError);
+      // Pillar-level guard rails (DB enforces these too).
+      if (pillar?.requiresExpiry && !attributes.expires_on) {
+        return toast.error("Expiry date is required for this category.");
       }
-      if (topCategory === "agro_equipment_tools" && !catFields.condition) {
-        return toast.error("Condition is required for equipment listings.");
+      if (pillar?.requiresCondition && !attributes.condition) {
+        return toast.error("Condition is required for this category.");
       }
     } else if (step === 2) {
       const r = step2.safeParse(pricing);
@@ -142,44 +173,56 @@ function PostWizard() {
     if (!r3.success) return toast.error(r3.error.issues[0].message);
     if (!user) return toast.error("You must be signed in");
     if (photos.length === 0) return toast.error("Please add at least one photo");
+    if (!category) return toast.error("Please pick a subcategory");
 
     setBusy(true);
     try {
-      // metadata holds category-specific extras the listings table doesn't have first-class columns for
-      const metadata: Record<string, unknown> = {};
-      if (catFields.brand) metadata.brand = catFields.brand;
-      if (catFields.pack_size) metadata.pack_size = catFields.pack_size;
-      if (catFields.active_ingredient) metadata.active_ingredient = catFields.active_ingredient;
-      if (catFields.dosage) metadata.dosage = catFields.dosage;
-      if (catFields.model) metadata.model = catFields.model;
+      // Coerce numeric attribute strings to numbers based on the data type.
+      const coerced: AttributesValue = {};
+      for (const a of categoryAttrs) {
+        const v = attributes[a.definition.key];
+        if (v === undefined || v === null || v === "") continue;
+        if (a.definition.dataType === "integer") coerced[a.definition.key] = Number(v);
+        else if (a.definition.dataType === "decimal") coerced[a.definition.key] = Number(v);
+        else coerced[a.definition.key] = v;
+      }
+
+      // Pull a few well-known attributes back into first-class columns so
+      // legacy filters (breed/age/sex/weight/condition/expires_on) keep working
+      // until those columns are removed.
+      const breedSlug = typeof coerced.breed === "string" ? coerced.breed : null;
+      const breedLabel = breedSlug
+        ? (taxonomy.breeds.find((b) => b.slug === breedSlug)?.labelEn ?? breedSlug)
+        : (typeof coerced.breed_text === "string" ? coerced.breed_text : null);
 
       const created = await create({
         data: {
           title: title.trim(),
-          top_category: topCategory,
-          category: catFields.subcategory_slug ?? topCategory,
-          subcategory_slug: catFields.subcategory_slug ?? null,
-          breed: catFields.breed || null,
+          top_category: pillarSlug,
+          category: category.slug,
+          category_id: category.id,
+          subcategory_slug: category.slug,
+          attributes: coerced,
+          breed: breedLabel,
           age_months:
-            catFields.age_months === undefined || catFields.age_months === ""
-              ? null
-              : Number(catFields.age_months),
-          sex: catFields.sex || null,
+            typeof coerced.age_months === "number" ? coerced.age_months : null,
+          sex: (coerced.sex as "male" | "female" | "mixed" | undefined) ?? null,
           quantity: Number(quantity) || 1,
           weight_kg:
-            catFields.weight_kg === undefined || catFields.weight_kg === ""
-              ? null
-              : Number(catFields.weight_kg),
+            typeof coerced.weight_kg === "number" ? coerced.weight_kg : null,
           price_ghs: Number(pricing.price_ghs),
-          price_unit: pricing.price_unit,
+          price_unit: legacyPriceUnit(pricing.price_unit_slug),
+          price_unit_slug: pricing.price_unit_slug,
           region: pricing.region,
           district: pricing.district || null,
           description: description || null,
-          condition: catFields.condition || null,
+          condition:
+            (coerced.condition as "new" | "used" | undefined) ?? null,
           stock_quantity: null,
           min_order_qty: 1,
-          expires_on: catFields.expires_on || null,
-          metadata,
+          expires_on:
+            typeof coerced.expires_on === "string" ? coerced.expires_on : null,
+          metadata: {},
         },
       });
 
@@ -240,10 +283,10 @@ function PostWizard() {
           {step === 1 && (
             <Section title="What are you selling?">
               <div>
-                <Label>Marketplace pillar *</Label>
-                <Select value={topCategory} onValueChange={(v) => onTopCategoryChange(v as TopCategory)}>
+                <Label>Marketplace *</Label>
+                <Select value={pillarSlug} onValueChange={onPillarChange}>
                   <SelectTrigger className="mt-1.5 w-full rounded-xl">
-                    <SelectValue />
+                    <SelectValue placeholder={taxonomyLoading ? "Loading…" : "Pick a marketplace"} />
                   </SelectTrigger>
                   <SelectContent>
                     {topPillars.map((c) => (
@@ -255,20 +298,35 @@ function PostWizard() {
                 </Select>
               </div>
               <div>
+                <Label>Subcategory *</Label>
+                <Select
+                  value={categorySlug || undefined}
+                  onValueChange={(v) => {
+                    setCategorySlug(v);
+                    setAttributes({});
+                  }}
+                >
+                  <SelectTrigger className="mt-1.5 w-full rounded-xl">
+                    <SelectValue placeholder={subcategories.length ? "Pick a subcategory" : "—"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subcategories
+                      .filter((s) => s.acceptsListings !== false)
+                      .map((s) => (
+                        <SelectItem key={s.slug} value={s.slug}>
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <Label htmlFor="title">Listing title *</Label>
                 <Input
                   id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder={
-                    topCategory === "livestock"
-                      ? "2 healthy Sanga bulls, 18 months"
-                      : topCategory === "agrofeed_supplements"
-                        ? "Layer mash 50kg — premium brand"
-                        : topCategory === "agromed_veterinary"
-                          ? "Newcastle vaccine, 1000-dose vial"
-                          : "Used 1056-egg incubator, working"
-                  }
+                  placeholder={pillar?.description ?? "Short, descriptive title"}
                   className="mt-1.5 rounded-xl"
                 />
               </div>
@@ -283,10 +341,10 @@ function PostWizard() {
                   className="mt-1.5 rounded-xl"
                 />
               </div>
-              <CategoryFieldsSwitcher
-                topCategory={topCategory}
-                value={catFields}
-                onChange={updateCat}
+              <AttributeForm
+                categoryId={category?.id ?? null}
+                value={attributes}
+                onChange={setAttributes}
               />
             </Section>
           )}
@@ -307,18 +365,18 @@ function PostWizard() {
                 <div>
                   <Label>Price unit *</Label>
                   <Select
-                    value={pricing.price_unit}
+                    value={pricing.price_unit_slug || undefined}
                     onValueChange={(v) =>
-                      setPricing((p) => ({ ...p, price_unit: v as typeof p.price_unit }))
+                      setPricing((p) => ({ ...p, price_unit_slug: v }))
                     }
                   >
                     <SelectTrigger className="mt-1.5 w-full rounded-xl">
-                      <SelectValue />
+                      <SelectValue placeholder="Pick a unit" />
                     </SelectTrigger>
                     <SelectContent>
-                      {PRICE_UNITS.map((p) => (
-                        <SelectItem key={p.value} value={p.value}>
-                          {p.label}
+                      {priceUnits.map((u) => (
+                        <SelectItem key={u.slug} value={u.slug}>
+                          {u.labelEn}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -417,13 +475,9 @@ function PostWizard() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder={
-                    topCategory === "livestock"
+                    pillar?.slug === "livestock"
                       ? "Health status, feeding, vaccination, willingness to deliver…"
-                      : topCategory === "agrofeed_supplements"
-                        ? "Composition, nutrient profile, packaging, storage…"
-                        : topCategory === "agromed_veterinary"
-                          ? "Indication, withdrawal period, storage, batch number…"
-                          : "Year, hours used, condition notes, included accessories…"
+                      : "Composition, packaging, storage, condition, batch…"
                   }
                   className="rounded-xl"
                 />
