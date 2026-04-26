@@ -146,6 +146,62 @@ export type Database = {
         }
         Relationships: []
       }
+      attribute_definitions: {
+        Row: {
+          created_at: string
+          data_type: string
+          enum_values: string[]
+          help_text_en: string | null
+          id: string
+          is_active: boolean
+          key: string
+          label_en: string
+          label_local: Json
+          reference_table: string | null
+          unit_slug: string | null
+          updated_at: string
+          validation: Json
+        }
+        Insert: {
+          created_at?: string
+          data_type: string
+          enum_values?: string[]
+          help_text_en?: string | null
+          id?: string
+          is_active?: boolean
+          key: string
+          label_en: string
+          label_local?: Json
+          reference_table?: string | null
+          unit_slug?: string | null
+          updated_at?: string
+          validation?: Json
+        }
+        Update: {
+          created_at?: string
+          data_type?: string
+          enum_values?: string[]
+          help_text_en?: string | null
+          id?: string
+          is_active?: boolean
+          key?: string
+          label_en?: string
+          label_local?: Json
+          reference_table?: string | null
+          unit_slug?: string | null
+          updated_at?: string
+          validation?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attribute_definitions_unit_slug_fkey"
+            columns: ["unit_slug"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       batch_reservations: {
         Row: {
           batch_id: string
@@ -217,15 +273,145 @@ export type Database = {
           },
         ]
       }
+      breeds: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          label_en: string
+          label_local: Json
+          origin: string | null
+          slug: string
+          status: string
+          submitted_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          label_en: string
+          label_local?: Json
+          origin?: string | null
+          slug: string
+          status?: string
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          label_en?: string
+          label_local?: Json
+          origin?: string | null
+          slug?: string
+          status?: string
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "breeds_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "market_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      category_attributes: {
+        Row: {
+          attribute_id: string
+          category_id: string
+          created_at: string
+          default_value: Json | null
+          display_order: number
+          is_filterable: boolean
+          is_promoted: boolean
+          is_required: boolean
+        }
+        Insert: {
+          attribute_id: string
+          category_id: string
+          created_at?: string
+          default_value?: Json | null
+          display_order?: number
+          is_filterable?: boolean
+          is_promoted?: boolean
+          is_required?: boolean
+        }
+        Update: {
+          attribute_id?: string
+          category_id?: string
+          created_at?: string
+          default_value?: Json | null
+          display_order?: number
+          is_filterable?: boolean
+          is_promoted?: boolean
+          is_required?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "category_attributes_attribute_id_fkey"
+            columns: ["attribute_id"]
+            isOneToOne: false
+            referencedRelation: "attribute_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "category_attributes_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "market_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feed_brands: {
+        Row: {
+          created_at: string
+          id: string
+          label_en: string
+          manufacturer: string | null
+          slug: string
+          status: string
+          submitted_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label_en: string
+          manufacturer?: string | null
+          slug: string
+          status?: string
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label_en?: string
+          manufacturer?: string | null
+          slug?: string
+          status?: string
+          submitted_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hatcheries: {
         Row: {
           address: string | null
           approved_at: string | null
           approved_by: string | null
+          attributes: Json
           blurb: string | null
           business_hours: Json
           capacity_per_cycle: number | null
           category: Database["public"]["Enums"]["hatchery_category"]
+          category_id: string | null
           cover_path: string | null
           created_at: string
           district: string | null
@@ -250,10 +436,12 @@ export type Database = {
           address?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          attributes?: Json
           blurb?: string | null
           business_hours?: Json
           capacity_per_cycle?: number | null
           category: Database["public"]["Enums"]["hatchery_category"]
+          category_id?: string | null
           cover_path?: string | null
           created_at?: string
           district?: string | null
@@ -278,10 +466,12 @@ export type Database = {
           address?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          attributes?: Json
           blurb?: string | null
           business_hours?: Json
           capacity_per_cycle?: number | null
           category?: Database["public"]["Enums"]["hatchery_category"]
+          category_id?: string | null
           cover_path?: string | null
           created_at?: string
           district?: string | null
@@ -302,7 +492,15 @@ export type Database = {
           updated_at?: string
           whatsapp_e164?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "hatcheries_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "market_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hatchery_batch_photos: {
         Row: {
@@ -489,8 +687,10 @@ export type Database = {
       listings: {
         Row: {
           age_months: number | null
+          attributes: Json
           breed: string | null
           category: string
+          category_id: string | null
           condition: string | null
           contact_count: number
           created_at: string
@@ -503,6 +703,7 @@ export type Database = {
           min_order_qty: number
           price_ghs: number
           price_unit: Database["public"]["Enums"]["price_unit"]
+          price_unit_slug: string | null
           quantity: number
           region: string
           save_count: number
@@ -521,8 +722,10 @@ export type Database = {
         }
         Insert: {
           age_months?: number | null
+          attributes?: Json
           breed?: string | null
           category: string
+          category_id?: string | null
           condition?: string | null
           contact_count?: number
           created_at?: string
@@ -535,6 +738,7 @@ export type Database = {
           min_order_qty?: number
           price_ghs: number
           price_unit?: Database["public"]["Enums"]["price_unit"]
+          price_unit_slug?: string | null
           quantity?: number
           region: string
           save_count?: number
@@ -553,8 +757,10 @@ export type Database = {
         }
         Update: {
           age_months?: number | null
+          attributes?: Json
           breed?: string | null
           category?: string
+          category_id?: string | null
           condition?: string | null
           contact_count?: number
           created_at?: string
@@ -567,6 +773,7 @@ export type Database = {
           min_order_qty?: number
           price_ghs?: number
           price_unit?: Database["public"]["Enums"]["price_unit"]
+          price_unit_slug?: string | null
           quantity?: number
           region?: string
           save_count?: number
@@ -583,46 +790,96 @@ export type Database = {
           view_count?: number
           weight_kg?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "listings_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "market_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listings_price_unit_slug_fkey"
+            columns: ["price_unit_slug"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["slug"]
+          },
+        ]
       }
       market_categories: {
         Row: {
+          accepts_listings: boolean
+          canonical_path: string | null
           created_at: string
           description: string | null
           icon_key: string | null
           id: string
           is_active: boolean
+          is_promoted: boolean
           label: string
+          label_local: Json
+          merged_into_id: string | null
+          parent_id: string | null
           pillar_slug: string
           slug: string
           sort_order: number
+          status: string
           updated_at: string
         }
         Insert: {
+          accepts_listings?: boolean
+          canonical_path?: string | null
           created_at?: string
           description?: string | null
           icon_key?: string | null
           id?: string
           is_active?: boolean
+          is_promoted?: boolean
           label: string
+          label_local?: Json
+          merged_into_id?: string | null
+          parent_id?: string | null
           pillar_slug: string
           slug: string
           sort_order?: number
+          status?: string
           updated_at?: string
         }
         Update: {
+          accepts_listings?: boolean
+          canonical_path?: string | null
           created_at?: string
           description?: string | null
           icon_key?: string | null
           id?: string
           is_active?: boolean
+          is_promoted?: boolean
           label?: string
+          label_local?: Json
+          merged_into_id?: string | null
+          parent_id?: string | null
           pillar_slug?: string
           slug?: string
           sort_order?: number
+          status?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "market_categories_merged_into_id_fkey"
+            columns: ["merged_into_id"]
+            isOneToOne: false
+            referencedRelation: "market_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "market_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "market_categories_pillar_slug_fkey"
             columns: ["pillar_slug"]
@@ -670,51 +927,77 @@ export type Database = {
       }
       market_pillars: {
         Row: {
+          accepts_vendor_stores: boolean
+          allowed_units: string[]
           created_at: string
+          default_unit_slug: string | null
           description: string | null
+          has_directory: boolean
           icon_key: string | null
           is_active: boolean
           is_marketplace: boolean
           label: string
+          label_local: Json
           requires_condition: boolean
           requires_expiry: boolean
           requires_licence: boolean
           short_label: string
           slug: string
           sort_order: number
+          status: string
           updated_at: string
         }
         Insert: {
+          accepts_vendor_stores?: boolean
+          allowed_units?: string[]
           created_at?: string
+          default_unit_slug?: string | null
           description?: string | null
+          has_directory?: boolean
           icon_key?: string | null
           is_active?: boolean
           is_marketplace?: boolean
           label: string
+          label_local?: Json
           requires_condition?: boolean
           requires_expiry?: boolean
           requires_licence?: boolean
           short_label: string
           slug: string
           sort_order?: number
+          status?: string
           updated_at?: string
         }
         Update: {
+          accepts_vendor_stores?: boolean
+          allowed_units?: string[]
           created_at?: string
+          default_unit_slug?: string | null
           description?: string | null
+          has_directory?: boolean
           icon_key?: string | null
           is_active?: boolean
           is_marketplace?: boolean
           label?: string
+          label_local?: Json
           requires_condition?: boolean
           requires_expiry?: boolean
           requires_licence?: boolean
           short_label?: string
           slug?: string
           sort_order?: number
+          status?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "market_pillars_default_unit_slug_fkey"
+            columns: ["default_unit_slug"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["slug"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -835,12 +1118,14 @@ export type Database = {
       service_profiles: {
         Row: {
           address: string | null
+          attributes: Json
           badge_tier: string
           base_rate_ghs: number | null
           blurb: string | null
           business_hours: Json
           business_name: string
           category: string
+          category_id: string | null
           cover_path: string | null
           coverage_districts: string[]
           coverage_regions: string[]
@@ -862,12 +1147,14 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          attributes?: Json
           badge_tier?: string
           base_rate_ghs?: number | null
           blurb?: string | null
           business_hours?: Json
           business_name: string
           category: string
+          category_id?: string | null
           cover_path?: string | null
           coverage_districts?: string[]
           coverage_regions?: string[]
@@ -889,12 +1176,14 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          attributes?: Json
           badge_tier?: string
           base_rate_ghs?: number | null
           blurb?: string | null
           business_hours?: Json
           business_name?: string
           category?: string
+          category_id?: string | null
           cover_path?: string | null
           coverage_districts?: string[]
           coverage_regions?: string[]
@@ -914,7 +1203,15 @@ export type Database = {
           updated_at?: string
           whatsapp_e164?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "service_profiles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "market_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       service_requests: {
         Row: {
@@ -996,6 +1293,72 @@ export type Database = {
           },
         ]
       }
+      taxonomy_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after: Json | null
+          before: Json | null
+          created_at: string
+          id: number
+          row_id: string
+          table_name: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: number
+          row_id: string
+          table_name: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: number
+          row_id?: string
+          table_name?: string
+        }
+        Relationships: []
+      }
+      units: {
+        Row: {
+          created_at: string
+          is_active: boolean
+          kind: string
+          label_en: string
+          label_local: Json
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          is_active?: boolean
+          kind: string
+          label_en: string
+          label_local?: Json
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          is_active?: boolean
+          kind?: string
+          label_en?: string
+          label_local?: Json
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1014,6 +1377,48 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vaccines: {
+        Row: {
+          created_at: string
+          disease: string | null
+          id: string
+          label_en: string
+          label_local: Json
+          slug: string
+          status: string
+          submitted_by: string | null
+          target_species: string[]
+          updated_at: string
+          withdrawal_days: number | null
+        }
+        Insert: {
+          created_at?: string
+          disease?: string | null
+          id?: string
+          label_en: string
+          label_local?: Json
+          slug: string
+          status?: string
+          submitted_by?: string | null
+          target_species?: string[]
+          updated_at?: string
+          withdrawal_days?: number | null
+        }
+        Update: {
+          created_at?: string
+          disease?: string | null
+          id?: string
+          label_en?: string
+          label_local?: Json
+          slug?: string
+          status?: string
+          submitted_by?: string | null
+          target_species?: string[]
+          updated_at?: string
+          withdrawal_days?: number | null
         }
         Relationships: []
       }
@@ -1099,6 +1504,7 @@ export type Database = {
         Args: { _batch_id: string; _user_id: string }
         Returns: boolean
       }
+      recompute_category_path: { Args: { _id: string }; Returns: undefined }
       resolve_category_slug: {
         Args: { _pillar: string; _slug: string }
         Returns: string
