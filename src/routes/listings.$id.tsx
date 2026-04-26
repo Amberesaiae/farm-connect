@@ -14,7 +14,7 @@ import { useAuth } from "@/lib/auth-context";
 import { formatGhs, formatPriceUnit, formatRelative } from "@/lib/format";
 import { listingPhotoUrl } from "@/lib/photo-url";
 import { useServerFn } from "@tanstack/react-start";
-import { logView } from "@/server/listings.functions";
+import { recordView } from "@/server/contact.functions";
 import { ArrowLeftIcon, EyeIcon, MapPinIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 
@@ -29,9 +29,11 @@ export const Route = createFileRoute("/listings/$id")({
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!data) throw notFound();
+    // NOTE: do NOT select whatsapp_e164 here — phone numbers are revealed
+    // through the rate-limited `reveal_contact` RPC, not the public loader.
     const { data: profile } = await supabase
       .from("profiles")
-      .select("display_name,avatar_url,badge_tier,trade_count,listing_count,whatsapp_e164")
+      .select("display_name,avatar_url,badge_tier,trade_count,listing_count")
       .eq("id", data.seller_id)
       .maybeSingle();
     let store: { slug: string; business_name: string; logo_path: string | null; region: string } | null = null;
@@ -97,7 +99,7 @@ function ListingDetail() {
   const { user } = useAuth();
   const [savedInitial, setSavedInitial] = useState(false);
   const [savedLoaded, setSavedLoaded] = useState(false);
-  const logViewFn = useServerFn(logView);
+  const logViewFn = useServerFn(recordView);
 
   useEffect(() => {
     void logViewFn({ data: { listingId: listing.id } });
@@ -209,7 +211,6 @@ function ListingDetail() {
               <WhatsAppCTA
                 listingId={listing.id}
                 listingTitle={listing.title}
-                sellerWhatsappE164={seller?.whatsapp_e164 ?? null}
               />
               {savedLoaded && (
                 <SaveButton listingId={listing.id} initialSaved={savedInitial} variant="full" />
@@ -219,13 +220,12 @@ function ListingDetail() {
         </div>
       </div>
 
-      {savedLoaded && seller?.whatsapp_e164 && (
+      {savedLoaded && (
         <StickyContactBar>
           <div className="flex-1">
             <WhatsAppCTA
               listingId={listing.id}
               listingTitle={listing.title}
-              sellerWhatsappE164={seller.whatsapp_e164}
             />
           </div>
           <SaveButton listingId={listing.id} initialSaved={savedInitial} variant="square" />

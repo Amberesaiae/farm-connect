@@ -3,6 +3,8 @@ import appCss from "../styles.css?url";
 import { AuthProvider } from "@/lib/auth-context";
 import { TaxonomyProvider } from "@/lib/taxonomy-context";
 import { Toaster } from "@/components/ui/sonner";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState } from "react";
 
 function NotFoundComponent() {
   return (
@@ -77,12 +79,24 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  // Fresh QueryClient per render tree (per-request on SSR) — avoids
+  // leaking cached session/role data across users.
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: false },
+        },
+      }),
+  );
   return (
-    <AuthProvider>
-      <TaxonomyProvider>
-        <Outlet />
-        <Toaster richColors position="top-center" />
-      </TaxonomyProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TaxonomyProvider>
+          <Outlet />
+          <Toaster richColors position="top-center" />
+        </TaxonomyProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
