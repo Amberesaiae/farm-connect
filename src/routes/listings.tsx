@@ -22,6 +22,7 @@ import type { ListingCardData } from "@/components/listing/ListingCard";
 import { TopCategoryTabs } from "@/components/listing/TopCategoryTabs";
 import { type TopCategory } from "@/lib/categories";
 import { useTaxonomy } from "@/lib/taxonomy-context";
+import type { ResolvedAttribute, Taxonomy } from "@/lib/taxonomy";
 import mixedHero from "@/assets/mixed-hero.jpg";
 
 interface ListingsSearch {
@@ -33,6 +34,8 @@ interface ListingsSearch {
   verifiedOnly?: boolean;
   minPrice?: number;
   maxPrice?: number;
+  /** Dynamic per-category attribute filters keyed `attr_<key>`. */
+  attrs?: Record<string, string>;
 }
 
 const TOP_VALUES: readonly string[] = [
@@ -43,19 +46,28 @@ const TOP_VALUES: readonly string[] = [
 ];
 
 export const Route = createFileRoute("/listings")({
-  validateSearch: (s: Record<string, unknown>): ListingsSearch => ({
-    q: typeof s.q === "string" ? s.q : undefined,
-    topCategory:
-      typeof s.topCategory === "string" && TOP_VALUES.includes(s.topCategory)
-        ? (s.topCategory as TopCategory)
-        : undefined,
-    category: typeof s.category === "string" ? s.category : undefined,
-    subcategory: typeof s.subcategory === "string" ? s.subcategory : undefined,
-    region: typeof s.region === "string" ? s.region : undefined,
-    verifiedOnly: s.verifiedOnly === true || s.verifiedOnly === "true",
-    minPrice: typeof s.minPrice === "string" ? Number(s.minPrice) : undefined,
-    maxPrice: typeof s.maxPrice === "string" ? Number(s.maxPrice) : undefined,
-  }),
+  validateSearch: (s: Record<string, unknown>): ListingsSearch => {
+    const attrs: Record<string, string> = {};
+    for (const [k, v] of Object.entries(s)) {
+      if (k.startsWith("attr_") && typeof v === "string" && v.length > 0) {
+        attrs[k.slice(5)] = v;
+      }
+    }
+    return {
+      q: typeof s.q === "string" ? s.q : undefined,
+      topCategory:
+        typeof s.topCategory === "string" && TOP_VALUES.includes(s.topCategory)
+          ? (s.topCategory as TopCategory)
+          : undefined,
+      category: typeof s.category === "string" ? s.category : undefined,
+      subcategory: typeof s.subcategory === "string" ? s.subcategory : undefined,
+      region: typeof s.region === "string" ? s.region : undefined,
+      verifiedOnly: s.verifiedOnly === true || s.verifiedOnly === "true",
+      minPrice: typeof s.minPrice === "string" ? Number(s.minPrice) : undefined,
+      maxPrice: typeof s.maxPrice === "string" ? Number(s.maxPrice) : undefined,
+      attrs: Object.keys(attrs).length ? attrs : undefined,
+    };
+  },
   head: () => ({
     meta: [
       { title: "Browse livestock — farmlink" },
@@ -90,6 +102,12 @@ function ListingsPage() {
   const { taxonomy } = useTaxonomy();
   const [rows, setRows] = useState<ListingCardData[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Resolve the active category id (for filter rendering + JSONB query).
+  const pillarForCat = search.topCategory ?? "livestock";
+  const activeSlug = search.subcategory ?? search.category ?? null;
+  const activeCategory = taxonomy.resolveCategory(pillarForCat, activeSlug);
+  const filterableAttrs = taxonomy.filterableFor(activeCategory?.id);
 
   useEffect(() => {
     let cancelled = false;
@@ -126,6 +144,18 @@ function ListingsPage() {
       if (typeof search.maxPrice === "number" && !Number.isNaN(search.maxPrice))
         query = query.lte("price_ghs", search.maxPrice);
       if (search.q) query = query.textSearch("search_vector", search.q, { type: "websearch" });
+
+      // Dynamic attribute filters → JSONB containment (uses GIN index).
+      const attrEntries = Object.entries(search.attrs ?? {}).filter(([, v]) => v && v.length > 0);
+      if (attrEntries.length > 0) {
+        const obj: Record<string, unknown> = {};
+        for (const [k, v] of attrEntries) {
+          if (v === "true") obj[k] = true;
+          else if (v === "false") obj[k] = false;
+          else obj[k] = v;
+        }
+        query = query.contains("attributes", obj);
+      }
 
       const { data, error } = await query;
       if (cancelled) return;
@@ -175,20 +205,58 @@ function ListingsPage() {
     return () => {
       cancelled = true;
     };
-  }, [search.q, search.topCategory, search.subcategory, search.category, search.region, search.verifiedOnly, search.minPrice, search.maxPrice]);
+  }, [
+    search.q,
+    search.topCategory,
+    search.subcategory,
+    search.category,
+    search.region,
+    search.verifiedOnly,
+    search.minPrice,
+    search.maxPrice,
+    // re-fetch when dynamic attribute filters change
+    JSON.stringify(search.attrs ?? {}),
+  ]);
 
   const update = (patch: Partial<ListingsSearch>) => {
-    navigate({ to: "/listings", search: { ...search, ...patch } as never });
+    // When the category context changes, drop attrs that no longer apply.
+    const next = { ...search, ...patch };
+    if (
+      ("topCategory" in patch || "subcategory" in patch || "category" in patch) &&
+      !("attrs" in patch)
+    ) {
+      next.attrs = undefined;
+    }
+    // Flatten attrs into top-level `attr_<key>` search params for shareable URLs.
+    const flat: Record<string, unknown> = { ...next };
+    delete (flat as { attrs?: unknown }).attrs;
+    for (const [k, v] of Object.entries(next.attrs ?? {})) {
+      if (v) flat[`attr_${k}`] = v;
+    }
+    // Strip any stale `attr_*` params from current search that aren't in next.attrs.
+    for (const key of Object.keys(search)) {
+      if (key.startsWith("attr_") && !(key in flat)) {
+        flat[key] = undefined;
+      }
+    }
+    navigate({ to: "/listings", search: flat as never });
   };
 
   const activeCount =
     (search.region ? 1 : 0) +
     (search.minPrice ? 1 : 0) +
     (search.maxPrice ? 1 : 0) +
-    (search.verifiedOnly ? 1 : 0);
+    (search.verifiedOnly ? 1 : 0) +
+    Object.values(search.attrs ?? {}).filter(Boolean).length;
 
   const FiltersPanel = (
-    <FiltersInner search={search} update={update} navigate={navigate} />
+    <FiltersInner
+      search={search}
+      update={update}
+      navigate={navigate}
+      filterableAttrs={filterableAttrs}
+      taxonomy={taxonomy}
+    />
   );
 
   return (
@@ -263,11 +331,22 @@ function FiltersInner({
   search,
   update,
   navigate,
+  filterableAttrs,
+  taxonomy,
 }: {
   search: ListingsSearch;
   update: (patch: Partial<ListingsSearch>) => void;
   navigate: ReturnType<typeof useNavigate>;
+  filterableAttrs: ResolvedAttribute[];
+  taxonomy: Taxonomy;
 }): ReactNode {
+  const setAttr = (key: string, value: string | undefined) => {
+    const next = { ...(search.attrs ?? {}) };
+    if (value === undefined || value === "" || value === "all") delete next[key];
+    else next[key] = value;
+    update({ attrs: Object.keys(next).length ? next : undefined });
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -338,6 +417,23 @@ function FiltersInner({
         />
       </div>
 
+      {filterableAttrs.length > 0 && (
+        <div className="space-y-3 rounded-xl border border-dashed border-border p-3">
+          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            More filters
+          </div>
+          {filterableAttrs.map((a) => (
+            <AttributeFilter
+              key={a.definition.key}
+              attr={a}
+              value={search.attrs?.[a.definition.key]}
+              onChange={(v) => setAttr(a.definition.key, v)}
+              taxonomy={taxonomy}
+            />
+          ))}
+        </div>
+      )}
+
       <Button
         variant="ghost"
         className="w-full rounded-xl"
@@ -345,6 +441,88 @@ function FiltersInner({
       >
         Clear filters
       </Button>
+    </div>
+  );
+}
+
+function humanise(s: string) {
+  return s.replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
+}
+
+function AttributeFilter({
+  attr,
+  value,
+  onChange,
+  taxonomy,
+}: {
+  attr: ResolvedAttribute;
+  value: string | undefined;
+  onChange: (v: string | undefined) => void;
+  taxonomy: Taxonomy;
+}) {
+  const def = attr.definition;
+  const label = (
+    <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      {def.labelEn || humanise(def.key)}
+    </Label>
+  );
+
+  if (def.dataType === "boolean") {
+    return (
+      <div className="flex items-center justify-between rounded-lg bg-surface px-3 py-2">
+        <Label className="cursor-pointer text-sm font-medium">{def.labelEn}</Label>
+        <Switch
+          checked={value === "true"}
+          onCheckedChange={(c) => onChange(c ? "true" : undefined)}
+        />
+      </div>
+    );
+  }
+
+  let options: { value: string; label: string }[] = [];
+  if (def.dataType === "enum") {
+    options = def.enumValues.map((o) => ({ value: o, label: humanise(o) }));
+  } else if (def.dataType === "reference") {
+    if (def.referenceTable === "breeds") {
+      options = taxonomy.breeds.map((b) => ({ value: b.slug, label: b.labelEn }));
+    } else if (def.referenceTable === "vaccines") {
+      options = taxonomy.vaccines.map((v) => ({ value: v.slug, label: v.labelEn }));
+    } else if (def.referenceTable === "feed_brands") {
+      options = taxonomy.feedBrands.map((f) => ({ value: f.slug, label: f.labelEn }));
+    }
+  }
+
+  if (options.length > 0) {
+    return (
+      <div>
+        {label}
+        <Select value={value ?? "all"} onValueChange={(v) => onChange(v === "all" ? undefined : v)}>
+          <SelectTrigger className="mt-1.5 w-full rounded-xl">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Any</SelectItem>
+            {options.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  }
+
+  // Fallback for text/number/date — free input that contains-matches.
+  return (
+    <div>
+      {label}
+      <Input
+        defaultValue={value ?? ""}
+        placeholder={def.helpText ?? ""}
+        className="mt-1.5 h-10 rounded-xl"
+        onBlur={(e) => onChange(e.target.value || undefined)}
+      />
     </div>
   );
 }

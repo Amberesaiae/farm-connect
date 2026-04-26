@@ -857,16 +857,6 @@ function CatalogsPanel({ onChanged }: { onChanged: () => void }) {
   );
 }
 
-function CatalogStatusPill({ status }: { status: string }) {
-  const cls =
-    status === "active"
-      ? "bg-emerald-500/10 text-emerald-600"
-      : status === "pending"
-        ? "bg-amber-500/10 text-amber-700"
-        : "bg-muted text-muted-foreground";
-  return <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${cls}`}>{status}</span>;
-}
-
 function BreedsCatalog({ onChanged }: { onChanged: () => void }) {
   const { taxonomy } = useTaxonomy();
   const [filter, setFilter] = useState("");
@@ -939,76 +929,348 @@ function BreedsCatalog({ onChanged }: { onChanged: () => void }) {
   );
 }
 
+
 function VaccinesCatalog({ onChanged }: { onChanged: () => void }) {
   const { taxonomy } = useTaxonomy();
+  const [filter, setFilter] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [label, setLabel] = useState("");
+  const [slug, setSlug] = useState("");
+  const [disease, setDisease] = useState("");
+  const [species, setSpecies] = useState("");
+  const [withdrawal, setWithdrawal] = useState<string>("");
+  const [busy, setBusy] = useState(false);
+
+  const list = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    const arr = [...taxonomy.vaccines].sort((a, b) => a.labelEn.localeCompare(b.labelEn));
+    if (!q) return arr;
+    return arr.filter(
+      (v) =>
+        v.labelEn.toLowerCase().includes(q) ||
+        v.slug.includes(q) ||
+        (v.disease ?? "").toLowerCase().includes(q),
+    );
+  }, [taxonomy.vaccines, filter]);
+
+  const submit = async () => {
+    if (!label || !slug) return;
+    setBusy(true);
+    const { error } = await supabase.from("vaccines").insert({
+      slug,
+      label_en: label,
+      disease: disease || null,
+      target_species: species
+        ? species.split(",").map((s) => s.trim()).filter(Boolean)
+        : [],
+      withdrawal_days: withdrawal ? Number(withdrawal) : null,
+      status: "active",
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Vaccine added");
+    setLabel("");
+    setSlug("");
+    setDisease("");
+    setSpecies("");
+    setWithdrawal("");
+    setCreating(false);
+    onChanged();
+  };
+
+  const setStatus = async (id: string, status: "active" | "pending" | "archived") => {
+    const { error } = await supabase.from("vaccines").update({ status }).eq("id", id);
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Updated");
+      onChanged();
+    }
+  };
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[640px] text-sm">
-        <thead>
-          <tr className="text-left text-[11px] uppercase tracking-wide text-muted-foreground">
-            <th className="px-2 py-1.5">Label</th>
-            <th className="px-2 py-1.5">Disease</th>
-            <th className="px-2 py-1.5">Species</th>
-            <th className="px-2 py-1.5 w-20">Withdrawal</th>
-          </tr>
-        </thead>
-        <tbody>
-          {taxonomy.vaccines.map((v) => (
-            <tr key={v.id} className="border-t border-border">
-              <td className="px-2 py-1.5">{v.labelEn}</td>
-              <td className="px-2 py-1.5 text-xs text-muted-foreground">{v.disease ?? "—"}</td>
-              <td className="px-2 py-1.5 text-xs text-muted-foreground">
-                {v.targetSpecies.join(", ") || "—"}
-              </td>
-              <td className="px-2 py-1.5 text-xs">{v.withdrawalDays ?? "—"}</td>
+    <>
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          placeholder="Search vaccines…"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="h-8 w-64 rounded-xl"
+        />
+        <Button
+          size="sm"
+          variant={creating ? "ghost" : "outline"}
+          onClick={() => setCreating((v) => !v)}
+          className="rounded-xl"
+        >
+          <Plus className="mr-1 h-3.5 w-3.5" />
+          {creating ? "Cancel" : "New vaccine"}
+        </Button>
+      </div>
+
+      {creating && (
+        <div className="mt-3 grid grid-cols-1 gap-2 rounded-xl border border-dashed border-border p-3 sm:grid-cols-5">
+          <div className="sm:col-span-2">
+            <Label className="text-[11px]">Label</Label>
+            <Input
+              className="h-8 rounded-lg"
+              value={label}
+              onChange={(e) => {
+                setLabel(e.target.value);
+                if (!slug) setSlug(slugify(e.target.value));
+              }}
+            />
+          </div>
+          <div>
+            <Label className="text-[11px]">Slug</Label>
+            <Input
+              className="h-8 rounded-lg font-mono text-xs"
+              value={slug}
+              onChange={(e) => setSlug(slugify(e.target.value))}
+            />
+          </div>
+          <div>
+            <Label className="text-[11px]">Disease</Label>
+            <Input
+              className="h-8 rounded-lg"
+              value={disease}
+              onChange={(e) => setDisease(e.target.value)}
+              placeholder="e.g. Newcastle"
+            />
+          </div>
+          <div>
+            <Label className="text-[11px]">Species (comma)</Label>
+            <Input
+              className="h-8 rounded-lg"
+              value={species}
+              onChange={(e) => setSpecies(e.target.value)}
+              placeholder="poultry, cattle"
+            />
+          </div>
+          <div>
+            <Label className="text-[11px]">Withdrawal (days)</Label>
+            <Input
+              type="number"
+              className="h-8 rounded-lg"
+              value={withdrawal}
+              onChange={(e) => setWithdrawal(e.target.value)}
+            />
+          </div>
+          <div className="sm:col-span-5 flex justify-end">
+            <Button size="sm" onClick={submit} disabled={busy || !label || !slug} className="rounded-xl">
+              Add vaccine
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[680px] text-sm">
+          <thead>
+            <tr className="text-left text-[11px] uppercase tracking-wide text-muted-foreground">
+              <th className="px-2 py-1.5">Label</th>
+              <th className="px-2 py-1.5">Slug</th>
+              <th className="px-2 py-1.5">Disease</th>
+              <th className="px-2 py-1.5">Species</th>
+              <th className="px-2 py-1.5 w-20">Withdrawal</th>
+              <th className="px-2 py-1.5 w-32">Status</th>
             </tr>
-          ))}
-          {taxonomy.vaccines.length === 0 && (
-            <tr>
-              <td colSpan={4} className="px-2 py-3 text-xs text-muted-foreground">
-                No vaccines yet — seed via SQL or admin create flow.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-      <p className="mt-3 text-[11px] text-muted-foreground">
-        Vaccine and feed-brand creation belongs in a dedicated tool — read-only here for now.
-      </p>
-      {/* keep onChanged referenced so future inline edits are easy to wire */}
-      <span className="hidden">{onChanged.length}</span>
-    </div>
+          </thead>
+          <tbody>
+            {list.map((v) => (
+              <tr key={v.id} className="border-t border-border">
+                <td className="px-2 py-1.5">{v.labelEn}</td>
+                <td className="px-2 py-1.5 font-mono text-[11px] text-muted-foreground">{v.slug}</td>
+                <td className="px-2 py-1.5 text-xs text-muted-foreground">{v.disease ?? "—"}</td>
+                <td className="px-2 py-1.5 text-xs text-muted-foreground">
+                  {v.targetSpecies.join(", ") || "—"}
+                </td>
+                <td className="px-2 py-1.5 text-xs">{v.withdrawalDays ?? "—"}</td>
+                <td className="px-2 py-1.5">
+                  <Select
+                    defaultValue="active"
+                    onValueChange={(s) => setStatus(v.id, s as "active" | "pending" | "archived")}
+                  >
+                    <SelectTrigger className="h-7 rounded-lg text-xs">
+                      <SelectValue placeholder="active" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </td>
+              </tr>
+            ))}
+            {list.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-2 py-3 text-xs text-muted-foreground">
+                  No vaccines match.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
 
 function FeedBrandsCatalog({ onChanged }: { onChanged: () => void }) {
   const { taxonomy } = useTaxonomy();
+  const [filter, setFilter] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [label, setLabel] = useState("");
+  const [slug, setSlug] = useState("");
+  const [manufacturer, setManufacturer] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const list = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    const arr = [...taxonomy.feedBrands].sort((a, b) => a.labelEn.localeCompare(b.labelEn));
+    if (!q) return arr;
+    return arr.filter(
+      (f) =>
+        f.labelEn.toLowerCase().includes(q) ||
+        f.slug.includes(q) ||
+        (f.manufacturer ?? "").toLowerCase().includes(q),
+    );
+  }, [taxonomy.feedBrands, filter]);
+
+  const submit = async () => {
+    if (!label || !slug) return;
+    setBusy(true);
+    const { error } = await supabase.from("feed_brands").insert({
+      slug,
+      label_en: label,
+      manufacturer: manufacturer || null,
+      status: "active",
+    });
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Brand added");
+    setLabel("");
+    setSlug("");
+    setManufacturer("");
+    setCreating(false);
+    onChanged();
+  };
+
+  const setStatus = async (id: string, status: "active" | "pending" | "archived") => {
+    const { error } = await supabase.from("feed_brands").update({ status }).eq("id", id);
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Updated");
+      onChanged();
+    }
+  };
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[480px] text-sm">
-        <thead>
-          <tr className="text-left text-[11px] uppercase tracking-wide text-muted-foreground">
-            <th className="px-2 py-1.5">Brand</th>
-            <th className="px-2 py-1.5">Manufacturer</th>
-          </tr>
-        </thead>
-        <tbody>
-          {taxonomy.feedBrands.map((f) => (
-            <tr key={f.id} className="border-t border-border">
-              <td className="px-2 py-1.5">{f.labelEn}</td>
-              <td className="px-2 py-1.5 text-xs text-muted-foreground">{f.manufacturer ?? "—"}</td>
+    <>
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          placeholder="Search brands…"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="h-8 w-64 rounded-xl"
+        />
+        <Button
+          size="sm"
+          variant={creating ? "ghost" : "outline"}
+          onClick={() => setCreating((v) => !v)}
+          className="rounded-xl"
+        >
+          <Plus className="mr-1 h-3.5 w-3.5" />
+          {creating ? "Cancel" : "New brand"}
+        </Button>
+      </div>
+
+      {creating && (
+        <div className="mt-3 grid grid-cols-1 gap-2 rounded-xl border border-dashed border-border p-3 sm:grid-cols-3">
+          <div>
+            <Label className="text-[11px]">Brand</Label>
+            <Input
+              className="h-8 rounded-lg"
+              value={label}
+              onChange={(e) => {
+                setLabel(e.target.value);
+                if (!slug) setSlug(slugify(e.target.value));
+              }}
+            />
+          </div>
+          <div>
+            <Label className="text-[11px]">Slug</Label>
+            <Input
+              className="h-8 rounded-lg font-mono text-xs"
+              value={slug}
+              onChange={(e) => setSlug(slugify(e.target.value))}
+            />
+          </div>
+          <div>
+            <Label className="text-[11px]">Manufacturer</Label>
+            <Input
+              className="h-8 rounded-lg"
+              value={manufacturer}
+              onChange={(e) => setManufacturer(e.target.value)}
+            />
+          </div>
+          <div className="sm:col-span-3 flex justify-end">
+            <Button size="sm" onClick={submit} disabled={busy || !label || !slug} className="rounded-xl">
+              Add brand
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[560px] text-sm">
+          <thead>
+            <tr className="text-left text-[11px] uppercase tracking-wide text-muted-foreground">
+              <th className="px-2 py-1.5">Brand</th>
+              <th className="px-2 py-1.5">Slug</th>
+              <th className="px-2 py-1.5">Manufacturer</th>
+              <th className="px-2 py-1.5 w-32">Status</th>
             </tr>
-          ))}
-          {taxonomy.feedBrands.length === 0 && (
-            <tr>
-              <td colSpan={2} className="px-2 py-3 text-xs text-muted-foreground">
-                No feed brands yet.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-      <span className="hidden">{onChanged.length}</span>
-    </div>
+          </thead>
+          <tbody>
+            {list.map((f) => (
+              <tr key={f.id} className="border-t border-border">
+                <td className="px-2 py-1.5">{f.labelEn}</td>
+                <td className="px-2 py-1.5 font-mono text-[11px] text-muted-foreground">{f.slug}</td>
+                <td className="px-2 py-1.5 text-xs text-muted-foreground">{f.manufacturer ?? "—"}</td>
+                <td className="px-2 py-1.5">
+                  <Select
+                    defaultValue="active"
+                    onValueChange={(s) => setStatus(f.id, s as "active" | "pending" | "archived")}
+                  >
+                    <SelectTrigger className="h-7 rounded-lg text-xs">
+                      <SelectValue placeholder="active" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </td>
+              </tr>
+            ))}
+            {list.length === 0 && (
+              <tr>
+                <td colSpan={4} className="px-2 py-3 text-xs text-muted-foreground">
+                  No brands match.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
