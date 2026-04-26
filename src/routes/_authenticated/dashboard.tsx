@@ -18,6 +18,7 @@ import { formatGhs, formatPriceUnit, formatRelative } from "@/lib/format";
 import { listingPhotoUrl } from "@/lib/photo-url";
 import { toast } from "sonner";
 import { Eye, MessageCircle, MoreHorizontal, Package, Plus } from "lucide-react";
+import { PhoneVerifyNudge } from "@/components/auth/PhoneVerifyNudge";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "My listings — farmlink" }] }),
