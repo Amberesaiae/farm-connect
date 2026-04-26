@@ -1517,7 +1517,14 @@ export type Database = {
         | "approved"
         | "suspended"
         | "rejected"
-      app_role: "admin" | "user"
+      app_role:
+        | "admin"
+        | "user"
+        | "moderator"
+        | "buyer"
+        | "hatchery_owner"
+        | "service_provider"
+        | "agro_vendor"
       badge_tier: "none" | "verified" | "trusted" | "top_seller"
       batch_status: "draft" | "open" | "full" | "closed" | "cancelled"
       fulfilment_mode: "pickup" | "delivery"
@@ -1706,7 +1713,15 @@ export const Constants = {
         "suspended",
         "rejected",
       ],
-      app_role: ["admin", "user"],
+      app_role: [
+        "admin",
+        "user",
+        "moderator",
+        "buyer",
+        "hatchery_owner",
+        "service_provider",
+        "agro_vendor",
+      ],
       badge_tier: ["none", "verified", "trusted", "top_seller"],
       batch_status: ["draft", "open", "full", "closed", "cancelled"],
       fulfilment_mode: ["pickup", "delivery"],
