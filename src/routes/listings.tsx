@@ -22,6 +22,7 @@ import type { ListingCardData } from "@/components/listing/ListingCard";
 import { TopCategoryTabs } from "@/components/listing/TopCategoryTabs";
 import { type TopCategory } from "@/lib/categories";
 import { useTaxonomy } from "@/lib/taxonomy-context";
+import type { ResolvedAttribute, Taxonomy } from "@/lib/taxonomy";
 import mixedHero from "@/assets/mixed-hero.jpg";
 
 interface ListingsSearch {
