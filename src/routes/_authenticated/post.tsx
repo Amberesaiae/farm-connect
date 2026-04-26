@@ -538,6 +538,7 @@ function PostWizard() {
         </div>
       </div>
       <style>{`@media (min-width: 768px) { .fixed.inset-x-0.z-30 { bottom: 0 !important; } }`}</style>
+      <RequirePhoneVerifyModal open={verifyOpen} onOpenChange={setVerifyOpen} />
     </AppShell>
   );
 }
