@@ -50,51 +50,37 @@ export const logView = createServerFn({ method: "POST" })
   });
 
 // ---------- Create listing (auth, category-aware validation) ----------
-const TOP_CATEGORIES = [
-  "livestock",
-  "agrofeed_supplements",
-  "agromed_veterinary",
-  "agro_equipment_tools",
-] as const;
-
-const createListingInput = z
-  .object({
-    title: z.string().trim().min(3).max(120),
-    top_category: z.enum(TOP_CATEGORIES).default("livestock"),
-    category: z.string().min(1).max(40),
-    subcategory_slug: z.string().max(60).optional().nullable(),
-    breed: z.string().max(60).optional().nullable(),
-    age_months: z.number().int().min(0).max(600).optional().nullable(),
-    sex: z.enum(["male", "female", "mixed"]).optional().nullable(),
-    quantity: z.number().int().min(1).max(10000).default(1),
-    weight_kg: z.number().positive().max(5000).optional().nullable(),
-    price_ghs: z.number().positive().max(10_000_000),
-    price_unit: z.enum(["per_head", "per_kg", "per_lb", "lot"]),
-    region: z.string().min(1).max(60),
-    district: z.string().max(60).optional().nullable(),
-    description: z.string().max(2000).optional().nullable(),
-    condition: z.enum(["new", "used"]).optional().nullable(),
-    stock_quantity: z.number().int().min(0).max(100000).optional().nullable(),
-    min_order_qty: z.number().int().min(1).max(10000).optional(),
-    expires_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
-    metadata: z.record(z.string(), z.unknown()).optional(),
-  })
-  .superRefine((v, ctx) => {
-    if (v.top_category === "agromed_veterinary" && !v.expires_on) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["expires_on"],
-        message: "VALIDATION_ERROR: expires_on is required for veterinary medicines",
-      });
-    }
-    if (v.top_category === "agro_equipment_tools" && !v.condition) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["condition"],
-        message: "VALIDATION_ERROR: condition is required for equipment listings",
-      });
-    }
-  });
+/**
+ * Create-listing input. The DB validation trigger
+ * (`tg_listings_normalize_taxonomy`) is the authoritative source of truth for
+ * pillar/category/attribute rules — the schema here is intentionally permissive
+ * about taxonomy fields (`top_category`/`category_id`/`attributes`) so we don't
+ * have to redeploy when taxonomy changes.
+ */
+const createListingInput = z.object({
+  title: z.string().trim().min(3).max(120),
+  top_category: z.string().min(1).max(60),
+  category: z.string().min(1).max(60),
+  category_id: z.string().uuid().optional().nullable(),
+  subcategory_slug: z.string().max(60).optional().nullable(),
+  attributes: z.record(z.string(), z.unknown()).optional(),
+  breed: z.string().max(60).optional().nullable(),
+  age_months: z.number().int().min(0).max(600).optional().nullable(),
+  sex: z.enum(["male", "female", "mixed"]).optional().nullable(),
+  quantity: z.number().int().min(1).max(10000).default(1),
+  weight_kg: z.number().positive().max(5000).optional().nullable(),
+  price_ghs: z.number().positive().max(10_000_000),
+  price_unit: z.enum(["per_head", "per_kg", "per_lb", "lot"]),
+  price_unit_slug: z.string().max(40).optional().nullable(),
+  region: z.string().min(1).max(60),
+  district: z.string().max(60).optional().nullable(),
+  description: z.string().max(2000).optional().nullable(),
+  condition: z.enum(["new", "used"]).optional().nullable(),
+  stock_quantity: z.number().int().min(0).max(100000).optional().nullable(),
+  min_order_qty: z.number().int().min(1).max(10000).optional(),
+  expires_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
 
 export const createListing = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
