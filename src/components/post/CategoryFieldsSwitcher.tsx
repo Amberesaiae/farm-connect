@@ -7,13 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AGROFEED_SUBCATEGORIES,
-  AGROMED_SUBCATEGORIES,
-  EQUIPMENT_SUBCATEGORIES,
-  LIVESTOCK_SUBCATEGORIES,
-  type TopCategory,
-} from "@/lib/categories";
+import { type TopCategory } from "@/lib/categories";
+import { useTaxonomy } from "@/lib/taxonomy-context";
 import { SEX_OPTIONS } from "@/lib/constants";
 
 export interface CategoryFieldsValue {
@@ -47,14 +42,11 @@ interface Props {
  * visually obvious through `*` markers — the server enforces the rule.
  */
 export function CategoryFieldsSwitcher({ topCategory, value, onChange }: Props) {
-  const subs =
-    topCategory === "livestock"
-      ? LIVESTOCK_SUBCATEGORIES
-      : topCategory === "agrofeed_supplements"
-        ? AGROFEED_SUBCATEGORIES
-        : topCategory === "agromed_veterinary"
-          ? AGROMED_SUBCATEGORIES
-          : EQUIPMENT_SUBCATEGORIES;
+  const { taxonomy } = useTaxonomy();
+  const subs = taxonomy.categoriesFor(topCategory);
+  const pillar = taxonomy.getPillar(topCategory);
+  const requireExpiry = pillar?.requiresExpiry ?? false;
+  const requireCondition = pillar?.requiresCondition ?? false;
 
   return (
     <div className="space-y-4">
