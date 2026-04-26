@@ -13,7 +13,7 @@ import { QuoteRequestForm } from "@/components/services/QuoteRequestForm";
 import { hatcheryPhotoUrl } from "@/lib/hatchery-photo-url";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { SERVICE_CATEGORY_LABEL } from "@/lib/categories";
+import { useTaxonomy } from "@/lib/taxonomy-context";
 import { formatGhs } from "@/lib/format";
 import { MapPin, MessageCircleMore } from "lucide-react";
 
