@@ -23,7 +23,7 @@ export const submitReport = createServerFn({ method: "POST" })
       _kind: data.kind,
       _id: data.id,
       _reason: data.reason,
-      _details: data.details ?? null,
+      _details: data.details ?? undefined,
     });
     if (error) throw appErrorResponse({ code: "INTERNAL", message: error.message });
     const r = res as { ok?: boolean; code?: string; id?: string } | null;
