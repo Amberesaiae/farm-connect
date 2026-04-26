@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { AdminGate } from "@/components/layout/AdminGate";
 import { AdminNav } from "@/components/layout/AdminNav";
-import { ShieldCheck, ListChecks, Users } from "lucide-react";
+import { ShieldCheck, ListChecks, Users, Layers } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin — farmlink" }] }),
@@ -14,6 +14,7 @@ function AdminHome() {
     { to: "/admin/verifications", title: "Verification queue", desc: "Approve or reject seller IDs.", Icon: ShieldCheck },
     { to: "/admin/listings", title: "Listing moderation", desc: "Hide, restore or delete listings.", Icon: ListChecks },
     { to: "/admin/users", title: "Users", desc: "Suspend or reinstate accounts.", Icon: Users },
+    { to: "/admin/taxonomy", title: "Taxonomy", desc: "Manage categories, attributes & catalogs.", Icon: Layers },
   ] as const;
   return (
     <AdminGate>
@@ -26,7 +27,7 @@ function AdminHome() {
           <div className="mt-5">
             <AdminNav />
           </div>
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {cards.map((c) => (
               <Link
                 key={c.to}
