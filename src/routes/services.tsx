@@ -7,7 +7,7 @@ import {
 } from "@/components/services/ServiceProfileCard";
 import { supabase } from "@/integrations/supabase/client";
 import { GHANA_REGIONS } from "@/lib/constants";
-import { SERVICE_CATEGORIES } from "@/lib/categories";
+import { useTaxonomy } from "@/lib/taxonomy-context";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,6 +48,7 @@ export const Route = createFileRoute("/services")({
 function ServicesPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
+  const { taxonomy } = useTaxonomy();
   const [rows, setRows] = useState<ServiceProfileCardData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -78,8 +79,11 @@ function ServicesPage() {
   }, [search.category, search.region]);
 
   const filters = useMemo(
-    () => [{ value: "all", label: "All" }, ...SERVICE_CATEGORIES.map((c) => ({ value: c.value, label: c.label }))],
-    [],
+    () => [
+      { value: "all", label: "All" },
+      ...taxonomy.categoriesFor("services").map((c) => ({ value: c.slug, label: c.label })),
+    ],
+    [taxonomy],
   );
 
   return (
