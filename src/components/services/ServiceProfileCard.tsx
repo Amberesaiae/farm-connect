@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { MapPin, Star } from "lucide-react";
 import { hatcheryPhotoUrl } from "@/lib/hatchery-photo-url";
-import { SERVICE_CATEGORY_LABEL } from "@/lib/categories";
+import { useTaxonomy } from "@/lib/taxonomy-context";
 import { formatGhs } from "@/lib/format";
 
 export interface ServiceProfileCardData {
@@ -20,6 +20,7 @@ export interface ServiceProfileCardData {
 }
 
 export function ServiceProfileCard({ profile }: { profile: ServiceProfileCardData }) {
+  const { taxonomy } = useTaxonomy();
   const cover = hatcheryPhotoUrl(profile.cover_path);
   const verified = profile.badge_tier && profile.badge_tier !== "none";
   return (
@@ -47,7 +48,7 @@ export function ServiceProfileCard({ profile }: { profile: ServiceProfileCardDat
       <div className="flex flex-1 flex-col p-4">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="inline-flex items-center rounded-full bg-secondary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-secondary">
-            {SERVICE_CATEGORY_LABEL[profile.category] ?? profile.category}
+            {taxonomy.labelFor("services", profile.category)}
           </span>
           {verified ? (
             <span className="inline-flex items-center rounded-full bg-primary-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
