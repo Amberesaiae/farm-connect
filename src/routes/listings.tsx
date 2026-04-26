@@ -194,7 +194,7 @@ function ListingsPage() {
   return (
     <AppShell showTrust>
       <div className="mx-auto max-w-7xl space-y-10 px-4 py-6 md:px-8 md:py-10">
-        <HeroOffer category={search.category} />
+        <HeroOffer topCategory={search.topCategory} subcategory={search.subcategory ?? search.category} />
 
         <section>
           <div className="flex items-baseline justify-between">
