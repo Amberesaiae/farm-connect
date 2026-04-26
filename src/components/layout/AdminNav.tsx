@@ -8,6 +8,7 @@ const TABS = [
   { to: "/admin/stores", label: "Shops", Icon: ShieldIcon },
   { to: "/admin/listings", label: "Listings", Icon: ListingsIcon },
   { to: "/admin/users", label: "Users", Icon: UserIcon },
+  { to: "/admin/taxonomy", label: "Taxonomy", Icon: ListingsIcon },
 ] as const;
 
 export function AdminNav() {

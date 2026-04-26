@@ -34,6 +34,7 @@ import { Route as AuthenticatedDashboardProviderRouteImport } from './routes/_au
 import { Route as AuthenticatedDashboardHatcheryRouteImport } from './routes/_authenticated/dashboard.hatchery'
 import { Route as AuthenticatedAdminVerificationsRouteImport } from './routes/_authenticated/admin.verifications'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
+import { Route as AuthenticatedAdminTaxonomyRouteImport } from './routes/_authenticated/admin.taxonomy'
 import { Route as AuthenticatedAdminStoresRouteImport } from './routes/_authenticated/admin.stores'
 import { Route as AuthenticatedAdminListingsRouteImport } from './routes/_authenticated/admin.listings'
 import { Route as AuthenticatedAdminHatcheriesRouteImport } from './routes/_authenticated/admin.hatcheries'
@@ -175,6 +176,12 @@ const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminTaxonomyRoute =
+  AuthenticatedAdminTaxonomyRouteImport.update({
+    id: '/taxonomy',
+    path: '/taxonomy',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminStoresRoute =
   AuthenticatedAdminStoresRouteImport.update({
     id: '/stores',
@@ -250,6 +257,7 @@ export interface FileRoutesByFullPath {
   '/admin/hatcheries': typeof AuthenticatedAdminHatcheriesRoute
   '/admin/listings': typeof AuthenticatedAdminListingsRoute
   '/admin/stores': typeof AuthenticatedAdminStoresRoute
+  '/admin/taxonomy': typeof AuthenticatedAdminTaxonomyRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/dashboard/hatchery': typeof AuthenticatedDashboardHatcheryRouteWithChildren
@@ -285,6 +293,7 @@ export interface FileRoutesByTo {
   '/admin/hatcheries': typeof AuthenticatedAdminHatcheriesRoute
   '/admin/listings': typeof AuthenticatedAdminListingsRoute
   '/admin/stores': typeof AuthenticatedAdminStoresRoute
+  '/admin/taxonomy': typeof AuthenticatedAdminTaxonomyRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/dashboard/hatchery': typeof AuthenticatedDashboardHatcheryRouteWithChildren
@@ -322,6 +331,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/hatcheries': typeof AuthenticatedAdminHatcheriesRoute
   '/_authenticated/admin/listings': typeof AuthenticatedAdminListingsRoute
   '/_authenticated/admin/stores': typeof AuthenticatedAdminStoresRoute
+  '/_authenticated/admin/taxonomy': typeof AuthenticatedAdminTaxonomyRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/admin/verifications': typeof AuthenticatedAdminVerificationsRoute
   '/_authenticated/dashboard/hatchery': typeof AuthenticatedDashboardHatcheryRouteWithChildren
@@ -359,6 +369,7 @@ export interface FileRouteTypes {
     | '/admin/hatcheries'
     | '/admin/listings'
     | '/admin/stores'
+    | '/admin/taxonomy'
     | '/admin/users'
     | '/admin/verifications'
     | '/dashboard/hatchery'
@@ -394,6 +405,7 @@ export interface FileRouteTypes {
     | '/admin/hatcheries'
     | '/admin/listings'
     | '/admin/stores'
+    | '/admin/taxonomy'
     | '/admin/users'
     | '/admin/verifications'
     | '/dashboard/hatchery'
@@ -430,6 +442,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/hatcheries'
     | '/_authenticated/admin/listings'
     | '/_authenticated/admin/stores'
+    | '/_authenticated/admin/taxonomy'
     | '/_authenticated/admin/users'
     | '/_authenticated/admin/verifications'
     | '/_authenticated/dashboard/hatchery'
@@ -636,6 +649,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/taxonomy': {
+      id: '/_authenticated/admin/taxonomy'
+      path: '/taxonomy'
+      fullPath: '/admin/taxonomy'
+      preLoaderRoute: typeof AuthenticatedAdminTaxonomyRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/stores': {
       id: '/_authenticated/admin/stores'
       path: '/stores'
@@ -706,6 +726,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminHatcheriesRoute: typeof AuthenticatedAdminHatcheriesRoute
   AuthenticatedAdminListingsRoute: typeof AuthenticatedAdminListingsRoute
   AuthenticatedAdminStoresRoute: typeof AuthenticatedAdminStoresRoute
+  AuthenticatedAdminTaxonomyRoute: typeof AuthenticatedAdminTaxonomyRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedAdminVerificationsRoute: typeof AuthenticatedAdminVerificationsRoute
 }
@@ -714,6 +735,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminHatcheriesRoute: AuthenticatedAdminHatcheriesRoute,
   AuthenticatedAdminListingsRoute: AuthenticatedAdminListingsRoute,
   AuthenticatedAdminStoresRoute: AuthenticatedAdminStoresRoute,
+  AuthenticatedAdminTaxonomyRoute: AuthenticatedAdminTaxonomyRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedAdminVerificationsRoute: AuthenticatedAdminVerificationsRoute,
 }
