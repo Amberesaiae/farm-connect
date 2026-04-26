@@ -857,16 +857,6 @@ function CatalogsPanel({ onChanged }: { onChanged: () => void }) {
   );
 }
 
-function CatalogStatusPill({ status }: { status: string }) {
-  const cls =
-    status === "active"
-      ? "bg-emerald-500/10 text-emerald-600"
-      : status === "pending"
-        ? "bg-amber-500/10 text-amber-700"
-        : "bg-muted text-muted-foreground";
-  return <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${cls}`}>{status}</span>;
-}
-
 function BreedsCatalog({ onChanged }: { onChanged: () => void }) {
   const { taxonomy } = useTaxonomy();
   const [filter, setFilter] = useState("");
