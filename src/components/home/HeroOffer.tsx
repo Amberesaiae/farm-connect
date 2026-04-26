@@ -1,9 +1,20 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRightIcon, ShieldIcon } from "@/components/icons";
 import { heroForCategory } from "@/lib/hero-image";
+import { useTaxonomy } from "@/lib/taxonomy-context";
 
-export function HeroOffer({ category }: { category?: string }) {
-  const hero = heroForCategory(category);
+export function HeroOffer({
+  topCategory,
+  subcategory,
+}: {
+  topCategory?: string;
+  subcategory?: string;
+}) {
+  const { taxonomy } = useTaxonomy();
+  // Resolve to the canonical icon_key so a `?subcategory=goat` legacy alias
+  // still picks up the goats hero.
+  const iconKey = taxonomy.iconFor(topCategory ?? "livestock", subcategory);
+  const hero = heroForCategory(iconKey ?? subcategory);
   return (
     <section className="relative overflow-hidden rounded-3xl bg-primary text-primary-foreground">
       <div
