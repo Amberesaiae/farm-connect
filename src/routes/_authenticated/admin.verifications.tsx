@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
-import { AdminGate } from "@/components/layout/AdminGate";
+import { StaffGate } from "@/components/layout/StaffGate";
 import { AdminNav } from "@/components/layout/AdminNav";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -69,7 +69,7 @@ function VerificationQueue() {
   };
 
   return (
-    <AdminGate>
+    <StaffGate>
       <AppShell>
         <div className="mx-auto max-w-4xl px-4 py-6 md:py-8">
           <h1 className="font-display text-[28px] font-extrabold tracking-tight">
@@ -134,6 +134,6 @@ function VerificationQueue() {
           </div>
         </div>
       </AppShell>
-    </AdminGate>
+    </StaffGate>
   );
 }

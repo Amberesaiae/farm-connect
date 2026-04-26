@@ -1,7 +1,7 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
-import { AdminGate } from "@/components/layout/AdminGate";
+import { StaffGate } from "@/components/layout/StaffGate";
 import { AdminNav } from "@/components/layout/AdminNav";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
@@ -62,7 +62,7 @@ function AdminStoresPage() {
           </div>
         </div>
         <AdminNav />
-        <AdminGate><Inner /></AdminGate>
+        <StaffGate><Inner /></StaffGate>
       </div>
     </AppShell>
   );
