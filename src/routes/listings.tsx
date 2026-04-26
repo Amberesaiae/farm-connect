@@ -20,7 +20,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { GHANA_REGIONS } from "@/lib/constants";
 import type { ListingCardData } from "@/components/listing/ListingCard";
 import { TopCategoryTabs } from "@/components/listing/TopCategoryTabs";
-import { TOP_CATEGORIES, type TopCategory } from "@/lib/categories";
+import { type TopCategory } from "@/lib/categories";
+import { useTaxonomy } from "@/lib/taxonomy-context";
 import mixedHero from "@/assets/mixed-hero.jpg";
 
 interface ListingsSearch {
@@ -34,7 +35,12 @@ interface ListingsSearch {
   maxPrice?: number;
 }
 
-const TOP_VALUES = TOP_CATEGORIES.map((c) => c.value) as readonly string[];
+const TOP_VALUES: readonly string[] = [
+  "livestock",
+  "agrofeed_supplements",
+  "agromed_veterinary",
+  "agro_equipment_tools",
+];
 
 export const Route = createFileRoute("/listings")({
   validateSearch: (s: Record<string, unknown>): ListingsSearch => ({
@@ -81,6 +87,7 @@ interface Row {
 function ListingsPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
+  const { taxonomy } = useTaxonomy();
   const [rows, setRows] = useState<ListingCardData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -88,6 +95,17 @@ function ListingsPage() {
     let cancelled = false;
     async function load() {
       setLoading(true);
+      // Resolve any legacy alias (e.g. ?category=goat) to its canonical slug
+      // so old shared links keep working with the new taxonomy.
+      const pillarForCat = search.topCategory ?? "livestock";
+      const canonicalSubcategory =
+        search.subcategory
+          ? (taxonomy.canonicalSlug(pillarForCat, search.subcategory) ?? search.subcategory)
+          : null;
+      const canonicalCategory = search.category
+        ? (taxonomy.canonicalSlug(pillarForCat, search.category) ?? search.category)
+        : null;
+
       let query = supabase
         .from("listings")
         .select(
@@ -98,8 +116,10 @@ function ListingsPage() {
         .limit(48);
 
       if (search.topCategory) query = query.eq("top_category", search.topCategory);
-      if (search.subcategory) query = query.eq("subcategory_slug", search.subcategory);
-      if (search.category) query = query.eq("category", search.category);
+      if (canonicalSubcategory) query = query.eq("subcategory_slug", canonicalSubcategory);
+      // The legacy `category` column is mirrored from subcategory_slug by the DB
+      // trigger, so a single canonical filter covers both old and new rows.
+      if (canonicalCategory && !canonicalSubcategory) query = query.eq("category", canonicalCategory);
       if (search.region) query = query.eq("region", search.region);
       if (typeof search.minPrice === "number" && !Number.isNaN(search.minPrice))
         query = query.gte("price_ghs", search.minPrice);

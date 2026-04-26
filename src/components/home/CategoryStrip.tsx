@@ -1,38 +1,27 @@
 import { Link } from "@tanstack/react-router";
 import { CategoryIcon } from "@/components/icons/CategoryIcon";
+import { useTaxonomy } from "@/lib/taxonomy-context";
 import { cn } from "@/lib/utils";
 
-interface Cat {
-  value: string;
-  label: string;
-  icon: string;
-}
-
-const CATEGORIES: Cat[] = [
-  { value: "cattle", label: "Cattle", icon: "cattle" },
-  { value: "goat", label: "Goats", icon: "goat" },
-  { value: "sheep", label: "Sheep", icon: "sheep" },
-  { value: "poultry", label: "Poultry", icon: "poultry" },
-  { value: "pig", label: "Pigs", icon: "pig" },
-  { value: "rabbit", label: "Rabbits", icon: "rabbit" },
-  { value: "fish", label: "Fish", icon: "fish" },
-  { value: "egg", label: "Eggs", icon: "egg" },
-];
-
 export function CategoryStrip({ active }: { active?: string }) {
+  const { taxonomy } = useTaxonomy();
+  const cats = taxonomy.categoriesFor("livestock");
+  // Resolve `active` (which may be a legacy alias e.g. "goat") to the canonical
+  // slug so chips highlight correctly across old and new URLs.
+  const activeCanonical = taxonomy.canonicalSlug("livestock", active) ?? active;
   return (
     <>
       {/* Mobile horizontal scroll */}
       <div className="-mx-4 overflow-x-auto px-4 no-scrollbar md:hidden">
         <ul className="flex min-w-max gap-2 pb-1">
           <CatItem active={!active} value={null} label="All" icon="all" />
-          {CATEGORIES.map((c) => (
+          {cats.map((c) => (
             <CatItem
-              key={c.value}
-              active={active === c.value}
-              value={c.value}
+              key={c.slug}
+              active={activeCanonical === c.slug}
+              value={c.slug}
               label={c.label}
-              icon={c.icon}
+              icon={c.iconKey ?? c.slug}
             />
           ))}
         </ul>
@@ -40,15 +29,18 @@ export function CategoryStrip({ active }: { active?: string }) {
 
       {/* Desktop grid */}
       <div className="hidden md:block">
-        <ul className="grid grid-cols-9 gap-2">
+        <ul
+          className="grid gap-2"
+          style={{ gridTemplateColumns: `repeat(${cats.length + 1}, minmax(0, 1fr))` }}
+        >
           <CatItem active={!active} value={null} label="All" icon="all" />
-          {CATEGORIES.map((c) => (
+          {cats.map((c) => (
             <CatItem
-              key={c.value}
-              active={active === c.value}
-              value={c.value}
+              key={c.slug}
+              active={activeCanonical === c.slug}
+              value={c.slug}
               label={c.label}
-              icon={c.icon}
+              icon={c.iconKey ?? c.slug}
             />
           ))}
         </ul>

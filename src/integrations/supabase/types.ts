@@ -585,6 +585,137 @@ export type Database = {
         }
         Relationships: []
       }
+      market_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon_key: string | null
+          id: string
+          is_active: boolean
+          label: string
+          pillar_slug: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon_key?: string | null
+          id?: string
+          is_active?: boolean
+          label: string
+          pillar_slug: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon_key?: string | null
+          id?: string
+          is_active?: boolean
+          label?: string
+          pillar_slug?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_categories_pillar_slug_fkey"
+            columns: ["pillar_slug"]
+            isOneToOne: false
+            referencedRelation: "market_pillars"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      market_category_synonyms: {
+        Row: {
+          alias_slug: string
+          canonical_slug: string
+          created_at: string
+          pillar_slug: string
+        }
+        Insert: {
+          alias_slug: string
+          canonical_slug: string
+          created_at?: string
+          pillar_slug: string
+        }
+        Update: {
+          alias_slug?: string
+          canonical_slug?: string
+          created_at?: string
+          pillar_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_category_synonyms_pillar_slug_canonical_slug_fkey"
+            columns: ["pillar_slug", "canonical_slug"]
+            isOneToOne: false
+            referencedRelation: "market_categories"
+            referencedColumns: ["pillar_slug", "slug"]
+          },
+          {
+            foreignKeyName: "market_category_synonyms_pillar_slug_fkey"
+            columns: ["pillar_slug"]
+            isOneToOne: false
+            referencedRelation: "market_pillars"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      market_pillars: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon_key: string | null
+          is_active: boolean
+          is_marketplace: boolean
+          label: string
+          requires_condition: boolean
+          requires_expiry: boolean
+          requires_licence: boolean
+          short_label: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon_key?: string | null
+          is_active?: boolean
+          is_marketplace?: boolean
+          label: string
+          requires_condition?: boolean
+          requires_expiry?: boolean
+          requires_licence?: boolean
+          short_label: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon_key?: string | null
+          is_active?: boolean
+          is_marketplace?: boolean
+          label?: string
+          requires_condition?: boolean
+          requires_expiry?: boolean
+          requires_licence?: boolean
+          short_label?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string | null
@@ -967,6 +1098,10 @@ export type Database = {
       owns_batch: {
         Args: { _batch_id: string; _user_id: string }
         Returns: boolean
+      }
+      resolve_category_slug: {
+        Args: { _pillar: string; _slug: string }
+        Returns: string
       }
     }
     Enums: {
