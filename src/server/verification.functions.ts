@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAnyRole } from "@/integrations/supabase/role-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const submitInput = z.object({
@@ -32,18 +33,10 @@ const reviewInput = z.object({
 });
 
 export const reviewVerification = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAnyRole(["admin", "moderator"])])
   .inputValidator((d: unknown) => reviewInput.parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    // Confirm caller is admin
-    const { data: roleRow } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (!roleRow) throw new Error("Forbidden");
+    const { userId } = context;
 
     const { data: sub, error: e1 } = await supabaseAdmin
       .from("verification_submissions")
