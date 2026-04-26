@@ -211,7 +211,6 @@ function ListingDetail() {
               <WhatsAppCTA
                 listingId={listing.id}
                 listingTitle={listing.title}
-                sellerWhatsappE164={seller?.whatsapp_e164 ?? null}
               />
               {savedLoaded && (
                 <SaveButton listingId={listing.id} initialSaved={savedInitial} variant="full" />
