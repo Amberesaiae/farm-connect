@@ -15,7 +15,7 @@ import {
 } from "@/server/hatcheries.functions";
 import { toast } from "sonner";
 import { formatRelative } from "@/lib/format";
-import { HATCHERY_CATEGORY_LABEL } from "@/lib/categories";
+import { useTaxonomy } from "@/lib/taxonomy-context";
 import { ExternalLink, MapPin } from "lucide-react";
 import type { HatcheryStatus } from "@/lib/hatchery-status";
 
