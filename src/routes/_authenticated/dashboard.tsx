@@ -179,6 +179,10 @@ function Dashboard() {
           <KpiTile label="WhatsApp taps" value={totalTaps} Icon={MessageCircle} />
         </div>
 
+        <div className="mt-4">
+          <PhoneVerifyNudge />
+        </div>
+
         <Tabs defaultValue="active" className="mt-6">
           <TabsList className="rounded-xl border-[1.5px] border-border bg-card p-1">
             <TabsTrigger value="active" className="rounded-lg">
