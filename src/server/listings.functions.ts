@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireGate } from "@/integrations/supabase/role-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // ---------- Log a contact-tap (anyone can call; user may be anon) ----------
@@ -83,7 +84,7 @@ const createListingInput = z.object({
 });
 
 export const createListing = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireGate("phone_verified")])
   .inputValidator((d: unknown) => createListingInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;

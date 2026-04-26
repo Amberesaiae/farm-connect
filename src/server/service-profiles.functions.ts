@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireGate } from "@/integrations/supabase/role-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 function slugify(name: string): string {
@@ -27,7 +27,7 @@ const upsertInput = z.object({
 });
 
 export const upsertServiceProfile = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireGate("id_verified")])
   .inputValidator((d: unknown) => upsertInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;

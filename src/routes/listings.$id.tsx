@@ -17,6 +17,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { recordView } from "@/server/contact.functions";
 import { ArrowLeftIcon, EyeIcon, MapPinIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import { ReportButton } from "@/components/safety/ReportButton";
 
 export const Route = createFileRoute("/listings/$id")({
   loader: async ({ params }) => {
@@ -215,6 +216,9 @@ function ListingDetail() {
               {savedLoaded && (
                 <SaveButton listingId={listing.id} initialSaved={savedInitial} variant="full" />
               )}
+              <div className="pt-1">
+                <ReportButton targetKind="listing" targetId={listing.id} />
+              </div>
             </div>
           </aside>
         </div>

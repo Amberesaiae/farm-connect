@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
-import { AdminGate } from "@/components/layout/AdminGate";
+import { StaffGate } from "@/components/layout/StaffGate";
 import { AdminNav } from "@/components/layout/AdminNav";
 import { AdminAuditLog } from "@/components/admin/AdminAuditLog";
 import { ActionConfirmDialog } from "@/components/admin/ActionConfirmDialog";
@@ -89,7 +89,7 @@ function ListingMod() {
   };
 
   return (
-    <AdminGate>
+    <StaffGate>
       <AppShell>
         <div className="mx-auto max-w-6xl px-4 py-6 md:py-8">
           <h1 className="font-display text-[28px] font-extrabold tracking-tight">
@@ -182,6 +182,6 @@ function ListingMod() {
           </div>
         </div>
       </AppShell>
-    </AdminGate>
+    </StaffGate>
   );
 }

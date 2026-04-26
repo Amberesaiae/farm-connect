@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireAnyRole, requireGate } from "@/integrations/supabase/role-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 function slugify(name: string): string {
@@ -31,7 +32,7 @@ const submitInput = z.object({
 });
 
 export const submitHatcheryApplication = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireGate("id_verified")])
   .inputValidator((d: unknown) => submitInput.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -111,22 +112,10 @@ const reviewInput = z.object({
   reason: z.string().max(500).optional().nullable(),
 });
 
-async function assertAdmin(supabase: any, userId: string) {
-  const { data } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "admin")
-    .maybeSingle();
-  if (!data) throw new Error("Forbidden");
-}
-
 export const reviewHatcheryApplication = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAnyRole(["admin", "moderator"])])
   .inputValidator((d: unknown) => reviewInput.parse(d))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
-
     let status: "approved" | "rejected" | "suspended";
     if (data.action === "approve" || data.action === "reinstate") status = "approved";
     else if (data.action === "reject") status = "rejected";
@@ -177,10 +166,9 @@ export const reviewHatcheryApplication = createServerFn({ method: "POST" })
 
 // ---------- Admin: signed permit URL ----------
 export const getPermitSignedUrl = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireAnyRole(["admin", "moderator"])])
   .inputValidator((d: unknown) => z.object({ hatchery_id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+  .handler(async ({ data }) => {
     const { data: row } = await supabaseAdmin
       .from("hatcheries")
       .select("permit_doc_path")

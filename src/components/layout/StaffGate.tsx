@@ -4,24 +4,24 @@ import { useAuth } from "@/lib/auth-context";
 import { useMySession } from "@/hooks/useMySession";
 
 /**
- * Admins-only route gate. Reads from the cached `useMySession` so it stays
- * consistent with the server-side `requireRole('admin')` middleware.
+ * Staff (admin OR moderator) route gate. Mirrors `requireAnyRole(['admin','moderator'])`
+ * on the server so moderation pages don't surface a flash of protected content.
  */
-export function AdminGate({ children }: { children: ReactNode }) {
+export function StaffGate({ children }: { children: ReactNode }) {
   const { loading: authLoading, isAuthenticated } = useAuth();
   const { session, loading: sessLoading } = useMySession();
   const navigate = useNavigate();
 
   const loading = authLoading || (isAuthenticated && sessLoading);
-  const isAdmin = !!session?.roles.includes("admin");
+  const isStaff = !!session?.roles.some((r) => r === "admin" || r === "moderator");
 
   useEffect(() => {
-    if (!loading && !isAdmin) {
+    if (!loading && !isStaff) {
       navigate({ to: "/listings", replace: true });
     }
-  }, [loading, isAdmin, navigate]);
+  }, [loading, isStaff, navigate]);
 
-  if (loading || !isAdmin) {
+  if (loading || !isStaff) {
     return (
       <div className="flex min-h-screen items-center justify-center text-muted-foreground">
         Checking permissions…
