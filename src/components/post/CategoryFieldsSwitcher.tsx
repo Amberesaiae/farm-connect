@@ -44,9 +44,6 @@ interface Props {
 export function CategoryFieldsSwitcher({ topCategory, value, onChange }: Props) {
   const { taxonomy } = useTaxonomy();
   const subs = taxonomy.categoriesFor(topCategory);
-  const pillar = taxonomy.getPillar(topCategory);
-  const requireExpiry = pillar?.requiresExpiry ?? false;
-  const requireCondition = pillar?.requiresCondition ?? false;
 
   return (
     <div className="space-y-4">
