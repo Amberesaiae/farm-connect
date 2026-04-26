@@ -684,6 +684,24 @@ export type Database = {
           },
         ]
       }
+      listing_view_throttle: {
+        Row: {
+          hour_bucket: string
+          ip_hash: string
+          listing_id: string
+        }
+        Insert: {
+          hour_bucket: string
+          ip_hash: string
+          listing_id: string
+        }
+        Update: {
+          hour_bucket?: string
+          ip_hash?: string
+          listing_id?: string
+        }
+        Relationships: []
+      }
       listings: {
         Row: {
           age_months: number | null
@@ -1032,16 +1050,48 @@ export type Database = {
         }
         Relationships: []
       }
+      phone_otps: {
+        Row: {
+          attempts: number
+          code_hash: string
+          consumed_at: string | null
+          phone_e164: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          consumed_at?: string | null
+          phone_e164: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          consumed_at?: string | null
+          phone_e164?: string
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           active_role: string
           avatar_url: string | null
           badge_tier: Database["public"]["Enums"]["badge_tier"]
+          business_licensed: boolean
           created_at: string
           display_name: string
           district: string | null
           id: string
+          id_verified: boolean
+          id_verified_at: string | null
           listing_count: number
+          phone_verified: boolean
+          phone_verified_at: string | null
           region: string | null
           roles: string[]
           status: Database["public"]["Enums"]["user_status"]
@@ -1055,11 +1105,16 @@ export type Database = {
           active_role?: string
           avatar_url?: string | null
           badge_tier?: Database["public"]["Enums"]["badge_tier"]
+          business_licensed?: boolean
           created_at?: string
           display_name?: string
           district?: string | null
           id: string
+          id_verified?: boolean
+          id_verified_at?: string | null
           listing_count?: number
+          phone_verified?: boolean
+          phone_verified_at?: string | null
           region?: string | null
           roles?: string[]
           status?: Database["public"]["Enums"]["user_status"]
@@ -1073,11 +1128,16 @@ export type Database = {
           active_role?: string
           avatar_url?: string | null
           badge_tier?: Database["public"]["Enums"]["badge_tier"]
+          business_licensed?: boolean
           created_at?: string
           display_name?: string
           district?: string | null
           id?: string
+          id_verified?: boolean
+          id_verified_at?: string | null
           listing_count?: number
+          phone_verified?: boolean
+          phone_verified_at?: string | null
           region?: string | null
           roles?: string[]
           status?: Database["public"]["Enums"]["user_status"]
@@ -1086,6 +1146,69 @@ export type Database = {
           trade_count?: number
           updated_at?: string
           whatsapp_e164?: string | null
+        }
+        Relationships: []
+      }
+      rate_limits: {
+        Row: {
+          count: number
+          key: string
+          scope: string
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          key: string
+          scope: string
+          window_start: string
+        }
+        Update: {
+          count?: number
+          key?: string
+          scope?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          created_at: string
+          details: string | null
+          id: string
+          reason: string
+          reporter_id: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          target_id: string
+          target_kind: string
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason: string
+          reporter_id: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          target_id: string
+          target_kind: string
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason?: string
+          reporter_id?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          target_id?: string
+          target_kind?: string
         }
         Relationships: []
       }
@@ -1460,6 +1583,45 @@ export type Database = {
       }
     }
     Views: {
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          badge_tier: Database["public"]["Enums"]["badge_tier"] | null
+          created_at: string | null
+          display_name: string | null
+          district: string | null
+          id: string | null
+          id_verified: boolean | null
+          listing_count: number | null
+          region: string | null
+          trade_count: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          badge_tier?: Database["public"]["Enums"]["badge_tier"] | null
+          created_at?: string | null
+          display_name?: string | null
+          district?: string | null
+          id?: string | null
+          id_verified?: boolean | null
+          listing_count?: number | null
+          region?: string | null
+          trade_count?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          badge_tier?: Database["public"]["Enums"]["badge_tier"] | null
+          created_at?: string | null
+          display_name?: string | null
+          district?: string | null
+          id?: string | null
+          id_verified?: boolean | null
+          listing_count?: number | null
+          region?: string | null
+          trade_count?: number | null
+        }
+        Relationships: []
+      }
       vendor_stores_v: {
         Row: {
           badge_tier: string | null
@@ -1489,6 +1651,18 @@ export type Database = {
         Args: { _confirmed_qty: number; _reservation_id: string }
         Returns: Json
       }
+      current_role_set: {
+        Args: never
+        Returns: Database["public"]["Enums"]["app_role"][]
+      }
+      current_trust: { Args: never; Returns: Json }
+      has_any_role: {
+        Args: {
+          _roles: Database["public"]["Enums"]["app_role"][]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1500,14 +1674,41 @@ export type Database = {
         Args: { _hatchery_id: string; _user_id: string }
         Returns: boolean
       }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
       owns_batch: {
         Args: { _batch_id: string; _user_id: string }
         Returns: boolean
       }
+      owns_listing: {
+        Args: { _listing_id: string; _user_id: string }
+        Returns: boolean
+      }
+      owns_service_profile: {
+        Args: { _profile_id: string; _user_id: string }
+        Returns: boolean
+      }
+      owns_store: {
+        Args: { _store_id: string; _user_id: string }
+        Returns: boolean
+      }
       recompute_category_path: { Args: { _id: string }; Returns: undefined }
+      record_listing_view: {
+        Args: { _ip_hash?: string; _listing_id: string }
+        Returns: Json
+      }
+      report_content: {
+        Args: { _details?: string; _id: string; _kind: string; _reason: string }
+        Returns: Json
+      }
       resolve_category_slug: {
         Args: { _pillar: string; _slug: string }
         Returns: string
+      }
+      reveal_contact: { Args: { _listing_id: string }; Returns: Json }
+      send_phone_otp: { Args: { _phone_e164: string }; Returns: Json }
+      verify_phone_otp: {
+        Args: { _code: string; _phone_e164: string }
+        Returns: Json
       }
     }
     Enums: {
@@ -1517,7 +1718,14 @@ export type Database = {
         | "approved"
         | "suspended"
         | "rejected"
-      app_role: "admin" | "user"
+      app_role:
+        | "admin"
+        | "user"
+        | "moderator"
+        | "buyer"
+        | "hatchery_owner"
+        | "service_provider"
+        | "agro_vendor"
       badge_tier: "none" | "verified" | "trusted" | "top_seller"
       batch_status: "draft" | "open" | "full" | "closed" | "cancelled"
       fulfilment_mode: "pickup" | "delivery"
@@ -1706,7 +1914,15 @@ export const Constants = {
         "suspended",
         "rejected",
       ],
-      app_role: ["admin", "user"],
+      app_role: [
+        "admin",
+        "user",
+        "moderator",
+        "buyer",
+        "hatchery_owner",
+        "service_provider",
+        "agro_vendor",
+      ],
       badge_tier: ["none", "verified", "trusted", "top_seller"],
       batch_status: ["draft", "open", "full", "closed", "cancelled"],
       fulfilment_mode: ["pickup", "delivery"],
