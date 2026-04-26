@@ -19,7 +19,8 @@ import {
   PRICE_UNITS,
   LISTING_PHOTOS_BUCKET,
 } from "@/lib/constants";
-import { TOP_CATEGORIES, type TopCategory } from "@/lib/categories";
+import { type TopCategory } from "@/lib/categories";
+import { useTaxonomy } from "@/lib/taxonomy-context";
 import {
   CategoryFieldsSwitcher,
   type CategoryFieldsValue,
@@ -68,6 +69,8 @@ function PostWizard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const create = useServerFn(createListing);
+  const { taxonomy } = useTaxonomy();
+  const topPillars = taxonomy.marketplacePillars;
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
 
@@ -243,8 +246,8 @@ function PostWizard() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {TOP_CATEGORIES.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>
+                    {topPillars.map((c) => (
+                      <SelectItem key={c.slug} value={c.slug}>
                         {c.label}
                       </SelectItem>
                     ))}
