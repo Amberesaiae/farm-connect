@@ -14,8 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useTaxonomy, type Taxonomy } from "@/lib/taxonomy-context";
-import type { ResolvedAttribute } from "@/lib/taxonomy";
+import { useTaxonomy } from "@/lib/taxonomy-context";
+import type { ResolvedAttribute, Taxonomy } from "@/lib/taxonomy";
 
 export type AttributesValue = Record<string, unknown>;
 
