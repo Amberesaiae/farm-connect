@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
-import { AdminGate } from "@/components/layout/AdminGate";
+import { StaffGate } from "@/components/layout/StaffGate";
 import { AdminNav } from "@/components/layout/AdminNav";
 import { ShieldCheck, ListChecks, Users, Layers } from "lucide-react";
+import { useMySession } from "@/hooks/useMySession";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin — farmlink" }] }),
@@ -10,14 +11,16 @@ export const Route = createFileRoute("/_authenticated/admin")({
 });
 
 function AdminHome() {
+  const { session } = useMySession();
+  const isAdmin = !!session?.roles.includes("admin");
   const cards = [
-    { to: "/admin/verifications", title: "Verification queue", desc: "Approve or reject seller IDs.", Icon: ShieldCheck },
-    { to: "/admin/listings", title: "Listing moderation", desc: "Hide, restore or delete listings.", Icon: ListChecks },
-    { to: "/admin/users", title: "Users", desc: "Suspend or reinstate accounts.", Icon: Users },
-    { to: "/admin/taxonomy", title: "Taxonomy", desc: "Manage categories, attributes & catalogs.", Icon: Layers },
-  ] as const;
+    { to: "/admin/verifications", title: "Verification queue", desc: "Approve or reject seller IDs.", Icon: ShieldCheck, adminOnly: false },
+    { to: "/admin/listings", title: "Listing moderation", desc: "Hide, restore or delete listings.", Icon: ListChecks, adminOnly: false },
+    { to: "/admin/users", title: "Users", desc: "Suspend or reinstate accounts.", Icon: Users, adminOnly: true },
+    { to: "/admin/taxonomy", title: "Taxonomy", desc: "Manage categories, attributes & catalogs.", Icon: Layers, adminOnly: true },
+  ].filter((c) => isAdmin || !c.adminOnly);
   return (
-    <AdminGate>
+    <StaffGate>
       <AppShell>
         <div className="mx-auto max-w-5xl px-4 py-6 md:py-8">
           <h1 className="font-display text-[28px] font-extrabold tracking-tight">Admin</h1>
@@ -44,6 +47,6 @@ function AdminHome() {
           </div>
         </div>
       </AppShell>
-    </AdminGate>
+    </StaffGate>
   );
 }
