@@ -27,6 +27,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
 import { ImagePlus, X } from "lucide-react";
+import { useCan } from "@/hooks/useCan";
+import { RequirePhoneVerifyModal } from "@/components/auth/RequirePhoneVerifyModal";
+import { parseAppError } from "@/integrations/supabase/errors";
 
 export const Route = createFileRoute("/_authenticated/post")({
   head: () => ({
@@ -75,6 +78,15 @@ function PostWizard() {
   const topPillars = taxonomy.marketplacePillars;
   const [step, setStep] = useState(1);
   const [busy, setBusy] = useState(false);
+  const { can, why } = useCan("listings.create");
+  const [verifyOpen, setVerifyOpen] = useState(false);
+
+  // Gentle prompt: when an authed user lands here without a verified phone,
+  // open the OTP modal once. They can dismiss and still draft, but submit
+  // will fail at the server gate until they verify.
+  useEffect(() => {
+    if (why === "needs_phone") setVerifyOpen(true);
+  }, [why]);
 
   const [pillarSlug, setPillarSlug] = useState<string>("");
   const [categorySlug, setCategorySlug] = useState<string>("");
@@ -174,6 +186,12 @@ function PostWizard() {
     if (!user) return toast.error("You must be signed in");
     if (photos.length === 0) return toast.error("Please add at least one photo");
     if (!category) return toast.error("Please pick a subcategory");
+    if (!can) {
+      // Open the relevant prompt instead of a confusing API error
+      if (why === "needs_phone") setVerifyOpen(true);
+      else toast.error("You don't have permission to post yet");
+      return;
+    }
 
     setBusy(true);
     try {
@@ -249,8 +267,12 @@ function PostWizard() {
       toast.success("Listing posted!");
       navigate({ to: "/listings/$id", params: { id: created.id } });
     } catch (err) {
-      const m = err instanceof Error ? err.message : "Failed to create listing";
-      toast.error(m);
+      const e = await parseAppError(err);
+      if (e.requires === "phone_verify") {
+        setVerifyOpen(true);
+      } else {
+        toast.error(e.message);
+      }
     } finally {
       setBusy(false);
     }
