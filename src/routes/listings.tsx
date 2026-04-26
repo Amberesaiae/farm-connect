@@ -204,20 +204,58 @@ function ListingsPage() {
     return () => {
       cancelled = true;
     };
-  }, [search.q, search.topCategory, search.subcategory, search.category, search.region, search.verifiedOnly, search.minPrice, search.maxPrice]);
+  }, [
+    search.q,
+    search.topCategory,
+    search.subcategory,
+    search.category,
+    search.region,
+    search.verifiedOnly,
+    search.minPrice,
+    search.maxPrice,
+    // re-fetch when dynamic attribute filters change
+    JSON.stringify(search.attrs ?? {}),
+  ]);
 
   const update = (patch: Partial<ListingsSearch>) => {
-    navigate({ to: "/listings", search: { ...search, ...patch } as never });
+    // When the category context changes, drop attrs that no longer apply.
+    const next = { ...search, ...patch };
+    if (
+      ("topCategory" in patch || "subcategory" in patch || "category" in patch) &&
+      !("attrs" in patch)
+    ) {
+      next.attrs = undefined;
+    }
+    // Flatten attrs into top-level `attr_<key>` search params for shareable URLs.
+    const flat: Record<string, unknown> = { ...next };
+    delete (flat as { attrs?: unknown }).attrs;
+    for (const [k, v] of Object.entries(next.attrs ?? {})) {
+      if (v) flat[`attr_${k}`] = v;
+    }
+    // Strip any stale `attr_*` params from current search that aren't in next.attrs.
+    for (const key of Object.keys(search)) {
+      if (key.startsWith("attr_") && !(key in flat)) {
+        flat[key] = undefined;
+      }
+    }
+    navigate({ to: "/listings", search: flat as never });
   };
 
   const activeCount =
     (search.region ? 1 : 0) +
     (search.minPrice ? 1 : 0) +
     (search.maxPrice ? 1 : 0) +
-    (search.verifiedOnly ? 1 : 0);
+    (search.verifiedOnly ? 1 : 0) +
+    Object.values(search.attrs ?? {}).filter(Boolean).length;
 
   const FiltersPanel = (
-    <FiltersInner search={search} update={update} navigate={navigate} />
+    <FiltersInner
+      search={search}
+      update={update}
+      navigate={navigate}
+      filterableAttrs={filterableAttrs}
+      taxonomy={taxonomy}
+    />
   );
 
   return (
@@ -292,11 +330,22 @@ function FiltersInner({
   search,
   update,
   navigate,
+  filterableAttrs,
+  taxonomy,
 }: {
   search: ListingsSearch;
   update: (patch: Partial<ListingsSearch>) => void;
   navigate: ReturnType<typeof useNavigate>;
+  filterableAttrs: ResolvedAttribute[];
+  taxonomy: Taxonomy;
 }): ReactNode {
+  const setAttr = (key: string, value: string | undefined) => {
+    const next = { ...(search.attrs ?? {}) };
+    if (value === undefined || value === "" || value === "all") delete next[key];
+    else next[key] = value;
+    update({ attrs: Object.keys(next).length ? next : undefined });
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -367,6 +416,23 @@ function FiltersInner({
         />
       </div>
 
+      {filterableAttrs.length > 0 && (
+        <div className="space-y-3 rounded-xl border border-dashed border-border p-3">
+          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            More filters
+          </div>
+          {filterableAttrs.map((a) => (
+            <AttributeFilter
+              key={a.definition.key}
+              attr={a}
+              value={search.attrs?.[a.definition.key]}
+              onChange={(v) => setAttr(a.definition.key, v)}
+              taxonomy={taxonomy}
+            />
+          ))}
+        </div>
+      )}
+
       <Button
         variant="ghost"
         className="w-full rounded-xl"
@@ -374,6 +440,88 @@ function FiltersInner({
       >
         Clear filters
       </Button>
+    </div>
+  );
+}
+
+function humanise(s: string) {
+  return s.replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase());
+}
+
+function AttributeFilter({
+  attr,
+  value,
+  onChange,
+  taxonomy,
+}: {
+  attr: ResolvedAttribute;
+  value: string | undefined;
+  onChange: (v: string | undefined) => void;
+  taxonomy: Taxonomy;
+}) {
+  const def = attr.definition;
+  const label = (
+    <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      {def.labelEn || humanise(def.key)}
+    </Label>
+  );
+
+  if (def.dataType === "boolean") {
+    return (
+      <div className="flex items-center justify-between rounded-lg bg-surface px-3 py-2">
+        <Label className="cursor-pointer text-sm font-medium">{def.labelEn}</Label>
+        <Switch
+          checked={value === "true"}
+          onCheckedChange={(c) => onChange(c ? "true" : undefined)}
+        />
+      </div>
+    );
+  }
+
+  let options: { value: string; label: string }[] = [];
+  if (def.dataType === "enum") {
+    options = def.enumValues.map((o) => ({ value: o, label: humanise(o) }));
+  } else if (def.dataType === "reference") {
+    if (def.referenceTable === "breeds") {
+      options = taxonomy.breeds.map((b) => ({ value: b.slug, label: b.labelEn }));
+    } else if (def.referenceTable === "vaccines") {
+      options = taxonomy.vaccines.map((v) => ({ value: v.slug, label: v.labelEn }));
+    } else if (def.referenceTable === "feed_brands") {
+      options = taxonomy.feedBrands.map((f) => ({ value: f.slug, label: f.labelEn }));
+    }
+  }
+
+  if (options.length > 0) {
+    return (
+      <div>
+        {label}
+        <Select value={value ?? "all"} onValueChange={(v) => onChange(v === "all" ? undefined : v)}>
+          <SelectTrigger className="mt-1.5 w-full rounded-xl">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Any</SelectItem>
+            {options.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  }
+
+  // Fallback for text/number/date — free input that contains-matches.
+  return (
+    <div>
+      {label}
+      <Input
+        defaultValue={value ?? ""}
+        placeholder={def.helpText ?? ""}
+        className="mt-1.5 h-10 rounded-xl"
+        onBlur={(e) => onChange(e.target.value || undefined)}
+      />
     </div>
   );
 }
