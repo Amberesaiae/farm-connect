@@ -1,4 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
+import { Flag, ScrollText } from "lucide-react";
 import { ListingsIcon, ShieldIcon, UserIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
@@ -7,8 +8,10 @@ const TABS = [
   { to: "/admin/hatcheries", label: "Hatcheries", Icon: ShieldIcon },
   { to: "/admin/stores", label: "Shops", Icon: ShieldIcon },
   { to: "/admin/listings", label: "Listings", Icon: ListingsIcon },
+  { to: "/admin/reports", label: "Reports", Icon: Flag },
   { to: "/admin/users", label: "Users", Icon: UserIcon },
   { to: "/admin/taxonomy", label: "Taxonomy", Icon: ListingsIcon },
+  { to: "/admin/audit", label: "Audit", Icon: ScrollText },
 ] as const;
 
 export function AdminNav() {
