@@ -320,6 +320,7 @@ function PostWizard() {
                   </SelectContent>
                 </Select>
               </div>
+              {pillarSlug ? <LicenceRequiredNudge pillar={pillarSlug} /> : null}
               <div>
                 <Label>Subcategory *</Label>
                 <Select
