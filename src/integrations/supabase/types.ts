@@ -1706,6 +1706,11 @@ export type Database = {
       }
       reveal_contact: { Args: { _listing_id: string }; Returns: Json }
       send_phone_otp: { Args: { _phone_e164: string }; Returns: Json }
+      user_can_post_pillar: {
+        Args: { _pillar: string; _user_id: string }
+        Returns: Json
+      }
+      vendor_listing_caps: { Args: never; Returns: Json }
       verify_phone_otp: {
         Args: { _code: string; _phone_e164: string }
         Returns: Json
