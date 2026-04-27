@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { ImagePlus, X } from "lucide-react";
 import { useCan } from "@/hooks/useCan";
 import { RequirePhoneVerifyModal } from "@/components/auth/RequirePhoneVerifyModal";
+import { LicenceRequiredNudge } from "@/components/auth/LicenceRequiredNudge";
 import { parseAppError } from "@/integrations/supabase/errors";
 
 export const Route = createFileRoute("/_authenticated/post")({
@@ -319,6 +320,7 @@ function PostWizard() {
                   </SelectContent>
                 </Select>
               </div>
+              {pillarSlug ? <LicenceRequiredNudge pillar={pillarSlug} /> : null}
               <div>
                 <Label>Subcategory *</Label>
                 <Select

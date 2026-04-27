@@ -36,8 +36,10 @@ import { Route as AuthenticatedAdminVerificationsRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminTaxonomyRouteImport } from './routes/_authenticated/admin.taxonomy'
 import { Route as AuthenticatedAdminStoresRouteImport } from './routes/_authenticated/admin.stores'
+import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated/admin.reports'
 import { Route as AuthenticatedAdminListingsRouteImport } from './routes/_authenticated/admin.listings'
 import { Route as AuthenticatedAdminHatcheriesRouteImport } from './routes/_authenticated/admin.hatcheries'
+import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
 import { Route as HatcheriesSlugBatchesBatchIdRouteImport } from './routes/hatcheries.$slug.batches.$batchId'
 import { Route as AuthenticatedDashboardHatcheryOnboardingRouteImport } from './routes/_authenticated/dashboard.hatchery.onboarding'
 import { Route as AuthenticatedDashboardHatcheryBookingsRouteImport } from './routes/_authenticated/dashboard.hatchery.bookings'
@@ -188,6 +190,12 @@ const AuthenticatedAdminStoresRoute =
     path: '/stores',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminReportsRoute =
+  AuthenticatedAdminReportsRouteImport.update({
+    id: '/reports',
+    path: '/reports',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminListingsRoute =
   AuthenticatedAdminListingsRouteImport.update({
     id: '/listings',
@@ -200,6 +208,11 @@ const AuthenticatedAdminHatcheriesRoute =
     path: '/hatcheries',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const HatcheriesSlugBatchesBatchIdRoute =
   HatcheriesSlugBatchesBatchIdRouteImport.update({
     id: '/batches/$batchId',
@@ -254,8 +267,10 @@ export interface FileRoutesByFullPath {
   '/services/$slug': typeof ServicesSlugRoute
   '/stores/$slug': typeof StoresSlugRoute
   '/stores/': typeof StoresIndexRoute
+  '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/hatcheries': typeof AuthenticatedAdminHatcheriesRoute
   '/admin/listings': typeof AuthenticatedAdminListingsRoute
+  '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/stores': typeof AuthenticatedAdminStoresRoute
   '/admin/taxonomy': typeof AuthenticatedAdminTaxonomyRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -290,8 +305,10 @@ export interface FileRoutesByTo {
   '/services/$slug': typeof ServicesSlugRoute
   '/stores/$slug': typeof StoresSlugRoute
   '/stores': typeof StoresIndexRoute
+  '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/hatcheries': typeof AuthenticatedAdminHatcheriesRoute
   '/admin/listings': typeof AuthenticatedAdminListingsRoute
+  '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/stores': typeof AuthenticatedAdminStoresRoute
   '/admin/taxonomy': typeof AuthenticatedAdminTaxonomyRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -328,8 +345,10 @@ export interface FileRoutesById {
   '/services/$slug': typeof ServicesSlugRoute
   '/stores/$slug': typeof StoresSlugRoute
   '/stores/': typeof StoresIndexRoute
+  '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/hatcheries': typeof AuthenticatedAdminHatcheriesRoute
   '/_authenticated/admin/listings': typeof AuthenticatedAdminListingsRoute
+  '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/_authenticated/admin/stores': typeof AuthenticatedAdminStoresRoute
   '/_authenticated/admin/taxonomy': typeof AuthenticatedAdminTaxonomyRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -366,8 +385,10 @@ export interface FileRouteTypes {
     | '/services/$slug'
     | '/stores/$slug'
     | '/stores/'
+    | '/admin/audit'
     | '/admin/hatcheries'
     | '/admin/listings'
+    | '/admin/reports'
     | '/admin/stores'
     | '/admin/taxonomy'
     | '/admin/users'
@@ -402,8 +423,10 @@ export interface FileRouteTypes {
     | '/services/$slug'
     | '/stores/$slug'
     | '/stores'
+    | '/admin/audit'
     | '/admin/hatcheries'
     | '/admin/listings'
+    | '/admin/reports'
     | '/admin/stores'
     | '/admin/taxonomy'
     | '/admin/users'
@@ -439,8 +462,10 @@ export interface FileRouteTypes {
     | '/services/$slug'
     | '/stores/$slug'
     | '/stores/'
+    | '/_authenticated/admin/audit'
     | '/_authenticated/admin/hatcheries'
     | '/_authenticated/admin/listings'
+    | '/_authenticated/admin/reports'
     | '/_authenticated/admin/stores'
     | '/_authenticated/admin/taxonomy'
     | '/_authenticated/admin/users'
@@ -663,6 +688,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminStoresRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/reports': {
+      id: '/_authenticated/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AuthenticatedAdminReportsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/listings': {
       id: '/_authenticated/admin/listings'
       path: '/listings'
@@ -675,6 +707,13 @@ declare module '@tanstack/react-router' {
       path: '/hatcheries'
       fullPath: '/admin/hatcheries'
       preLoaderRoute: typeof AuthenticatedAdminHatcheriesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/audit': {
+      id: '/_authenticated/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AuthenticatedAdminAuditRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/hatcheries/$slug/batches/$batchId': {
@@ -723,8 +762,10 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminHatcheriesRoute: typeof AuthenticatedAdminHatcheriesRoute
   AuthenticatedAdminListingsRoute: typeof AuthenticatedAdminListingsRoute
+  AuthenticatedAdminReportsRoute: typeof AuthenticatedAdminReportsRoute
   AuthenticatedAdminStoresRoute: typeof AuthenticatedAdminStoresRoute
   AuthenticatedAdminTaxonomyRoute: typeof AuthenticatedAdminTaxonomyRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
@@ -732,8 +773,10 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminHatcheriesRoute: AuthenticatedAdminHatcheriesRoute,
   AuthenticatedAdminListingsRoute: AuthenticatedAdminListingsRoute,
+  AuthenticatedAdminReportsRoute: AuthenticatedAdminReportsRoute,
   AuthenticatedAdminStoresRoute: AuthenticatedAdminStoresRoute,
   AuthenticatedAdminTaxonomyRoute: AuthenticatedAdminTaxonomyRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
