@@ -44,10 +44,10 @@ function VerificationPage() {
 
   const load = async () => {
     if (!user) return;
-    const [{ data: p }, { data: subs }] = await Promise.all([
+    const [{ data: p }, { data: subs }, { data: wa }] = await Promise.all([
       supabase
         .from("profiles")
-        .select("display_name,whatsapp_e164,badge_tier")
+        .select("display_name,badge_tier")
         .eq("id", user.id)
         .single(),
       supabase
@@ -56,10 +56,11 @@ function VerificationPage() {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(1),
+      supabase.rpc("get_my_whatsapp"),
     ]);
     if (p) {
-      setProfile(p as Profile);
-      setWhats(p.whatsapp_e164 ?? "");
+      setProfile({ ...(p as object), whatsapp_e164: (wa as string | null) ?? null } as Profile);
+      setWhats((wa as string | null) ?? "");
     }
     setLatest((subs?.[0] as Submission) ?? null);
   };

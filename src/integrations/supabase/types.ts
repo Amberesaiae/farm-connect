@@ -1662,6 +1662,7 @@ export type Database = {
         Returns: Database["public"]["Enums"]["app_role"][]
       }
       current_trust: { Args: never; Returns: Json }
+      get_my_whatsapp: { Args: never; Returns: string }
       has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]
