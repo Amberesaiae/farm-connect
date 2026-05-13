@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireStaffBeforeLoad } from "@/lib/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/layout/AppShell";
@@ -20,6 +21,7 @@ import { useMySession } from "@/hooks/useMySession";
 import { getAbuseSnapshot } from "@/server/reports.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
+  beforeLoad: requireStaffBeforeLoad,
   head: () => ({ meta: [{ title: "Admin — farmlink" }] }),
   component: AdminHome,
 });

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireStaffBeforeLoad } from "@/lib/route-guards";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/layout/AppShell";
@@ -8,6 +9,7 @@ import { listAuditLog } from "@/server/reports.functions";
 import { formatDistanceToNow } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/admin/audit")({
+  beforeLoad: requireStaffBeforeLoad,
   head: () => ({ meta: [{ title: "Audit log — Admin" }] }),
   component: AuditLog,
 });

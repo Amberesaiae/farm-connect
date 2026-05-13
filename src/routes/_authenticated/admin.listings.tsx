@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireStaffBeforeLoad } from "@/lib/route-guards";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { StaffGate } from "@/components/layout/StaffGate";
@@ -14,6 +15,7 @@ import { toast } from "sonner";
 import { formatGhs, formatRelative } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/listings")({
+  beforeLoad: requireStaffBeforeLoad,
   head: () => ({ meta: [{ title: "Listing moderation — farmlink admin" }] }),
   component: ListingMod,
 });
