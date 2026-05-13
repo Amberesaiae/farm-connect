@@ -11,6 +11,42 @@ import type { Database } from "./types";
 export type AppRole = Database["public"]["Enums"]["app_role"];
 export type TrustGate = "phone_verified" | "id_verified" | "business_licensed";
 
+/**
+ * Rate-limit middleware backed by the `rate_limit_hit` SQL helper.
+ * Throws RATE_LIMITED when the caller exceeds `max` calls in `windowSec`.
+ * `key` defaults to the user id; pass a custom resolver to scope by IP, etc.
+ */
+export function withRateLimit(opts: {
+  scope: string;
+  max: number;
+  windowSec: number;
+  key?: (ctx: { userId: string }) => string;
+}) {
+  return createMiddleware({ type: "function" })
+    .middleware([requireSupabaseAuth])
+    .server(async ({ next, context }) => {
+      const key = opts.key ? opts.key({ userId: context.userId }) : context.userId;
+      const { data, error } = await context.supabase.rpc("rate_limit_hit", {
+        _scope: opts.scope,
+        _key: key,
+        _max: opts.max,
+        _window_sec: opts.windowSec,
+      });
+      if (error) {
+        throw appErrorResponse({ code: "INTERNAL", message: error.message });
+      }
+      const r = data as { ok?: boolean; retryAfterSec?: number } | null;
+      if (!r?.ok) {
+        throw appErrorResponse({
+          code: "RATE_LIMITED",
+          message: "You're doing that too quickly. Please wait and retry.",
+          retryAfterSec: r?.retryAfterSec ?? opts.windowSec,
+        });
+      }
+      return next();
+    });
+}
+
 /** Require the caller to hold a specific role. */
 export function requireRole(role: AppRole) {
   return createMiddleware({ type: "function" })
