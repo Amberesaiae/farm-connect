@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireStaffBeforeLoad } from "@/lib/route-guards";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { StaffGate } from "@/components/layout/StaffGate";
@@ -20,6 +21,7 @@ import { ExternalLink, MapPin } from "lucide-react";
 import type { HatcheryStatus } from "@/lib/hatchery-status";
 
 export const Route = createFileRoute("/_authenticated/admin/hatcheries")({
+  beforeLoad: requireStaffBeforeLoad,
   head: () => ({ meta: [{ title: "Hatchery review queue — farmlink admin" }] }),
   component: AdminHatcheries,
 });

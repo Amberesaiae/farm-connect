@@ -1,4 +1,5 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { requireStaffBeforeLoad } from "@/lib/route-guards";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { StaffGate } from "@/components/layout/StaffGate";
@@ -22,6 +23,7 @@ import {
 } from "@/lib/agro-store-status";
 
 export const Route = createFileRoute("/_authenticated/admin/stores")({
+  beforeLoad: requireStaffBeforeLoad,
   head: () => ({ meta: [{ title: "Admin · Shops — farmlink" }] }),
   errorComponent: ({ error }) => {
     const router = useRouter();

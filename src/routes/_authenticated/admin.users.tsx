@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireAdminBeforeLoad } from "@/lib/route-guards";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { AdminGate } from "@/components/layout/AdminGate";
@@ -11,6 +12,7 @@ import { setUserStatus } from "@/server/admin.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
+  beforeLoad: requireAdminBeforeLoad,
   head: () => ({ meta: [{ title: "Users — farmlink admin" }] }),
   component: UsersMod,
 });
