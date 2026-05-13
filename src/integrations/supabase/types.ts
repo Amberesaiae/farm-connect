@@ -1050,6 +1050,30 @@ export type Database = {
         }
         Relationships: []
       }
+      phone_otp_dispatch: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          phone_e164: string
+          plain_code: string
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          phone_e164: string
+          plain_code: string
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          phone_e164?: string
+          plain_code?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       phone_otps: {
         Row: {
           attempts: number
@@ -1657,6 +1681,7 @@ export type Database = {
         Args: { _confirmed_qty: number; _reservation_id: string }
         Returns: Json
       }
+      consume_otp_for_dispatch: { Args: never; Returns: Json }
       current_role_set: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"][]

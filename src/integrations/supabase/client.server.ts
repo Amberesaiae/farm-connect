@@ -27,7 +27,15 @@ function createSupabaseAdminClient() {
 let _supabaseAdmin: ReturnType<typeof createSupabaseAdminClient> | undefined;
 
 // Server-side Supabase client with service role - bypasses RLS
-// SECURITY: Only use this for trusted server-side operations, never expose to client code
+// SECURITY POLICY:
+//   1. NEVER import from a client component or *.functions.ts handler that
+//      isn't already gated by `requireRole`/`requireAnyRole`/`requireOwnership`.
+//   2. Allowed call sites: admin tools, audit log writers, signed-URL minting,
+//      notification fan-out, and lookups that explicitly bypass RLS for an
+//      already-authorized actor (e.g. moderator approving a listing).
+//   3. If you reach for this client inside a user-facing flow, stop and use
+//      `context.supabase` from the `requireSupabaseAuth` middleware so RLS
+//      runs on the caller's identity.
 // Import like: import { supabaseAdmin } from "@/integrations/supabase/client.server";
 export const supabaseAdmin = new Proxy({} as ReturnType<typeof createSupabaseAdminClient>, {
   get(_, prop, receiver) {
