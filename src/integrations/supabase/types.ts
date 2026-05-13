@@ -1587,36 +1587,42 @@ export type Database = {
         Row: {
           avatar_url: string | null
           badge_tier: Database["public"]["Enums"]["badge_tier"] | null
+          business_licensed: boolean | null
           created_at: string | null
           display_name: string | null
           district: string | null
           id: string | null
           id_verified: boolean | null
           listing_count: number | null
+          phone_verified: boolean | null
           region: string | null
           trade_count: number | null
         }
         Insert: {
           avatar_url?: string | null
           badge_tier?: Database["public"]["Enums"]["badge_tier"] | null
+          business_licensed?: boolean | null
           created_at?: string | null
           display_name?: string | null
           district?: string | null
           id?: string | null
           id_verified?: boolean | null
           listing_count?: number | null
+          phone_verified?: boolean | null
           region?: string | null
           trade_count?: number | null
         }
         Update: {
           avatar_url?: string | null
           badge_tier?: Database["public"]["Enums"]["badge_tier"] | null
+          business_licensed?: boolean | null
           created_at?: string | null
           display_name?: string | null
           district?: string | null
           id?: string | null
           id_verified?: boolean | null
           listing_count?: number | null
+          phone_verified?: boolean | null
           region?: string | null
           trade_count?: number | null
         }
@@ -1675,6 +1681,7 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      my_session: { Args: never; Returns: Json }
       owns_batch: {
         Args: { _batch_id: string; _user_id: string }
         Returns: boolean
@@ -1690,6 +1697,16 @@ export type Database = {
       owns_store: {
         Args: { _store_id: string; _user_id: string }
         Returns: boolean
+      }
+      rate_limit_gc: { Args: never; Returns: number }
+      rate_limit_hit: {
+        Args: {
+          _key: string
+          _max: number
+          _scope: string
+          _window_sec: number
+        }
+        Returns: Json
       }
       recompute_category_path: { Args: { _id: string }; Returns: undefined }
       record_listing_view: {
