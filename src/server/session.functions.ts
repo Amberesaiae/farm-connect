@@ -31,15 +31,16 @@ export const getMySession = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<MySession> => {
     const { supabase, userId } = context;
 
-    const [rolesRes, profileRes] = await Promise.all([
+    const [rolesRes, profileRes, waRes] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", userId),
       supabase
         .from("profiles")
         .select(
-          "display_name, avatar_url, badge_tier, status, whatsapp_e164, phone_verified, id_verified, business_licensed",
+          "display_name, avatar_url, badge_tier, status, phone_verified, id_verified, business_licensed",
         )
         .eq("id", userId)
         .maybeSingle(),
+      supabase.rpc("get_my_whatsapp"),
     ]);
 
     const roles = ((rolesRes.data ?? []) as { role: AppRole }[]).map((r) => r.role);
@@ -59,7 +60,7 @@ export const getMySession = createServerFn({ method: "GET" })
             avatar_url: p.avatar_url,
             badge_tier: p.badge_tier,
             status: p.status,
-            whatsapp_e164: p.whatsapp_e164,
+            whatsapp_e164: (waRes.data as string | null) ?? null,
           }
         : null,
     };
