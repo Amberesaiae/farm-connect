@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { ImagePlus, X } from "lucide-react";
 import { useCan } from "@/hooks/useCan";
 import { RequirePhoneVerifyModal } from "@/components/auth/RequirePhoneVerifyModal";
+import { RequireIdVerifyModal } from "@/components/auth/RequireIdVerifyModal";
 import { LicenceRequiredNudge } from "@/components/auth/LicenceRequiredNudge";
 import { parseAppError } from "@/integrations/supabase/errors";
 

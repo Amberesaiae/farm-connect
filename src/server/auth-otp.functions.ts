@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { appErrorResponse } from "@/integrations/supabase/errors";
+import { dispatchOtpSms } from "@/integrations/sms/twilio.server";
 
 const phoneSchema = z
   .string()
@@ -32,14 +33,30 @@ export const sendPhoneOtp = createServerFn({ method: "POST" })
       }
       throw appErrorResponse({ code: "INTERNAL", message: msg });
     }
-    const r = res as { ok?: boolean; reason?: string; cooldown_sec?: number } | null;
+    const r = res as { ok?: boolean; reason?: string; cooldown_sec?: number; code?: string; retryAfterSec?: number } | null;
     if (!r?.ok) {
+      if (r?.code === "RATE_LIMITED") {
+        throw appErrorResponse({
+          code: "RATE_LIMITED",
+          message: "Too many code requests. Try again later.",
+          retryAfterSec: r.retryAfterSec ?? 3600,
+        });
+      }
       throw appErrorResponse({
-        code: "RATE_LIMITED",
-        message: "Please wait before requesting another code",
-        retryAfterSec: r?.cooldown_sec ?? 60,
+        code: "VALIDATION",
+        message: "Could not start verification",
       });
     }
+
+    // Pull the freshly-generated plaintext code (not exposed via the RPC
+    // response) and hand it to the SMS provider. If no provider is wired,
+    // we log the code server-side for development.
+    const { data: dispatch } = await supabase.rpc("consume_otp_for_dispatch");
+    const d = dispatch as { ok?: boolean; phone_e164?: string; code?: string } | null;
+    if (d?.ok && d.code && d.phone_e164) {
+      await dispatchOtpSms({ to: d.phone_e164, code: d.code });
+    }
+
     return { ok: true };
   });
 
