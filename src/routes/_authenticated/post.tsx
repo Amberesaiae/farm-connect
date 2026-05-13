@@ -82,6 +82,7 @@ function PostWizard() {
   const [busy, setBusy] = useState(false);
   const { can, why } = useCan("listings.create");
   const [verifyOpen, setVerifyOpen] = useState(false);
+  const [idVerifyOpen, setIdVerifyOpen] = useState(false);
 
   // Gentle prompt: when an authed user lands here without a verified phone,
   // open the OTP modal once. They can dismiss and still draft, but submit
@@ -272,6 +273,8 @@ function PostWizard() {
       const e = await parseAppError(err);
       if (e.requires === "phone_verify") {
         setVerifyOpen(true);
+      } else if (e.requires === "id_verify") {
+        setIdVerifyOpen(true);
       } else {
         toast.error(e.message);
       }
@@ -542,6 +545,7 @@ function PostWizard() {
       </div>
       <style>{`@media (min-width: 768px) { .fixed.inset-x-0.z-30 { bottom: 0 !important; } }`}</style>
       <RequirePhoneVerifyModal open={verifyOpen} onOpenChange={setVerifyOpen} />
+      <RequireIdVerifyModal open={idVerifyOpen} onOpenChange={setIdVerifyOpen} />
     </AppShell>
   );
 }
