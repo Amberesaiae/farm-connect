@@ -146,7 +146,9 @@ function ListingsPage() {
       if (search.q) query = query.textSearch("search_vector", search.q, { type: "websearch" });
 
       // Dynamic attribute filters → JSONB containment (uses GIN index).
-      const attrEntries = Object.entries(search.attrs ?? {}).filter(([, v]) => v && v.length > 0);
+      const attrEntries = Object.entries((search.attrs ?? {}) as Record<string, string>).filter(
+        ([, v]) => typeof v === "string" && v.length > 0,
+      );
       if (attrEntries.length > 0) {
         const obj: Record<string, unknown> = {};
         for (const [k, v] of attrEntries) {
