@@ -2,52 +2,35 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireGate } from "@/integrations/supabase/role-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { supabase as anonSupabase } from "@/integrations/supabase/client";
 
-// ---------- Log a contact-tap (anyone can call; user may be anon) ----------
+// ---------- Log a view / contact-tap (delegates to throttled RPCs) ----------
 const logContactInput = z.object({ listingId: z.string().uuid() });
 
+/**
+ * @deprecated Use the `revealContact` server fn (src/server/contact.functions.ts)
+ * which atomically reveals the seller WhatsApp + records the event.
+ * Kept as a thin wrapper for legacy callers — no-op on the events side because
+ * `reveal_contact` already inserts the contact_whatsapp event.
+ */
 export const logContactTap = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => logContactInput.parse(d))
-  .handler(async ({ data }) => {
-    const { error } = await supabaseAdmin.from("listing_events").insert({
-      listing_id: data.listingId,
-      event_type: "contact_whatsapp",
-    });
-    if (error) {
-      console.error("logContactTap insert error:", error.message);
-      return { ok: false };
-    }
-    const { data: row } = await supabaseAdmin
-      .from("listings")
-      .select("contact_count")
-      .eq("id", data.listingId)
-      .maybeSingle();
-    await supabaseAdmin
-      .from("listings")
-      .update({ contact_count: (row?.contact_count ?? 0) + 1 })
-      .eq("id", data.listingId);
+  .handler(async () => {
     return { ok: true };
   });
 
-// ---------- Log a view (anonymous-safe) ----------
+/**
+ * Anonymous-safe view tracker. Calls `record_listing_view` which is
+ * SECURITY DEFINER and applies hour-bucket throttling inside the database.
+ */
 export const logView = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => logContactInput.parse(d))
   .handler(async ({ data }) => {
-    await supabaseAdmin.from("listing_events").insert({
-      listing_id: data.listingId,
-      event_type: "view",
+    const { error } = await anonSupabase.rpc("record_listing_view", {
+      _listing_id: data.listingId,
     });
-    const { data: row } = await supabaseAdmin
-      .from("listings")
-      .select("view_count")
-      .eq("id", data.listingId)
-      .maybeSingle();
-    await supabaseAdmin
-      .from("listings")
-      .update({ view_count: (row?.view_count ?? 0) + 1 })
-      .eq("id", data.listingId);
-    return { ok: true };
+    if (error) console.error("logView rpc error:", error.message);
+    return { ok: !error };
   });
 
 // ---------- Create listing (auth, category-aware validation) ----------
@@ -149,7 +132,7 @@ export const markSold = createServerFn({ method: "POST" })
       .eq("seller_id", userId);
     if (e1) throw new Error(e1.message);
 
-    const { data: prof } = await supabaseAdmin
+    const { data: prof } = await supabase
       .from("profiles")
       .select("trade_count, badge_tier")
       .eq("id", userId)
@@ -161,7 +144,7 @@ export const markSold = createServerFn({ method: "POST" })
       if (newCount >= 25) tier = "top_seller";
       else if (newCount >= 5) tier = "trusted";
     }
-    await supabaseAdmin
+    await supabase
       .from("profiles")
       .update({ trade_count: newCount, badge_tier: tier })
       .eq("id", userId);
