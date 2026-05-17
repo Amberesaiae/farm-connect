@@ -16,6 +16,7 @@ import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as HatcheriesRouteImport } from './routes/hatcheries'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as StoresIndexRouteImport } from './routes/stores.index'
 import { Route as StoresSlugRouteImport } from './routes/stores.$slug'
 import { Route as ServicesSlugRouteImport } from './routes/services.$slug'
@@ -78,6 +79,11 @@ const AboutRoute = AboutRouteImport.update({
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StoresIndexRoute = StoresIndexRouteImport.update({
@@ -245,7 +251,7 @@ const AuthenticatedDashboardHatcheryBatchesBatchIdRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthenticatedRouteWithChildren
+  '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/hatcheries': typeof HatcheriesRouteWithChildren
   '/how-it-works': typeof HowItWorksRoute
@@ -283,7 +289,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/store/agro/onboarding': typeof AuthenticatedDashboardStoreAgroOnboardingRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof AuthenticatedRouteWithChildren
+  '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/hatcheries': typeof HatcheriesRouteWithChildren
   '/how-it-works': typeof HowItWorksRoute
@@ -322,6 +328,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
   '/hatcheries': typeof HatcheriesRouteWithChildren
@@ -438,6 +445,7 @@ export interface FileRouteTypes {
     | '/dashboard/store/agro/onboarding'
   id:
     | '__root__'
+    | '/'
     | '/_authenticated'
     | '/about'
     | '/hatcheries'
@@ -477,6 +485,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
   HatcheriesRoute: typeof HatcheriesRouteWithChildren
@@ -537,6 +546,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stores/': {
@@ -916,6 +932,7 @@ const ServicesRouteWithChildren = ServicesRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
   HatcheriesRoute: HatcheriesRouteWithChildren,
@@ -929,3 +946,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
