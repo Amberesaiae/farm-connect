@@ -235,3 +235,36 @@
 .hero-text-active  { animation: hero-text-in 700ms var(--ease-out-soft) both; }
 .hero-text-leaving { animation: hero-text-out 400ms var(--ease-out-soft) both; }
 .hero-progress     { transform-origin: left center; animation: hero-progress var(--hero-dur, 5500ms) linear both; }
+
+/* Reduced motion: respect OS setting — strip all hero kinetics */
+@media (prefers-reduced-motion: reduce) {
+  .hero-img-active,
+  .hero-img-leaving,
+  .hero-text-active,
+  .hero-text-leaving,
+  .hero-progress,
+  .fl-fade-in,
+  .fl-rise-in,
+  .fl-drift,
+  .ticker-track {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Horizontal scroll-snap row (used by AgroVendorStrip etc.) */
+.scroll-snap-row {
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+.scroll-snap-row > * { scroll-snap-align: start; }
+
+/* Visually hidden but available to screen readers */
+.sr-only-live {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0);
+  white-space: nowrap; border: 0;
+}
