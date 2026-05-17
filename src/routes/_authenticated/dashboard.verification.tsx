@@ -12,6 +12,7 @@ import { VERIFICATION_DOCS_BUCKET } from "@/lib/constants";
 import { normaliseGhanaPhone } from "@/lib/format";
 import { toast } from "sonner";
 import { CheckCircle2, Clock, ImagePlus, ShieldAlert } from "lucide-react";
+import { TrustLadder } from "@/components/trust/TrustLadder";
 
 export const Route = createFileRoute("/_authenticated/dashboard/verification")({
   head: () => ({ meta: [{ title: "Get verified — farmlink" }] }),
@@ -117,7 +118,7 @@ function VerificationPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
+      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6">
         <div>
           <h1 className="font-display text-[28px] font-extrabold tracking-tight">
             Get verified
@@ -126,6 +127,8 @@ function VerificationPage() {
             Verified sellers display a badge and earn higher trust from buyers.
           </p>
         </div>
+
+        <TrustLadder current={profile?.badge_tier ?? null} />
 
         {profile?.badge_tier && profile.badge_tier !== "none" && (
           <div className="flex items-center gap-2 rounded-2xl border-[1.5px] border-primary/30 bg-primary-soft p-3 text-primary">
