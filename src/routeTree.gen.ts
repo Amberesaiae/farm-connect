@@ -9,10 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SitemapRouteImport } from './routes/sitemap'
 import { Route as ServicesRouteImport } from './routes/services'
+import { Route as SafetyRouteImport } from './routes/safety'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ListingsRouteImport } from './routes/listings'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as HelpRouteImport } from './routes/help'
 import { Route as HatcheriesRouteImport } from './routes/hatcheries'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
@@ -48,9 +53,29 @@ import { Route as AuthenticatedDashboardHatcheryBatchesRouteImport } from './rou
 import { Route as AuthenticatedDashboardStoreAgroOnboardingRouteImport } from './routes/_authenticated/dashboard.store.agro.onboarding'
 import { Route as AuthenticatedDashboardHatcheryBatchesBatchIdRouteImport } from './routes/_authenticated/dashboard.hatchery.batches.$batchId'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapRoute = SitemapRouteImport.update({
+  id: '/sitemap',
+  path: '/sitemap',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
   path: '/services',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SafetyRoute = SafetyRouteImport.update({
+  id: '/safety',
+  path: '/safety',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -66,6 +91,11 @@ const ListingsRoute = ListingsRouteImport.update({
 const HowItWorksRoute = HowItWorksRouteImport.update({
   id: '/how-it-works',
   path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HelpRoute = HelpRouteImport.update({
+  id: '/help',
+  path: '/help',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HatcheriesRoute = HatcheriesRouteImport.update({
@@ -261,10 +291,15 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/hatcheries': typeof HatcheriesRouteWithChildren
+  '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/listings': typeof ListingsRouteWithChildren
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
+  '/safety': typeof SafetyRoute
   '/services': typeof ServicesRouteWithChildren
+  '/sitemap': typeof SitemapRoute
+  '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/post': typeof AuthenticatedPostRoute
@@ -300,10 +335,15 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/hatcheries': typeof HatcheriesRouteWithChildren
+  '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/listings': typeof ListingsRouteWithChildren
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
+  '/safety': typeof SafetyRoute
   '/services': typeof ServicesRouteWithChildren
+  '/sitemap': typeof SitemapRoute
+  '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/post': typeof AuthenticatedPostRoute
@@ -341,10 +381,15 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
   '/hatcheries': typeof HatcheriesRouteWithChildren
+  '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/listings': typeof ListingsRouteWithChildren
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
+  '/safety': typeof SafetyRoute
   '/services': typeof ServicesRouteWithChildren
+  '/sitemap': typeof SitemapRoute
+  '/terms': typeof TermsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/_authenticated/post': typeof AuthenticatedPostRoute
@@ -382,10 +427,15 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/hatcheries'
+    | '/help'
     | '/how-it-works'
     | '/listings'
     | '/login'
+    | '/privacy'
+    | '/safety'
     | '/services'
+    | '/sitemap'
+    | '/terms'
     | '/admin'
     | '/dashboard'
     | '/post'
@@ -421,10 +471,15 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/hatcheries'
+    | '/help'
     | '/how-it-works'
     | '/listings'
     | '/login'
+    | '/privacy'
+    | '/safety'
     | '/services'
+    | '/sitemap'
+    | '/terms'
     | '/admin'
     | '/dashboard'
     | '/post'
@@ -461,10 +516,15 @@ export interface FileRouteTypes {
     | '/about'
     | '/contact'
     | '/hatcheries'
+    | '/help'
     | '/how-it-works'
     | '/listings'
     | '/login'
+    | '/privacy'
+    | '/safety'
     | '/services'
+    | '/sitemap'
+    | '/terms'
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/post'
@@ -502,21 +562,54 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   ContactRoute: typeof ContactRoute
   HatcheriesRoute: typeof HatcheriesRouteWithChildren
+  HelpRoute: typeof HelpRoute
   HowItWorksRoute: typeof HowItWorksRoute
   ListingsRoute: typeof ListingsRouteWithChildren
   LoginRoute: typeof LoginRoute
+  PrivacyRoute: typeof PrivacyRoute
+  SafetyRoute: typeof SafetyRoute
   ServicesRoute: typeof ServicesRouteWithChildren
+  SitemapRoute: typeof SitemapRoute
+  TermsRoute: typeof TermsRoute
   StoresSlugRoute: typeof StoresSlugRoute
   StoresIndexRoute: typeof StoresIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap': {
+      id: '/sitemap'
+      path: '/sitemap'
+      fullPath: '/sitemap'
+      preLoaderRoute: typeof SitemapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/services': {
       id: '/services'
       path: '/services'
       fullPath: '/services'
       preLoaderRoute: typeof ServicesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/safety': {
+      id: '/safety'
+      path: '/safety'
+      fullPath: '/safety'
+      preLoaderRoute: typeof SafetyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -538,6 +631,13 @@ declare module '@tanstack/react-router' {
       path: '/how-it-works'
       fullPath: '/how-it-works'
       preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help': {
+      id: '/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof HelpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hatcheries': {
@@ -957,10 +1057,15 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   ContactRoute: ContactRoute,
   HatcheriesRoute: HatcheriesRouteWithChildren,
+  HelpRoute: HelpRoute,
   HowItWorksRoute: HowItWorksRoute,
   ListingsRoute: ListingsRouteWithChildren,
   LoginRoute: LoginRoute,
+  PrivacyRoute: PrivacyRoute,
+  SafetyRoute: SafetyRoute,
   ServicesRoute: ServicesRouteWithChildren,
+  SitemapRoute: SitemapRoute,
+  TermsRoute: TermsRoute,
   StoresSlugRoute: StoresSlugRoute,
   StoresIndexRoute: StoresIndexRoute,
 }
