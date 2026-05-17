@@ -118,7 +118,7 @@ function VerificationPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-2xl space-y-6 px-4 py-6">
+      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6">
         <div>
           <h1 className="font-display text-[28px] font-extrabold tracking-tight">
             Get verified
