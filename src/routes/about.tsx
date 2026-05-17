@@ -4,8 +4,8 @@ import {
   CompassIcon,
   ChatBubbleIcon,
   SeedlingIcon,
-  ShoppingBagIcon,
-  SyringeIcon,
+  StorefrontIcon,
+  TruckIcon,
   EggIcon,
 } from "@/components/icons";
 
@@ -68,14 +68,14 @@ const ECOSYSTEM: Array<{
     cta: "See hatcheries",
   },
   {
-    Icon: SyringeIcon,
+    Icon: TruckIcon,
     title: "Vets, transport & feed",
     body: "Verified service providers across veterinary, transport, feed and insurance.",
     to: "/services",
     cta: "Find a provider",
   },
   {
-    Icon: ShoppingBagIcon,
+    Icon: StorefrontIcon,
     title: "Agro shops",
     body: "Feed, agromed and equipment stores — one directory, every verified vendor.",
     to: "/stores",
