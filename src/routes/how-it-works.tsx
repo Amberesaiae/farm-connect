@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 
 export const Route = createFileRoute("/how-it-works")({
@@ -39,7 +39,10 @@ function HowItWorksPage() {
     <AppShell>
       <div className="mx-auto max-w-5xl px-4 py-10 md:px-8 md:py-16">
         <header className="max-w-2xl">
-          <h1 className="font-display text-[32px] font-extrabold leading-[1.05] tracking-tight md:text-[42px]">
+          <span className="inline-flex items-center rounded-full bg-primary-soft px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wider text-primary">
+            Buyer & seller guide
+          </span>
+          <h1 className="font-display mt-3 text-[32px] font-extrabold leading-[1.05] tracking-tight md:text-[42px]">
             How farmlink works
           </h1>
           <p className="mt-3 text-[14.5px] leading-relaxed text-muted-foreground">
@@ -52,6 +55,31 @@ function HowItWorksPage() {
           <Guide title="For buyers" steps={BUYER_STEPS} />
           <Guide title="For sellers" steps={SELLER_STEPS} />
         </div>
+
+        <section className="mt-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border-[1.5px] border-border bg-card p-6 md:p-8">
+          <div>
+            <h2 className="font-display text-[20px] font-extrabold tracking-tight md:text-[22px]">
+              Ready to get started?
+            </h2>
+            <p className="mt-1 text-[13.5px] text-muted-foreground">
+              Browse what's live today, or post your first listing in under a minute.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2.5">
+            <Link
+              to="/listings"
+              className="inline-flex items-center rounded-md border-[1.5px] border-border bg-card px-4 py-2 text-[13px] font-semibold text-foreground transition-colors hover:border-primary/40"
+            >
+              Browse marketplace
+            </Link>
+            <Link
+              to="/post"
+              className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Post a listing
+            </Link>
+          </div>
+        </section>
       </div>
     </AppShell>
   );

@@ -8,6 +8,13 @@ import { type HatcheryCategory } from "@/lib/categories";
 import { useTaxonomy } from "@/lib/taxonomy-context";
 import { GHANA_REGIONS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/hatcheries")({
   head: () => ({
@@ -82,7 +89,7 @@ function HatcheriesPage() {
     <AppShell>
       <div className="mx-auto max-w-6xl px-4 py-8 md:px-8 md:py-12">
         <header className="max-w-2xl">
-          <span className="inline-flex items-center rounded-full bg-secondary/15 px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wider text-secondary">
+          <span className="inline-flex items-center rounded-full bg-primary-soft px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wider text-primary">
             Approved hatcheries
           </span>
           <h1 className="font-display mt-3 text-[32px] font-extrabold leading-[1.05] tracking-tight md:text-[40px]">
@@ -100,7 +107,7 @@ function HatcheriesPage() {
           </Link>
         </header>
 
-        <div className="mt-6 flex flex-wrap gap-2">
+        <div className="mt-7 flex flex-wrap items-center gap-2">
           {categoryFilters.map((f) => (
             <button
               key={f.value}
@@ -116,41 +123,33 @@ function HatcheriesPage() {
               {f.label}
             </button>
           ))}
-        </div>
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setRegion("all")}
-            className={cn(
-              "rounded-full border-[1.5px] px-3 py-1 text-[11.5px] font-semibold transition-colors",
-              region === "all"
-                ? "border-foreground bg-foreground text-background"
-                : "border-border bg-card text-muted-foreground hover:text-foreground",
-            )}
-          >
-            All regions
-          </button>
-          {GHANA_REGIONS.map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => setRegion(r)}
-              className={cn(
-                "rounded-full border-[1.5px] px-3 py-1 text-[11.5px] font-semibold transition-colors",
-                region === r
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border bg-card text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {r}
-            </button>
-          ))}
+          <div className="ml-auto w-[180px]">
+            <Select value={region} onValueChange={setRegion}>
+              <SelectTrigger className="rounded-xl">
+                <SelectValue placeholder="All regions" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All regions</SelectItem>
+                {GHANA_REGIONS.map((r) => (
+                  <SelectItem key={r} value={r}>
+                    {r}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="mt-7">
           {loading ? (
-            <p className="text-sm text-muted-foreground">Loading hatcheries…</p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="aspect-[5/4] animate-pulse rounded-2xl border-[1.5px] border-border bg-card"
+                />
+              ))}
+            </div>
           ) : visible.length === 0 ? (
             <div className="rounded-2xl border-[1.5px] border-dashed border-border bg-card p-10 text-center">
               <p className="text-sm text-muted-foreground">
