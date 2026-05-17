@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { MapPinIcon, CheckIcon } from "@/components/icons";
 import { formatGhs, formatPriceUnit, formatRelative } from "@/lib/format";
 import { listingPhotoUrl } from "@/lib/photo-url";
-import { SaveButton } from "./SaveButton";
+import { CardSaveButton } from "./CardSaveButton";
 import { cn } from "@/lib/utils";
 
 export interface ListingCardData {
@@ -151,8 +151,8 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
       </div>
       </Link>
       {/* Real save button — sits above the link so the click is captured */}
-      <div className="absolute right-2.5 top-2.5">
-        <SaveButton listingId={listing.id} initialSaved={false} />
+      <div className="absolute right-2.5 top-2.5 z-10">
+        <CardSaveButton listingId={listing.id} />
       </div>
     </div>
   );
