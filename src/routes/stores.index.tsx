@@ -68,8 +68,15 @@ function StoresIndex() {
       <div className="mx-auto max-w-6xl px-4 py-5 md:py-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-display text-[28px] font-extrabold tracking-tight">Shops</h1>
-            <p className="mt-1 text-[14px] text-muted-foreground">Verified hatcheries, service providers and agro dealers.</p>
+            <span className="inline-flex items-center rounded-full bg-primary-soft px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wider text-primary">
+              Vendor directory
+            </span>
+            <h1 className="font-display mt-3 text-[32px] font-extrabold leading-[1.05] tracking-tight md:text-[40px]">
+              Every verified vendor, in one place
+            </h1>
+            <p className="mt-3 max-w-xl text-[14.5px] leading-relaxed text-muted-foreground">
+              Hatcheries, service providers and agro dealers — all vetted by Farmlink and reachable directly on WhatsApp.
+            </p>
           </div>
           <Button asChild variant="outline" className="rounded-xl">
             <Link to="/dashboard/store">Open a shop</Link>
@@ -94,7 +101,7 @@ function StoresIndex() {
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name…" className="max-w-xs rounded-xl" />
           <Select value={region} onValueChange={setRegion}>
-            <SelectTrigger className="w-[180px] rounded-xl"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-[180px] rounded-xl"><SelectValue placeholder="All regions" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All regions</SelectItem>
               {GHANA_REGIONS.map((r) => (<SelectItem key={r} value={r}>{r}</SelectItem>))}
