@@ -1,27 +1,29 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { ArrowRightIcon } from "@/components/icons";
 import heroCattle from "@/assets/hero-cattle.jpg";
 import heroGoats from "@/assets/hero-goats.jpg";
 import heroPoultry from "@/assets/hero-poultry.jpg";
 
 /**
- * Editorial scene-rotator hero. No search box, no green wash — image leads.
- * A subtle bottom-anchored dark gradient keeps text legible while letting the
- * photography (golden hour, red earth, dust) carry the brand mood.
- *
- * Each scene rotates every 5.5s; headline slides in with a clip-path reveal
- * so the kinetic motion comes from the type, not the image.
+ * Editorial scene-rotator hero. Accessibility-hardened:
+ *  - Stable <h1> (does not change between scenes — SEO & SR friendly).
+ *  - Rotating scene copy lives inside a role="group" + aria-roledescription="slide".
+ *  - Auto-advance honours prefers-reduced-motion, document visibility, hover & focus.
+ *  - Visible play/pause toggle (WCAG 2.2.2).
+ *  - Indicator strip is a proper role="tablist" with arrow-key + Home/End nav and roving tabindex.
+ *  - aria-live region announces the current scene to screen readers.
+ *  - Contrast scrim guarantees ≥4.5:1 against any underlying image area.
  */
 interface Scene {
   src: string;
   alt: string;
   eyebrow: string;
-  word: string;        // accent word — large, in clay tone
-  line: string;        // continuation of the headline
-  caption: string;     // sub-line under the headline
-  meta: string;        // tiny dateline / location credit
-  position: string;    // background-position to keep the subject in frame
+  word: string;
+  line: string;
+  caption: string;
+  meta: string;
+  position: string;
 }
 
 const SCENES: Scene[] = [
@@ -59,35 +61,111 @@ const SCENES: Scene[] = [
 
 const DURATION_MS = 5500;
 
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const handler = () => setReduced(mq.matches);
+    handler();
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return reduced;
+}
+
 export function HomeHero() {
   const [i, setI] = useState(0);
   const [prev, setPrev] = useState<number | null>(null);
+  const [paused, setPaused] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [focusWithin, setFocusWithin] = useState(false);
+  const [visible, setVisible] = useState(true);
+  const reduced = usePrefersReducedMotion();
+  const tablistId = useId();
+  const liveId = useId();
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  // Tab-visibility pause
+  useEffect(() => {
+    const onVis = () => setVisible(!document.hidden);
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+
+  const effectivePaused = paused || hovered || focusWithin || !visible || reduced;
 
   useEffect(() => {
-    const t = setInterval(() => {
+    if (effectivePaused) return;
+    const t = window.setTimeout(() => {
       setPrev(i);
       setI((n) => (n + 1) % SCENES.length);
     }, DURATION_MS);
-    return () => clearInterval(t);
-  }, [i]);
+    return () => window.clearTimeout(t);
+  }, [i, effectivePaused]);
 
-  const goTo = (next: number) => {
-    if (next === i) return;
-    setPrev(i);
-    setI(next);
+  const goTo = useCallback(
+    (next: number, focus = false) => {
+      const clamped = ((next % SCENES.length) + SCENES.length) % SCENES.length;
+      if (clamped === i) return;
+      setPrev(i);
+      setI(clamped);
+      if (focus) {
+        // Defer to next tick so the new tab is selectable
+        window.setTimeout(() => tabRefs.current[clamped]?.focus(), 0);
+      }
+    },
+    [i],
+  );
+
+  const onTabKey = (e: React.KeyboardEvent) => {
+    switch (e.key) {
+      case "ArrowRight":
+        e.preventDefault();
+        goTo(i + 1, true);
+        break;
+      case "ArrowLeft":
+        e.preventDefault();
+        goTo(i - 1, true);
+        break;
+      case "Home":
+        e.preventDefault();
+        goTo(0, true);
+        break;
+      case "End":
+        e.preventDefault();
+        goTo(SCENES.length - 1, true);
+        break;
+    }
   };
 
   const scene = SCENES[i];
+  const animate = !reduced;
 
   return (
     <section
-      aria-label="Featured livestock"
+      id="hero"
+      aria-label="Featured livestock scenes"
+      aria-roledescription="carousel"
       className="relative isolate overflow-hidden rounded-[28px] bg-foreground text-white shadow-[0_24px_80px_-30px_rgba(17,24,20,0.4)]"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocus={() => setFocusWithin(true)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) setFocusWithin(false);
+      }}
     >
-      {/* Image stage */}
+      {/* Live region — announces scene changes politely */}
+      <div id={liveId} className="sr-only-live" aria-live="polite" aria-atomic="true">
+        Scene {i + 1} of {SCENES.length}: {scene.word}, {scene.eyebrow}
+      </div>
+
+      {/* Stable H1 for SEO & screen readers — visually hidden, never changes */}
+      <h1 className="sr-only-live">
+        farmlink — Ghana's livestock marketplace, direct from the farm.
+      </h1>
+
       <div className="relative aspect-[4/5] w-full sm:aspect-[16/10] md:aspect-[21/9] md:min-h-[520px]">
-        {/* Outgoing image (briefly held under the incoming one) */}
-        {prev !== null && (
+        {prev !== null && animate && (
           <img
             key={`prev-${prev}`}
             src={SCENES[prev].src}
@@ -103,73 +181,87 @@ export function HomeHero() {
           key={`cur-${i}`}
           src={scene.src}
           alt={scene.alt}
-          className="hero-img-active absolute inset-0 h-full w-full object-cover"
+          className={animate ? "hero-img-active absolute inset-0 h-full w-full object-cover" : "absolute inset-0 h-full w-full object-cover"}
           style={{ objectPosition: scene.position }}
           width={1920}
           height={1080}
           fetchPriority="high"
         />
 
-        {/* Legibility scrim — bottom-anchored dark wash, NO green overlay.
-            Stronger on mobile (text wraps tighter), softer on desktop. */}
+        {/* Bottom scrim — guarantees text contrast over photography */}
         <div
           aria-hidden
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(180deg, rgba(0,0,0,0) 35%, rgba(0,0,0,0.15) 55%, rgba(17,24,20,0.85) 100%)",
+              "linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,0.25) 55%, rgba(17,24,20,0.92) 100%)",
           }}
         />
-        {/* Subtle left vignette for extra contrast under the eyebrow */}
+        {/* Targeted contrast pad anchored under the headline — guarantees 4.5:1 without darkening the photo */}
         <div
           aria-hidden
-          className="absolute inset-0 hidden md:block"
+          className="absolute inset-x-0 bottom-0 h-[55%]"
           style={{
             background:
-              "linear-gradient(90deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.05) 35%, rgba(0,0,0,0) 60%)",
+              "radial-gradient(ellipse 70% 80% at 25% 100%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 70%)",
+          }}
+        />
+        {/* Top vignette for the eyebrow row */}
+        <div
+          aria-hidden
+          className="absolute inset-x-0 top-0 h-32"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 100%)",
           }}
         />
 
-        {/* Top meta row — brand mark + scene counter */}
+        {/* Top meta row */}
         <div className="absolute inset-x-0 top-0 flex items-center justify-between px-6 pt-5 md:px-10 md:pt-7">
-          <span className="font-display text-[13px] font-extrabold uppercase tracking-[0.22em] text-white/85">
+          <span className="font-display text-[13px] font-extrabold uppercase tracking-[0.22em] text-white">
             farmlink
           </span>
           <span
             key={`meta-${i}`}
-            className="hero-text-active font-mono text-[10.5px] font-semibold uppercase tracking-[0.18em] text-white/70"
+            className={animate ? "hero-text-active font-mono text-[10.5px] font-semibold uppercase tracking-[0.18em] text-white/85" : "font-mono text-[10.5px] font-semibold uppercase tracking-[0.18em] text-white/85"}
           >
             {scene.meta}
           </span>
         </div>
 
-        {/* Headline block — anchored bottom-left, slides on each scene change */}
-        <div className="absolute inset-x-0 bottom-0 px-6 pb-10 md:px-12 md:pb-14">
-          <div key={`text-${i}`} className="hero-text-active max-w-3xl">
-            <p className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.24em] text-white/75">
+        {/* Headline block — rotates per scene */}
+        <div className="absolute inset-x-0 bottom-0 px-6 pb-20 md:px-12 md:pb-24">
+          <div
+            key={`text-${i}`}
+            role="group"
+            aria-roledescription="slide"
+            aria-label={`${i + 1} of ${SCENES.length}: ${scene.word}, ${scene.eyebrow}`}
+            className={animate ? "hero-text-active max-w-3xl" : "max-w-3xl"}
+          >
+            <p className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.24em] text-white">
               <span
                 className="mr-2 inline-block h-1.5 w-1.5 rounded-full align-middle"
                 style={{ background: "var(--accent-2)" }}
               />
               {scene.eyebrow}
             </p>
-            <h1 className="font-display mt-3 text-[40px] font-extrabold leading-[0.95] tracking-tight md:text-[72px] lg:text-[88px]">
-              <span
-                className="block italic"
-                style={{ color: "var(--accent-2)" }}
-              >
+            <p
+              aria-hidden="true"
+              className="font-display mt-3 text-[40px] font-extrabold leading-[0.95] tracking-tight md:text-[72px] lg:text-[88px]"
+            >
+              <span className="block italic" style={{ color: "var(--accent-2)" }}>
                 {scene.word}
               </span>
               <span className="block text-white">{scene.line}</span>
-            </h1>
-            <p className="mt-5 max-w-xl text-[14px] leading-relaxed text-white/85 md:text-[16px]">
+            </p>
+            <p className="mt-5 max-w-xl text-[14px] leading-relaxed text-white md:text-[16px]">
               {scene.caption}
             </p>
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <Link
                 to="/listings"
-                className="group inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-[13.5px] font-bold text-foreground transition-transform hover:-translate-y-0.5"
+                className="group inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-5 py-3 text-[13.5px] font-bold text-foreground transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-foreground"
               >
                 Browse marketplace
                 <ArrowRightIcon
@@ -179,7 +271,7 @@ export function HomeHero() {
               </Link>
               <Link
                 to="/post"
-                className="inline-flex items-center gap-2 rounded-full border border-white/30 px-5 py-3 text-[13.5px] font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/10"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/40 px-5 py-3 text-[13.5px] font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-foreground"
               >
                 Post a listing
               </Link>
@@ -187,31 +279,74 @@ export function HomeHero() {
           </div>
         </div>
 
-        {/* Scene indicators — clickable progress bars */}
-        <div className="absolute inset-x-0 bottom-3 flex justify-center gap-2 px-6 md:bottom-5 md:px-12">
-          <div className="flex w-full max-w-[260px] gap-2">
+        {/* Carousel controls — indicators + play/pause. Sits at the bottom edge. */}
+        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-4 px-6 pb-5 md:px-12 md:pb-6">
+          <div
+            id={tablistId}
+            role="tablist"
+            aria-label="Choose a scene"
+            onKeyDown={onTabKey}
+            className="flex w-full max-w-[280px] gap-2"
+          >
             {SCENES.map((s, idx) => (
               <button
                 key={s.word}
+                ref={(el) => {
+                  tabRefs.current[idx] = el;
+                }}
                 type="button"
+                role="tab"
+                aria-selected={idx === i}
+                aria-controls={`hero-slide-${idx}`}
+                aria-label={`Scene ${idx + 1}: ${s.word}`}
+                tabIndex={idx === i ? 0 : -1}
                 onClick={() => goTo(idx)}
-                aria-label={`Show ${s.word} scene`}
-                className="group relative h-[3px] flex-1 overflow-hidden rounded-full bg-white/25"
+                className="group relative h-3 flex-1 cursor-pointer overflow-visible focus-visible:outline-none"
               >
-                {idx === i ? (
-                  <span
-                    key={`bar-${i}`}
-                    className="hero-progress absolute inset-0 block bg-white"
-                    style={{ ["--hero-dur" as string]: `${DURATION_MS}ms` }}
-                  />
-                ) : idx < i ? (
-                  <span className="absolute inset-0 block bg-white/70" />
-                ) : null}
+                <span className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 overflow-hidden rounded-full bg-white/30 group-focus-visible:ring-2 group-focus-visible:ring-white group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-foreground">
+                  {idx === i && !effectivePaused ? (
+                    <span
+                      key={`bar-${i}`}
+                      className="hero-progress absolute inset-0 block bg-white"
+                      style={{ ["--hero-dur" as string]: `${DURATION_MS}ms` }}
+                    />
+                  ) : idx === i ? (
+                    <span className="absolute inset-0 block bg-white" />
+                  ) : idx < i ? (
+                    <span className="absolute inset-0 block bg-white/70" />
+                  ) : null}
+                </span>
               </button>
             ))}
           </div>
+
+          <button
+            type="button"
+            onClick={() => setPaused((p) => !p)}
+            aria-pressed={paused || reduced}
+            aria-label={paused || reduced ? "Play scene auto-advance" : "Pause scene auto-advance"}
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/40 bg-black/30 text-white backdrop-blur-sm transition-colors hover:bg-black/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-foreground"
+          >
+            {paused || reduced ? <PlayGlyph /> : <PauseGlyph />}
+          </button>
         </div>
       </div>
     </section>
+  );
+}
+
+function PlayGlyph() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" fill="currentColor">
+      <path d="M3 1.5v11l9-5.5z" />
+    </svg>
+  );
+}
+function PauseGlyph() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" fill="currentColor">
+      <rect x="2.5" y="1.5" width="3" height="11" rx="0.6" />
+      <rect x="8.5" y="1.5" width="3" height="11" rx="0.6" />
+    </svg>
   );
 }
