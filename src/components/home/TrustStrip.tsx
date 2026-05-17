@@ -25,22 +25,21 @@ const ITEMS = [
 
 export function TrustStrip() {
   return (
-    <section className="rounded-3xl border-[1.5px] border-border bg-card p-6 md:p-8">
-      <div className="mb-5 flex items-end justify-between">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-            How farmlink protects you
-          </p>
-          <h2 className="font-display mt-1 text-[22px] font-extrabold tracking-tight md:text-[26px]">
-            Built for trust, on every listing.
-          </h2>
-        </div>
+    <section aria-label="How farmlink protects you">
+      <div className="mb-6 flex items-baseline gap-4">
+        <h2 className="font-display text-[20px] font-extrabold tracking-tight md:text-[22px]">
+          Built for trust
+        </h2>
+        <span aria-hidden className="h-px flex-1 bg-border" />
+        <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+          On every listing
+        </span>
       </div>
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {ITEMS.map((it) => (
           <li
             key={it.title}
-            className="fl-lift flex flex-col gap-3 rounded-2xl bg-surface p-5"
+            className="fl-lift flex flex-col gap-3 rounded-2xl border border-border bg-card p-5"
           >
             <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-soft text-primary">
               <it.Icon size={22} />

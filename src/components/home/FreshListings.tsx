@@ -75,23 +75,26 @@ export function FreshListings() {
 
   return (
     <section>
-      <div className="flex items-end justify-between">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-            Just posted
+      <div className="flex items-end justify-between gap-6">
+        <div className="max-w-2xl">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary/80">
+            Just posted · updated hourly
           </p>
-          <h2 className="font-display mt-1 text-[22px] font-extrabold tracking-tight md:text-[26px]">
-            Fresh from farmers this week
+          <h2 className="font-display mt-2 text-[28px] font-extrabold leading-[1.05] tracking-tight md:text-[40px]">
+            Fresh from farmers <span className="text-primary">this week</span>
           </h2>
+          <p className="mt-3 text-[14px] leading-relaxed text-muted-foreground md:text-[15px]">
+            New listings from every region — tap any card to talk to the seller on WhatsApp.
+          </p>
         </div>
         <Link
           to="/listings"
-          className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-primary hover:underline"
+          className="hidden shrink-0 items-center gap-1.5 self-end rounded-full border border-border bg-card px-4 py-2 text-[13px] font-semibold text-foreground transition-colors hover:border-primary hover:text-primary md:inline-flex"
         >
           See all <ArrowRightIcon size={14} />
         </Link>
       </div>
-      <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="mt-7 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {loading
           ? Array.from({ length: 8 }).map((_, i) => (
               <div
@@ -100,6 +103,14 @@ export function FreshListings() {
               />
             ))
           : rows.map((l) => <ListingCard key={l.id} listing={l} />)}
+      </div>
+      <div className="mt-6 flex justify-center md:hidden">
+        <Link
+          to="/listings"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-[13px] font-semibold text-foreground"
+        >
+          See all listings <ArrowRightIcon size={14} />
+        </Link>
       </div>
     </section>
   );
