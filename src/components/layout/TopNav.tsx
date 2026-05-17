@@ -27,10 +27,12 @@ export function TopNav() {
   const navigate = useNavigate();
   const location = useLocation();
   const [q, setQ] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const onSearch = (e: FormEvent) => {
     e.preventDefault();
     navigate({ to: "/listings", search: { q: q.trim() || undefined } as never });
+    setSearchOpen(false);
   };
 
   const NavLink = ({ to, children }: { to: NavTo; children: React.ReactNode }) => {
@@ -55,7 +57,7 @@ export function TopNav() {
       <div className="mx-auto flex h-[60px] max-w-7xl items-center gap-3 px-4 md:px-8">
         <Wordmark />
 
-        <nav className="ml-4 hidden items-center gap-5 md:flex">
+        <nav className="ml-4 hidden items-center gap-5 lg:flex">
           <NavLink to="/listings">Browse</NavLink>
           <NavLink to="/services">Services</NavLink>
           <NavLink to="/hatcheries">Hatcheries</NavLink>
@@ -82,6 +84,15 @@ export function TopNav() {
         </form>
 
         <div className="ml-auto flex items-center gap-1.5 md:gap-2">
+          {/* Mobile search trigger — keeps search reachable on every screen */}
+          <button
+            type="button"
+            aria-label="Search"
+            onClick={() => setSearchOpen((s) => !s)}
+            className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-surface md:hidden"
+          >
+            <SearchIcon size={18} strokeWidth={2} />
+          </button>
           {isAuthenticated ? (
             <>
               <Button
@@ -102,9 +113,12 @@ export function TopNav() {
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-64">
                   <DropdownMenuLabel className="truncate">{user?.email}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
+                    My activity
+                  </DropdownMenuLabel>
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard">My listings</Link>
                   </DropdownMenuItem>
@@ -117,10 +131,13 @@ export function TopNav() {
                   <DropdownMenuItem asChild>
                     <Link to="/saved">Saved</Link>
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Sell on farmlink
+                  </DropdownMenuLabel>
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard/verification">Verification</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard/hatchery">My hatchery</Link>
                   </DropdownMenuItem>
@@ -128,12 +145,9 @@ export function TopNav() {
                     <Link to="/dashboard/provider">Service provider</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/services">Services</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/hatcheries">Hatcheries</Link>
-                  </DropdownMenuItem>
+                  <DropdownMenuLabel className="text-[10.5px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Help & more
+                  </DropdownMenuLabel>
                   <DropdownMenuItem asChild>
                     <Link to="/how-it-works">How it works</Link>
                   </DropdownMenuItem>
@@ -172,6 +186,28 @@ export function TopNav() {
           )}
         </div>
       </div>
+
+      {/* Mobile slide-down search panel */}
+      {searchOpen ? (
+        <div className="fl-fade-in border-t border-border bg-background px-4 py-3 md:hidden">
+          <form onSubmit={onSearch} className="flex w-full items-center overflow-hidden rounded-xl border-[1.5px] border-border bg-background focus-within:border-primary">
+            <input
+              autoFocus
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search livestock, breed, region…"
+              className="flex-1 bg-transparent px-3.5 py-2.5 text-[14px] text-foreground outline-none placeholder:text-muted-foreground/70"
+            />
+            <button
+              type="submit"
+              aria-label="Search"
+              className="flex items-center gap-1.5 bg-primary px-4 py-2.5 text-[13px] font-semibold text-primary-foreground"
+            >
+              <SearchIcon size={14} strokeWidth={2} /> Go
+            </button>
+          </form>
+        </div>
+      ) : null}
     </header>
   );
 }
