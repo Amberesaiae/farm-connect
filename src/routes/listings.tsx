@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ListingGrid } from "@/components/listing/ListingGrid";
-import { CategoryStrip } from "@/components/home/CategoryStrip";
+import { Link } from "@tanstack/react-router";
 import { MobileFilterSheet } from "@/components/layout/MobileFilterSheet";
 import { ResultsBar, type ListingSort } from "@/components/listing/ResultsBar";
 import { ActiveFilterChips, type FilterChip } from "@/components/listing/ActiveFilterChips";
@@ -308,11 +308,10 @@ function ListingsPage() {
           <div className="mt-4">
             <TopCategoryTabs active={search.topCategory} />
           </div>
-          {search.topCategory === undefined || search.topCategory === "livestock" ? (
-            <div className="mt-4">
-              <CategoryStrip active={search.category} />
-            </div>
-          ) : null}
+          <SubcategoryPills
+            pillar={search.topCategory ?? "livestock"}
+            active={search.category}
+          />
         </section>
 
         <section>
