@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { Eye, MessageCircle, MoreHorizontal, Package, Plus } from "lucide-react";
 import { PhoneVerifyNudge } from "@/components/auth/PhoneVerifyNudge";
 import { ListingQuotaBanner } from "@/components/dashboard/ListingQuotaBanner";
+import { VerificationProgressCard } from "@/components/dashboard/VerificationProgressCard";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "My listings — farmlink" }] }),
@@ -182,6 +183,10 @@ function Dashboard() {
 
         <div className="mt-4">
           <PhoneVerifyNudge />
+        </div>
+
+        <div className="mt-4">
+          <VerificationProgressCard />
         </div>
 
         <div className="mt-4">
