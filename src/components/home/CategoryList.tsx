@@ -21,27 +21,18 @@ export function CategoryList({ pillar }: { pillar?: string }) {
   useEffect(() => {
     let cancelled = false;
     if (cats.length === 0) return;
-    // One small head-count query per category in parallel. Cheap (8 reqs) and
-    // keeps each card independent — no DB migration required.
+    // One small head-count query per category in parallel. Cheap (≤8 reqs)
+    // and keeps each card independent — no DB migration required.
+    // Preview thumbnail intentionally omitted; would require a join on the
+    // `listing_photos` table (N+1 query) and isn't worth the cost on home.
     Promise.all(
       cats.map(async (c) => {
-        const [{ count }, { data: latest }] = await Promise.all([
-          supabase
-            .from("listings")
-            .select("id", { count: "exact", head: true })
-            .eq("status", "active")
-            .eq("category", c.slug),
-          supabase
-            .from("listings")
-            .select("photos")
-            .eq("status", "active")
-            .eq("category", c.slug)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle(),
-        ]);
-        const photos = (latest?.photos as string[] | null) ?? [];
-        return [c.slug, { count: count ?? 0, preview: photos[0] ?? null }] as const;
+        const { count } = await supabase
+          .from("listings")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "active")
+          .eq("category", c.slug);
+        return [c.slug, { count: count ?? 0, preview: null as string | null }] as const;
       }),
     ).then((entries) => {
       if (cancelled) return;
