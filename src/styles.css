@@ -42,6 +42,9 @@
   --color-ring: var(--ring);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-accent-2: var(--accent-2);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
 }
 
 :root {
@@ -95,6 +98,21 @@
   --chart-3: oklch(0.55 0.13 145);
   --chart-4: oklch(0.58 0.21 25);
   --chart-5: oklch(0.45 0.02 150);
+
+  /* Extended accents (Phase 1) */
+  --accent-2: oklch(0.62 0.15 45);          /* warm clay #c2410c-ish */
+  --info: oklch(0.55 0.13 235);              /* sky/info */
+  --info-soft: oklch(0.94 0.04 235);
+
+  /* Motion tokens */
+  --ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --duration-fast: 140ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+
+  /* Lift + overlay shadows */
+  --shadow-lift: 0 4px 12px -4px rgb(17 24 20 / 0.10), 0 16px 40px -12px rgb(17 24 20 / 0.14);
+  --shadow-overlay: 0 20px 60px -20px rgb(17 24 20 / 0.30);
 }
 
 .dark {
@@ -170,3 +188,22 @@
   50%      { opacity: 0.35; }
 }
 .pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+
+/* ---------- Phase 1 motion baseline ---------- */
+.fl-fade-in { animation: fl-fade-in var(--duration-base) var(--ease-out-soft) both; }
+.fl-rise-in { animation: fl-rise-in var(--duration-slow) var(--ease-out-soft) both; }
+.fl-lift   { transition: transform var(--duration-base) var(--ease-out-soft), box-shadow var(--duration-base) var(--ease-out-soft); }
+.fl-lift:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); }
+
+@keyframes fl-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fl-rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Slow drift for hero decorative shapes */
+@keyframes fl-drift {
+  0%, 100% { transform: translate3d(0,0,0); }
+  50%      { transform: translate3d(0,-6px,0); }
+}
+.fl-drift { animation: fl-drift 7s ease-in-out infinite; }
