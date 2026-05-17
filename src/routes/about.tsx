@@ -1,6 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { FAQS } from "@/lib/faqs";
+import {
   CompassIcon,
   ChatBubbleIcon,
   SeedlingIcon,
@@ -162,6 +169,9 @@ function AboutPage() {
         </section>
 
         <section className="mt-10 rounded-3xl bg-primary p-8 text-primary-foreground md:p-12">
+          <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-white/70">
+            Get started
+          </span>
           <h2 className="font-display text-[26px] font-extrabold leading-tight tracking-tight md:text-[32px]">
             Ready to sell or buy?
           </h2>
@@ -183,6 +193,31 @@ function AboutPage() {
               Browse marketplace
             </Link>
           </div>
+        </section>
+
+        <section className="mt-12" aria-labelledby="about-faq">
+          <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            FAQ
+          </span>
+          <h2 id="about-faq" className="font-display mt-1 text-[22px] font-extrabold tracking-tight md:text-[26px]">
+            Common questions
+          </h2>
+          <Accordion type="single" collapsible className="mt-4 rounded-2xl border-[1.5px] border-border bg-card">
+            {FAQS.slice(0, 6).map((f, i) => (
+              <AccordionItem key={i} value={`about-faq-${i}`} className="px-5">
+                <AccordionTrigger className="text-left text-[14.5px] font-semibold text-foreground">
+                  {f.q}
+                </AccordionTrigger>
+                <AccordionContent className="text-[13.5px] leading-relaxed text-muted-foreground">
+                  {f.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+          <p className="mt-3 text-[12.5px] text-muted-foreground">
+            More on the <Link to="/help" className="text-primary underline">Help page</Link> ·{" "}
+            Still stuck? <Link to="/contact" className="text-primary underline">Contact us</Link>.
+          </p>
         </section>
       </div>
     </AppShell>

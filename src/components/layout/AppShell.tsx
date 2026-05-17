@@ -17,7 +17,13 @@ export function AppShell({
       <AnnouncementBar />
       <TopNav />
       {showTrust ? <TrustBanner /> : null}
-      <main className="flex-1 pb-24 md:pb-0">{children}</main>
+      <a
+        href="#content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:shadow-lg"
+      >
+        Skip to content
+      </a>
+      <main id="content" tabIndex={-1} className="flex-1 pb-24 md:pb-0">{children}</main>
       <Footer />
       <MobileTabBar />
     </div>
