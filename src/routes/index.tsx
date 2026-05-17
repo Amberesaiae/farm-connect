@@ -5,6 +5,12 @@ import { RolePicker } from "@/components/home/RolePicker";
 import { CategoryList } from "@/components/home/CategoryList";
 import { FreshListings } from "@/components/home/FreshListings";
 import { TrustStrip } from "@/components/home/TrustStrip";
+import { MarketplacePulse } from "@/components/home/MarketplacePulse";
+import { ServicesAndHatcheries } from "@/components/home/ServicesAndHatcheries";
+import { AgroVendorStrip } from "@/components/home/AgroVendorStrip";
+import { RegionsMap } from "@/components/home/RegionsMap";
+import { HowItWorks } from "@/components/home/HowItWorks";
+import { FarmerVoices } from "@/components/home/FarmerVoices";
 import mixedHero from "@/assets/mixed-hero.jpg";
 
 export const Route = createFileRoute("/")({
@@ -14,7 +20,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Buy and sell cattle, goats, sheep and poultry direct from verified Ghanaian farmers. Vets, hatcheries and feed in one place. No middlemen.",
+          "Buy and sell livestock direct from verified Ghanaian farmers. Vets, hatcheries, agro-vendors and 16-region coverage — all on WhatsApp, no middlemen.",
       },
       { property: "og:title", content: "farmlink — Ghana's livestock marketplace" },
       {
@@ -48,9 +54,33 @@ function HomePage() {
           </div>
         </section>
 
+        <div className="mt-12 md:mt-16">
+          <MarketplacePulse />
+        </div>
+
         {/* Primary browse hook — largest type, most breathing room */}
         <div className="mt-16 md:mt-24">
           <FreshListings />
+        </div>
+
+        <div className="mt-16 md:mt-24">
+          <ServicesAndHatcheries />
+        </div>
+
+        <div className="mt-16 md:mt-24">
+          <AgroVendorStrip />
+        </div>
+
+        <div className="mt-16 md:mt-24">
+          <RegionsMap />
+        </div>
+
+        <div className="mt-16 md:mt-24">
+          <HowItWorks />
+        </div>
+
+        <div className="mt-16 md:mt-24">
+          <FarmerVoices />
         </div>
 
         <div className="mt-16 md:mt-24">
