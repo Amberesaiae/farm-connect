@@ -1,4 +1,4 @@
-import { XIcon } from "@/components/icons";
+import { CloseIcon } from "@/components/icons";
 
 export interface FilterChip {
   key: string;
@@ -25,7 +25,7 @@ export function ActiveFilterChips({
         >
           <span className="truncate max-w-[160px]">{c.label}</span>
           <span className="flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground">
-            <XIcon size={11} />
+            <CloseIcon size={11} />
           </span>
         </button>
       ))}
