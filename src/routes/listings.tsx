@@ -624,7 +624,7 @@ function SubcategoryPills({ pillar, active }: { pillar: string; active?: string 
       <div className="flex w-max gap-1.5">
         <Link
           to="/listings"
-          search={(prev) => ({ ...(prev as object), category: undefined }) as never}
+          search={((prev: Record<string, unknown>) => ({ ...prev, category: undefined })) as never}
           className={
             !active
               ? "inline-flex items-center rounded-full bg-primary px-3 py-1.5 text-[12.5px] font-semibold text-primary-foreground"
@@ -639,7 +639,7 @@ function SubcategoryPills({ pillar, active }: { pillar: string; active?: string 
             <Link
               key={c.slug}
               to="/listings"
-              search={(prev) => ({ ...(prev as object), category: c.slug }) as never}
+              search={((prev: Record<string, unknown>) => ({ ...prev, category: c.slug })) as never}
               className={
                 isActive
                   ? "inline-flex items-center rounded-full bg-primary px-3 py-1.5 text-[12.5px] font-semibold text-primary-foreground"
