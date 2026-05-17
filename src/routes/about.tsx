@@ -1,6 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
-import { CompassIcon, ChatBubbleIcon, SeedlingIcon } from "@/components/icons";
+import {
+  CompassIcon,
+  ChatBubbleIcon,
+  SeedlingIcon,
+  ShoppingBagIcon,
+  SyringeIcon,
+  EggIcon,
+} from "@/components/icons";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -36,6 +43,43 @@ const STEPS = [
     Icon: SeedlingIcon,
     title: "Trade",
     body: "Inspect, negotiate and pay the seller directly. We log the trade for trust scores.",
+  },
+];
+
+const ECOSYSTEM: Array<{
+  Icon: typeof CompassIcon;
+  title: string;
+  body: string;
+  to: "/listings" | "/hatcheries" | "/services" | "/stores";
+  cta: string;
+}> = [
+  {
+    Icon: SeedlingIcon,
+    title: "Live animals",
+    body: "Cattle, goats, sheep, poultry and fish posted by farmers across all 16 regions.",
+    to: "/listings",
+    cta: "Browse listings",
+  },
+  {
+    Icon: EggIcon,
+    title: "Hatcheries & breeders",
+    body: "Reserve day-old chicks, fish fingerlings and breeding stock from approved hatcheries.",
+    to: "/hatcheries",
+    cta: "See hatcheries",
+  },
+  {
+    Icon: SyringeIcon,
+    title: "Vets, transport & feed",
+    body: "Verified service providers across veterinary, transport, feed and insurance.",
+    to: "/services",
+    cta: "Find a provider",
+  },
+  {
+    Icon: ShoppingBagIcon,
+    title: "Agro shops",
+    body: "Feed, agromed and equipment stores — one directory, every verified vendor.",
+    to: "/stores",
+    cta: "Open directory",
   },
 ];
 
@@ -77,6 +121,44 @@ function AboutPage() {
               </p>
             </article>
           ))}
+        </section>
+
+        <section className="mt-12">
+          <div className="flex items-end justify-between gap-4">
+            <h2 className="font-display text-[22px] font-extrabold tracking-tight md:text-[26px]">
+              What's on farmlink
+            </h2>
+            <Link
+              to="/how-it-works"
+              className="text-[12.5px] font-semibold text-primary hover:underline"
+            >
+              How it works →
+            </Link>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {ECOSYSTEM.map((e) => (
+              <Link
+                key={e.to}
+                to={e.to}
+                className="group flex gap-4 rounded-2xl border-[1.5px] border-border bg-card p-5 transition-colors hover:border-primary/40"
+              >
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+                  <e.Icon size={20} strokeWidth={1.8} />
+                </span>
+                <div className="min-w-0">
+                  <h3 className="font-display text-[15.5px] font-extrabold tracking-tight">
+                    {e.title}
+                  </h3>
+                  <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
+                    {e.body}
+                  </p>
+                  <span className="mt-2 inline-block text-[12px] font-semibold text-primary group-hover:underline">
+                    {e.cta} →
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
         </section>
 
         <section className="mt-10 rounded-3xl bg-primary p-8 text-primary-foreground md:p-12">
