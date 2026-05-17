@@ -2,9 +2,10 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ListingGrid } from "@/components/listing/ListingGrid";
-import { HeroOffer } from "@/components/home/HeroOffer";
 import { CategoryStrip } from "@/components/home/CategoryStrip";
 import { MobileFilterSheet } from "@/components/layout/MobileFilterSheet";
+import { ResultsBar, type ListingSort } from "@/components/listing/ResultsBar";
+import { ActiveFilterChips, type FilterChip } from "@/components/listing/ActiveFilterChips";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ interface ListingsSearch {
   verifiedOnly?: boolean;
   minPrice?: number;
   maxPrice?: number;
+  sort?: ListingSort;
   /** Dynamic per-category attribute filters keyed `attr_<key>`. */
   attrs?: Record<string, string>;
 }
@@ -44,6 +46,8 @@ const TOP_VALUES: readonly string[] = [
   "agromed_veterinary",
   "agro_equipment_tools",
 ];
+
+const SORT_VALUES: readonly ListingSort[] = ["newest", "oldest", "price_asc", "price_desc"];
 
 export const Route = createFileRoute("/listings")({
   validateSearch: (s: Record<string, unknown>): ListingsSearch => {
@@ -65,6 +69,10 @@ export const Route = createFileRoute("/listings")({
       verifiedOnly: s.verifiedOnly === true || s.verifiedOnly === "true",
       minPrice: typeof s.minPrice === "string" ? Number(s.minPrice) : undefined,
       maxPrice: typeof s.maxPrice === "string" ? Number(s.maxPrice) : undefined,
+      sort:
+        typeof s.sort === "string" && (SORT_VALUES as readonly string[]).includes(s.sort)
+          ? (s.sort as ListingSort)
+          : undefined,
       attrs: Object.keys(attrs).length ? attrs : undefined,
     };
   },
@@ -130,8 +138,12 @@ function ListingsPage() {
           "id,title,category,price_ghs,price_unit,region,district,created_at,seller_id,listing_photos(storage_path,is_cover,display_order)",
         )
         .eq("status", "active")
-        .order("created_at", { ascending: false })
         .limit(48);
+      const sort: ListingSort = search.sort ?? "newest";
+      if (sort === "newest") query = query.order("created_at", { ascending: false });
+      else if (sort === "oldest") query = query.order("created_at", { ascending: true });
+      else if (sort === "price_asc") query = query.order("price_ghs", { ascending: true });
+      else if (sort === "price_desc") query = query.order("price_ghs", { ascending: false });
 
       if (search.topCategory) query = query.eq("top_category", search.topCategory);
       if (canonicalSubcategory) query = query.eq("subcategory_slug", canonicalSubcategory);
@@ -216,6 +228,7 @@ function ListingsPage() {
     search.verifiedOnly,
     search.minPrice,
     search.maxPrice,
+    search.sort,
     // re-fetch when dynamic attribute filters change
     JSON.stringify(search.attrs ?? {}),
   ]);
@@ -249,7 +262,26 @@ function ListingsPage() {
     (search.minPrice ? 1 : 0) +
     (search.maxPrice ? 1 : 0) +
     (search.verifiedOnly ? 1 : 0) +
+    (search.q ? 1 : 0) +
     Object.values(search.attrs ?? {}).filter(Boolean).length;
+
+  const chips: FilterChip[] = [];
+  if (search.q) chips.push({ key: "q", label: `"${search.q}"`, onRemove: () => update({ q: undefined }) });
+  if (search.region) chips.push({ key: "region", label: search.region, onRemove: () => update({ region: undefined }) });
+  if (search.minPrice) chips.push({ key: "minp", label: `Min GH₵${search.minPrice}`, onRemove: () => update({ minPrice: undefined }) });
+  if (search.maxPrice) chips.push({ key: "maxp", label: `Max GH₵${search.maxPrice}`, onRemove: () => update({ maxPrice: undefined }) });
+  if (search.verifiedOnly) chips.push({ key: "vo", label: "Verified only", onRemove: () => update({ verifiedOnly: undefined }) });
+  for (const [k, v] of Object.entries(search.attrs ?? {})) {
+    chips.push({
+      key: `attr_${k}`,
+      label: `${k.replace(/_/g, " ")}: ${v}`,
+      onRemove: () => {
+        const next = { ...(search.attrs ?? {}) };
+        delete next[k];
+        update({ attrs: Object.keys(next).length ? next : undefined });
+      },
+    });
+  }
 
   const FiltersPanel = (
     <FiltersInner
@@ -264,8 +296,6 @@ function ListingsPage() {
   return (
     <AppShell showTrust>
       <div className="mx-auto max-w-7xl space-y-10 px-4 py-6 md:px-8 md:py-10">
-        <HeroOffer topCategory={search.topCategory} subcategory={search.subcategory ?? search.category} />
-
         <section>
           <div className="flex items-baseline justify-between">
             <h2 className="font-display text-[20px] font-extrabold tracking-tight md:text-[22px]">
@@ -294,13 +324,28 @@ function ListingsPage() {
                   : "Latest listings"}
               </h2>
               <p className="mt-1 text-[12.5px] text-muted-foreground">
-                {rows.length} listing{rows.length === 1 ? "" : "s"} from sellers across Ghana
+                Direct from sellers across Ghana
               </p>
             </div>
             <MobileFilterSheet activeCount={activeCount}>{FiltersPanel}</MobileFilterSheet>
           </div>
 
-          <div className="mt-5 grid gap-6 md:grid-cols-[260px_1fr]">
+          <ResultsBar
+            count={rows.length}
+            loading={loading}
+            sort={search.sort ?? "newest"}
+            onSortChange={(s) => update({ sort: s === "newest" ? undefined : s })}
+            chips={
+              chips.length ? (
+                <ActiveFilterChips
+                  chips={chips}
+                  onClearAll={() => navigate({ to: "/listings", search: { topCategory: search.topCategory, category: search.category, subcategory: search.subcategory } as never })}
+                />
+              ) : null
+            }
+          />
+
+          <div className="grid gap-6 md:grid-cols-[260px_1fr]">
             <aside className="hidden self-start rounded-2xl border-[1.5px] border-border bg-card p-5 md:block">
               {FiltersPanel}
             </aside>
@@ -315,6 +360,11 @@ function ListingsPage() {
                     />
                   ))}
                 </div>
+              ) : rows.length === 0 ? (
+                <EmptyResults
+                  hasFilters={activeCount > 0}
+                  onClear={() => navigate({ to: "/listings", search: {} as never })}
+                />
               ) : (
                 <ListingGrid
                   listings={rows}
@@ -326,6 +376,36 @@ function ListingsPage() {
         </section>
       </div>
     </AppShell>
+  );
+}
+
+function EmptyResults({ hasFilters, onClear }: { hasFilters: boolean; onClear: () => void }) {
+  return (
+    <div className="fl-fade-in flex flex-col items-center gap-4 rounded-3xl border-[1.5px] border-dashed border-border bg-card p-12 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-soft text-primary">
+        <span className="text-3xl">🔎</span>
+      </div>
+      <div className="max-w-md space-y-1.5">
+        <h3 className="font-display text-[18px] font-extrabold tracking-tight">
+          {hasFilters ? "No listings match these filters" : "Nothing here yet"}
+        </h3>
+        <p className="text-[13px] leading-relaxed text-muted-foreground">
+          {hasFilters
+            ? "Try widening your price range, picking a different region, or clearing a filter or two."
+            : "Be the first to post a listing in this category."}
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {hasFilters ? (
+          <Button onClick={onClear} variant="outline" className="rounded-full">
+            Clear all filters
+          </Button>
+        ) : null}
+        <Button asChild className="rounded-full">
+          <a href="/post">Post a listing</a>
+        </Button>
+      </div>
+    </div>
   );
 }
 
