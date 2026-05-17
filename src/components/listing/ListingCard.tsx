@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { HeartIcon, MapPinIcon, CheckIcon } from "@/components/icons";
+import { MapPinIcon, CheckIcon } from "@/components/icons";
 import { formatGhs, formatPriceUnit, formatRelative } from "@/lib/format";
 import { listingPhotoUrl } from "@/lib/photo-url";
+import { SaveButton } from "./SaveButton";
+import { cn } from "@/lib/utils";
 
 export interface ListingCardData {
   id: string;
@@ -17,11 +19,28 @@ export interface ListingCardData {
   seller_name?: string | null;
   store_name?: string | null;
   store_slug?: string | null;
+  breed?: string | null;
+  age_months?: number | null;
+  sex?: string | null;
+  weight_kg?: number | string | null;
 }
+
+const TIER_RING: Record<string, string> = {
+  sprout: "ring-2 ring-[color:var(--accent-2)]/40",
+  grower: "ring-2 ring-primary/40",
+  trusted: "ring-2 ring-[color:var(--info)]/50",
+  verified_pro: "ring-2 ring-amber-400",
+  // back-compat values
+  bronze: "ring-2 ring-[color:var(--accent-2)]/40",
+  silver: "ring-2 ring-zinc-400/50",
+  gold: "ring-2 ring-amber-400",
+  platinum: "ring-2 ring-emerald-500",
+};
 
 export function ListingCard({ listing }: { listing: ListingCardData }) {
   const cover = listingPhotoUrl(listing.cover_path);
   const verified = listing.seller_badge && listing.seller_badge !== "none";
+  const tierRing = listing.seller_badge ? (TIER_RING[listing.seller_badge] ?? "") : "";
   const sellerName = listing.seller_name ?? "Farmer";
   const initials = sellerName
     .split(" ")
@@ -32,12 +51,20 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
     (Date.now() - new Date(listing.created_at).getTime()) / (1000 * 60 * 60 * 24);
   const isNew = ageDays < 3;
 
+  const specs: string[] = [];
+  if (listing.sex) specs.push(listing.sex === "male" ? "♂" : listing.sex === "female" ? "♀" : listing.sex);
+  if (listing.breed) specs.push(String(listing.breed));
+  if (listing.age_months != null) specs.push(`${listing.age_months} mo`);
+  if (listing.weight_kg != null) specs.push(`${listing.weight_kg} kg`);
+
   return (
-    <Link
-      to="/listings/$id"
-      params={{ id: listing.id }}
-      className="group flex flex-col overflow-hidden rounded-2xl border-[1.5px] border-border bg-card transition-all duration-200 hover:-translate-y-0.5 hover:border-input hover:shadow-[0_8px_32px_rgba(17,24,20,0.08)] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    >
+    <div className="group fl-lift relative flex flex-col overflow-hidden rounded-2xl border-[1.5px] border-border bg-card focus-within:ring-2 focus-within:ring-ring">
+      <Link
+        to="/listings/$id"
+        params={{ id: listing.id }}
+        className="flex flex-1 flex-col focus:outline-none"
+        aria-label={listing.title}
+      >
       <div className="relative aspect-[4/3] overflow-hidden bg-surface">
         {cover ? (
           <img
@@ -53,7 +80,7 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
         )}
         {/* Top-left badge */}
         {isNew ? (
-          <span className="absolute left-2.5 top-2.5 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-800">
+          <span className="absolute left-2.5 top-2.5 rounded-full bg-info-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--info)]">
             New
           </span>
         ) : verified ? (
@@ -61,13 +88,6 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
             Verified
           </span>
         ) : null}
-        {/* Save heart */}
-        <span
-          aria-hidden
-          className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-muted-foreground backdrop-blur transition-colors group-hover:bg-white group-hover:text-destructive"
-        >
-          <HeartIcon size={14} />
-        </span>
       </div>
 
       <div className="flex flex-1 flex-col gap-1.5 p-3.5">
@@ -85,6 +105,12 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
           {listing.title}
         </h3>
 
+        {specs.length > 0 && (
+          <p className="truncate text-[11.5px] font-medium text-muted-foreground">
+            {specs.join(" · ")}
+          </p>
+        )}
+
         <div className="flex items-baseline gap-1">
           <span className="font-mono text-[17px] font-semibold tracking-tight text-primary">
             {formatGhs(listing.price_ghs)}
@@ -95,7 +121,12 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
         </div>
 
         <div className="mt-auto flex items-center gap-2 border-t border-border/60 pt-2.5">
-          <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-primary-soft text-[9px] font-bold tracking-wider text-primary">
+          <span
+            className={cn(
+              "flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full bg-primary-soft text-[9.5px] font-bold tracking-wider text-primary",
+              tierRing,
+            )}
+          >
             {initials}
           </span>
           <span className="flex-1 truncate text-[11.5px] font-semibold text-muted-foreground">
@@ -118,6 +149,11 @@ export function ListingCard({ listing }: { listing: ListingCardData }) {
           ) : null}
         </div>
       </div>
-    </Link>
+      </Link>
+      {/* Real save button — sits above the link so the click is captured */}
+      <div className="absolute right-2.5 top-2.5">
+        <SaveButton listingId={listing.id} initialSaved={false} />
+      </div>
+    </div>
   );
 }
