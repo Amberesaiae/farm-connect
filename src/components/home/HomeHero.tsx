@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRightIcon, ShieldIcon, WhatsAppIcon } from "@/components/icons";
+import { MarketSearch } from "@/components/home/MarketSearch";
 import mixedHero from "@/assets/mixed-hero.jpg";
 
 export function HomeHero() {
@@ -33,18 +34,21 @@ export function HomeHero() {
             Buy direct from farmers. Sell without middlemen. Find vets,
             hatcheries and feed for your herd — all in one trusted marketplace.
           </p>
-          <div className="mt-7 flex flex-wrap gap-2.5">
-            <Link
-              to="/listings"
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-[14px] font-bold text-primary shadow-[0_4px_14px_rgba(0,0,0,0.18)] transition-transform hover:-translate-y-0.5"
-            >
-              Browse listings <ArrowRightIcon size={16} />
-            </Link>
+          <div className="fl-rise-in mt-7">
+            <MarketSearch variant="hero" />
+          </div>
+          <div className="mt-5 flex flex-wrap gap-2.5">
             <Link
               to="/post"
-              className="inline-flex items-center gap-2 rounded-xl border-[1.5px] border-white/30 px-5 py-3 text-[14px] font-bold text-white transition-colors hover:bg-white/10"
+              className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2 text-[13px] font-semibold text-white ring-1 ring-inset ring-white/20 transition-colors hover:bg-white/15"
             >
-              Post a listing
+              Post a listing <ArrowRightIcon size={14} />
+            </Link>
+            <Link
+              to="/how-it-works"
+              className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[13px] font-semibold text-white/85 transition-colors hover:text-white"
+            >
+              How it works
             </Link>
           </div>
           <div className="mt-6 flex items-center gap-2 text-[12px] text-white/70">

@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { ListingGrid } from "@/components/listing/ListingGrid";
-import { CategoryStrip } from "@/components/home/CategoryStrip";
+import { Link } from "@tanstack/react-router";
 import { MobileFilterSheet } from "@/components/layout/MobileFilterSheet";
 import { ResultsBar, type ListingSort } from "@/components/listing/ResultsBar";
 import { ActiveFilterChips, type FilterChip } from "@/components/listing/ActiveFilterChips";
@@ -308,11 +308,10 @@ function ListingsPage() {
           <div className="mt-4">
             <TopCategoryTabs active={search.topCategory} />
           </div>
-          {search.topCategory === undefined || search.topCategory === "livestock" ? (
-            <div className="mt-4">
-              <CategoryStrip active={search.category} />
-            </div>
-          ) : null}
+          <SubcategoryPills
+            pillar={search.topCategory ?? "livestock"}
+            active={search.category}
+          />
         </section>
 
         <section>
@@ -605,6 +604,53 @@ function AttributeFilter({
         className="mt-1.5 h-10 rounded-xl"
         onBlur={(e) => onChange(e.target.value || undefined)}
       />
+    </div>
+  );
+}
+
+/**
+ * Compact horizontal pill row for picking a subcategory inside the active
+ * pillar. Replaces the icon-tile carousel — text labels scan in one pass,
+ * no carousel-blindness, and a single tap-target row scrolls horizontally
+ * on narrow viewports.
+ */
+function SubcategoryPills({ pillar, active }: { pillar: string; active?: string }) {
+  const { taxonomy } = useTaxonomy();
+  const cats = taxonomy.categoriesFor(pillar);
+  const activeCanonical = taxonomy.canonicalSlug(pillar, active) ?? active;
+  if (cats.length === 0) return null;
+  return (
+    <div className="-mx-4 mt-3 overflow-x-auto px-4 no-scrollbar md:mx-0 md:px-0">
+      <div className="flex w-max gap-1.5">
+        <Link
+          to="/listings"
+          search={((prev: Record<string, unknown>) => ({ ...prev, category: undefined })) as never}
+          className={
+            !active
+              ? "inline-flex items-center rounded-full bg-primary px-3 py-1.5 text-[12.5px] font-semibold text-primary-foreground"
+              : "inline-flex items-center rounded-full border border-border bg-card px-3 py-1.5 text-[12.5px] font-medium text-muted-foreground hover:border-primary hover:text-primary"
+          }
+        >
+          All
+        </Link>
+        {cats.map((c) => {
+          const isActive = activeCanonical === c.slug;
+          return (
+            <Link
+              key={c.slug}
+              to="/listings"
+              search={((prev: Record<string, unknown>) => ({ ...prev, category: c.slug })) as never}
+              className={
+                isActive
+                  ? "inline-flex items-center rounded-full bg-primary px-3 py-1.5 text-[12.5px] font-semibold text-primary-foreground"
+                  : "inline-flex items-center rounded-full border border-border bg-card px-3 py-1.5 text-[12.5px] font-medium text-muted-foreground hover:border-primary hover:text-primary"
+              }
+            >
+              {c.label}
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }

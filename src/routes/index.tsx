@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { HomeHero } from "@/components/home/HomeHero";
 import { RolePicker } from "@/components/home/RolePicker";
-import { CategoryStrip } from "@/components/home/CategoryStrip";
+import { CategoryList } from "@/components/home/CategoryList";
 import { FreshListings } from "@/components/home/FreshListings";
 import { TrustStrip } from "@/components/home/TrustStrip";
 import mixedHero from "@/assets/mixed-hero.jpg";
@@ -45,11 +45,14 @@ function HomePage() {
                 Browse by animal
               </p>
               <h2 className="font-display mt-1 text-[22px] font-extrabold tracking-tight md:text-[26px]">
-                Pick your category
+                What are you looking for?
               </h2>
+              <p className="mt-1 text-[13px] text-muted-foreground">
+                Live listing counts update as farmers post.
+              </p>
             </div>
           </div>
-          <CategoryStrip />
+          <CategoryList />
         </section>
 
         <FreshListings />

@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { SVGProps } from "react";
+import type { ReactElement, SVGProps } from "react";
 
 /**
  * Crisp, theme-aware category icons rendered as inline SVG.
@@ -115,7 +115,7 @@ const Lot = (p: GlyphProps) => (
   </svg>
 );
 
-const GLYPHS: Record<string, (p: GlyphProps) => JSX.Element> = {
+const GLYPHS: Record<string, (p: GlyphProps) => ReactElement> = {
   cattle: Cattle,
   goat: Goat,
   sheep: Sheep,
