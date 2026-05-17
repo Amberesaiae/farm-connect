@@ -142,7 +142,7 @@ function ServicesPage() {
               }
             >
               <SelectTrigger className="rounded-xl">
-                <SelectValue />
+                <SelectValue placeholder="All regions" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All regions</SelectItem>
