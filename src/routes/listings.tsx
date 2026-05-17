@@ -296,18 +296,22 @@ function ListingsPage() {
   return (
     <AppShell showTrust>
       <div className="mx-auto max-w-7xl space-y-10 px-4 py-6 md:px-8 md:py-10">
-        <section>
-          <div className="flex items-baseline justify-between">
-            <h2 className="font-display text-[20px] font-extrabold tracking-tight md:text-[22px]">
-              Marketplace
-            </h2>
-            <p className="hidden text-[12px] text-muted-foreground md:block">
-              Filter by pillar, then drill into a category
-            </p>
-          </div>
-          <div className="mt-4">
-            <TopCategoryTabs active={search.topCategory} />
-          </div>
+        {/* Page header — establishes top of the visual hierarchy */}
+        <header className="space-y-2">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary/80">
+            Marketplace
+          </p>
+          <h1 className="font-display text-[30px] font-extrabold leading-[1.05] tracking-tight md:text-[42px]">
+            Browse livestock & farm supplies
+          </h1>
+          <p className="max-w-2xl text-[14px] text-muted-foreground md:text-[15px]">
+            Pick a pillar, then drill into a category. Filter by region, price and breed on the right.
+          </p>
+        </header>
+
+        {/* Pillar + subcategory navigation — secondary tier */}
+        <section aria-label="Categories">
+          <TopCategoryTabs active={search.topCategory} />
           <SubcategoryPills
             pillar={search.topCategory ?? "livestock"}
             active={search.category}
@@ -315,9 +319,9 @@ function ListingsPage() {
         </section>
 
         <section>
-          <div className="flex items-end justify-between gap-3">
+          <div className="flex items-end justify-between gap-3 border-t border-border pt-6">
             <div>
-              <h2 className="font-display text-[22px] font-extrabold tracking-tight md:text-[26px]">
+              <h2 className="font-display text-[20px] font-extrabold tracking-tight md:text-[22px]">
                 {search.category
                   ? `${search.category[0].toUpperCase()}${search.category.slice(1)} listings`
                   : "Latest listings"}

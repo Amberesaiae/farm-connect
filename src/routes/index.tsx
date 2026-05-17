@@ -33,32 +33,42 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   return (
     <AppShell showTrust>
-      <div className="mx-auto max-w-7xl space-y-12 px-4 py-6 md:space-y-16 md:px-8 md:py-10">
+      <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-10">
         <HomeHero />
 
-        <RolePicker />
+        <div className="mt-10 md:mt-14">
+          <RolePicker />
+        </div>
 
-        <section>
-          <div className="mb-4 flex items-end justify-between">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
-                Browse by animal
-              </p>
-              <h2 className="font-display mt-1 text-[22px] font-extrabold tracking-tight md:text-[26px]">
-                What are you looking for?
-              </h2>
-              <p className="mt-1 text-[13px] text-muted-foreground">
-                Live listing counts update as farmers post.
-              </p>
-            </div>
+        {/* Secondary section — quieter header so the hero + Fresh listings stay dominant */}
+        <section className="mt-14 md:mt-20">
+          <SectionLabel>Browse by animal · live counts</SectionLabel>
+          <div className="mt-4">
+            <CategoryList />
           </div>
-          <CategoryList />
         </section>
 
-        <FreshListings />
+        {/* Primary browse hook — largest type, most breathing room */}
+        <div className="mt-16 md:mt-24">
+          <FreshListings />
+        </div>
 
-        <TrustStrip />
+        <div className="mt-16 md:mt-24">
+          <TrustStrip />
+        </div>
       </div>
     </AppShell>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span aria-hidden className="h-px flex-1 bg-border" />
+      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        {children}
+      </p>
+      <span aria-hidden className="h-px flex-1 bg-border" />
+    </div>
   );
 }
