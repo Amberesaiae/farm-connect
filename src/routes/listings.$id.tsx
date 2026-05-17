@@ -4,6 +4,8 @@ import { AppShell } from "@/components/layout/AppShell";
 import { PhotoCarousel } from "@/components/listing/PhotoCarousel";
 import { SellerCard } from "@/components/listing/SellerCard";
 import { StorefrontCard } from "@/components/store/StorefrontCard";
+import { TrustPanel } from "@/components/listing/TrustPanel";
+import { SimilarListings } from "@/components/listing/SimilarListings";
 import { WhatsAppCTA } from "@/components/listing/WhatsAppCTA";
 import { SaveButton } from "@/components/listing/SaveButton";
 import { SpecsPanel } from "@/components/listing/SpecsPanel";
@@ -208,6 +210,13 @@ function ListingDetail() {
               />
             )}
 
+            <TrustPanel
+              sellerBadge={seller?.badge_tier ?? null}
+              tradeCount={seller?.trade_count ?? 0}
+              hasPhoto={photos.length > 0}
+              hasDescription={!!listing.description && listing.description.trim().length > 20}
+            />
+
             <div className="hidden space-y-2 md:block">
               <WhatsAppCTA
                 listingId={listing.id}
@@ -222,6 +231,12 @@ function ListingDetail() {
             </div>
           </aside>
         </div>
+
+        <SimilarListings
+          category={listing.category}
+          excludeId={listing.id}
+          region={listing.region}
+        />
       </div>
 
       {savedLoaded && (
