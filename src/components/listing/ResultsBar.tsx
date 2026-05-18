@@ -41,8 +41,11 @@ export function ResultsBar({
             Sort
           </span>
           <Select value={sort} onValueChange={(v) => onSortChange(v as ListingSort)}>
-            <SelectTrigger className="h-9 w-[160px] rounded-full text-[12.5px]">
-              <SelectValue />
+            <SelectTrigger
+              aria-label="Sort listings"
+              className="h-9 w-[160px] rounded-full text-[12.5px]"
+            >
+              <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
               {(Object.keys(SORT_LABEL) as ListingSort[]).map((k) => (
