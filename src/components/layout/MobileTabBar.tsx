@@ -41,7 +41,7 @@ export function MobileTabBar() {
           <Link
             to="/post"
             aria-label="Post a listing"
-            className="-mt-2 flex h-[52px] w-[52px] items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_4px_16px_rgba(20,83,45,0.35)] transition-transform hover:scale-105 active:scale-95"
+            className="-mt-2 flex h-[52px] w-[52px] items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_4px_16px_rgba(20,83,45,0.35)] transition-transform hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             <PlusIcon size={22} strokeWidth={2} />
           </Link>
@@ -68,8 +68,9 @@ function TabItem({
     <li className="flex-1">
       <Link
         to={to}
+        aria-current={active ? "page" : undefined}
         className={cn(
-          "flex flex-col items-center justify-center gap-[3px] py-1.5 text-[10px] font-semibold uppercase tracking-wider transition-colors",
+          "flex min-h-11 flex-col items-center justify-center gap-[3px] py-1.5 text-[10px] font-semibold uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           active ? "text-primary" : "text-muted-foreground",
         )}
       >

@@ -1,110 +1,60 @@
-# QA & Hardening Pass: About, Footer, Accessibility, Reusability
+## Surgical UI/UX cleanup
 
-## 1. About page — enrich beyond the current 3-step + 4-tile layout
+A focused fix-it pass on real potholes observed at 390px. No restructuring, no redesign — just hit the broken moments and tighten state handling. Scope: mobile, transactional flows, content pages, and the global shell.
 
-`/about` currently has a header, a 3-step "How it works" mini, an ecosystem grid, and a CTA. It reads as a landing teaser, not a real About. Add:
+### Potholes observed (with proof)
 
-- **Mission & origin** — a short editorial block explaining why farmlink exists (middlemen, price opacity, WhatsApp-first reality).
-- **By the numbers** — live stats band (regions covered, active listings, verified sellers, hatcheries) reusing the `MarketplacePulse` data pattern but in an About-appropriate "Our reach" framing.
-- **What we stand for** — 4 principle cards (No middlemen / WhatsApp-native / Verified IDs / Built for 16 regions) using existing icon set.
-- **Who farmlink is for** — 3 audience cards (Farmers selling stock, Buyers & traders, Service providers & hatcheries) each linking to the matching onboarding route.
-- **Trust & safety blurb** — link to a new `/safety` page, summarise verification tiers (reuse `VerifiedBadge`).
-- **Team / built-in-Ghana note** — small editorial footer block above CTA.
-- **FAQ accordion** — 6–8 Q&As using shadcn `Accordion`.
-- Keep existing ecosystem grid and final CTA.
+1. **Listings sort `Select` shows literal "Loading…"** as the trigger text, no accessible label, no placeholder. Looks broken on first paint.
+2. **Hatcheries list cards never populate** — skeletons sit forever because the empty-state branch is gated behind `loading`; no empty illustration / CTA. Filter `Select` trigger renders with no placeholder, just a chevron.
+3. **Deep-link `/hatcheries/:slug` silently fails** — when the slug doesn't match an approved hatchery, the route's `notFoundComponent` should render, but the user lands back on `/hatcheries` with no message. Either the loader throws wrong or the redirect masks the not-found.
+4. **HomeHero on 390px**: `aspect-[4/5]` plus a long Italic headline pushes "Sanga" close to the "01 / CATTLE" meta row, creating visual collision. Top vignette is too thin to separate the eyebrow row from the photo.
+5. **AnnouncementBar** wraps the bullet dot to its own line and the text runs under the page scrollbar — no right padding for the gutter, no truncation.
+6. **MobileTabBar** sits over page content (the floating + post FAB overlaps the last card of every list). Routes don't add bottom padding to compensate for the fixed bar.
+7. **TopNav mobile**: bare magnifier icon button has no `aria-label`, no visible affordance; "Sign in" link has no focus ring matching the rest of the system.
+8. **Empty/loading states are inconsistent** — some pages show "Loading…" text, others spinners, others skeletons. We standardise on shadcn `Skeleton` + a tiny `EmptyState` component.
 
-## 2. Footer — fix "dead" links
+### Fixes (file-by-file)
 
-The footer currently lists only 6 in-app routes. The complaint is that nothing supporting (legal, help, contact, safety, policies) exists. Add a 3rd column and create the missing pages so no footer link 404s.
+**Global shell**
+- `AppShell.tsx` — add `pb-[calc(env(safe-area-inset-bottom)+72px)] md:pb-0` to the `<main>` so the mobile tab bar never overlaps page content.
+- `TopNav.tsx` — add `aria-label="Search"` to the icon button; standardise focus-visible ring; ensure 44×44 hit area.
+- `AnnouncementBar.tsx` — add `px-4 pr-[calc(1rem+env(safe-area-inset-right))]` and `truncate` on the text; keep the dot inline-flex (no wrap).
+- `MobileTabBar.tsx` — confirm `pb-[env(safe-area-inset-bottom)]` and `min-h-11 min-w-11` on every button; add `aria-current="page"` on the active tab.
 
-New routes to create (all public, shadcn-built):
+**Home**
+- `HomeHero.tsx` — bump mobile ratio from `aspect-[4/5]` to `aspect-[3/4]` so the headline has more breathing room; thicken top vignette from `h-32` to `h-40`; reduce mobile headline from `text-[40px]` to `text-[34px]` on `<sm`.
 
-- `/contact` — contact form (Name, Region, Topic select, Message) + WhatsApp + email; uses `Form`, `Input`, `Textarea`, `Select`, `Button`, `Card`. Posts via a TanStack server function to a new `contact_messages` table (RLS: anyone can insert, only admins read).
-- `/safety` — buyer & seller safety guide, red-flag list, reporting flow.
-- `/privacy` — privacy policy (static MDX-style content).
-- `/terms` — terms of use.
-- `/help` — FAQ hub (reuses Accordion data with About).
-- `/sitemap` — human sitemap linking to every public route.
+**Listings**
+- `listings.tsx` — replace the sort `Select` "Loading…" trigger with a shadcn `Skeleton` while options resolve; once loaded, use `<SelectValue placeholder="Sort by" />`; add `aria-label="Sort listings"` to the trigger.
+- Same treatment on the category `Select`.
 
-Footer column rework:
+**Hatcheries**
+- `hatcheries.tsx` — when `loading=false && rows.length===0`, render an `EmptyState` (icon + "No hatcheries yet" + "Run a hatchery? List yours →" CTA) instead of dangling skeletons; cap skeleton count at 3 so the page doesn't look infinite.
+- Add `placeholder` text to the category `Select` trigger.
+- `hatcheries.$slug.tsx` — verify the `notFound()` branch actually surfaces `notFoundComponent` and isn't being caught by an upstream redirect; if the loader currently returns `null` on miss instead of throwing, switch to `throw notFound()`.
 
-- **Marketplace** — Browse, Sell, Services, Hatcheries, Agro stores
-- **Trust & safety** — Get verified, Safety guide, How it works, Report an issue (→ `/contact?topic=report`)
-- **Company** — About, Contact, Help, Privacy, Terms, Sitemap
-- Add region/language line and a "Built in Ghana 🇬🇭" badge.
-- Add social links row (WhatsApp community, X, Facebook) as `Button variant="ghost" size="icon"` with `aria-label`.
+**Shared primitives (new, small)**
+- `src/components/ui/empty-state.tsx` — tiny wrapper around an icon + title + description + optional CTA. Built on shadcn `Card`. Used by Listings, Hatcheries, Saved, Services, Stores empty branches.
+- `src/components/ui/list-skeletons.tsx` — `ListingCardSkeleton`, `HatcheryCardSkeleton` using shadcn `Skeleton` so every list shares one loading vocabulary.
 
-## 3. Accessibility sweep (WCAG 2.1 AA)
+**Static / content pages**
+- `about.tsx`, `help.tsx`, `safety.tsx`, `privacy.tsx`, `terms.tsx`, `contact.tsx`, `sitemap.tsx` — pass: ensure `<main>` bottom padding picks up tab-bar offset (handled in `AppShell`), tighten heading→lede spacing on mobile (`mt-2` not `mt-4`), and ensure every link has a `focus-visible:ring` token.
 
-Project-wide pass touching every route and shared component:
+**Accessibility quick wins** (no new structure)
+- All `size="icon"` shadcn `Button`s get an `aria-label`.
+- Replace `outline-none` without a replacement with `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`.
+- Replace any `text-muted-foreground/50` / `opacity-50` text with the token `text-muted-foreground` for AA contrast.
 
-- **Landmarks** — verify exactly one `<main>` per route (currently inconsistent — `AppShell` wraps content but some routes nest extra `main`s). Audit and standardise on AppShell providing `<main id="content">`, remove duplicates.
-- **Skip link** — add "Skip to content" link in `__root.tsx`, visible on focus, targeting `#content`.
-- **Heading order** — audit every route for single H1 + no skipped levels. Fix offenders (hero rotator, dashboard pages, admin pages).
-- **Focus visibility** — add a global `:focus-visible` ring token in `styles.css`; remove `outline-none` without replacement in shadcn overrides.
-- **Icon-only buttons** — sweep for `<Button size="icon">` / icon links missing `aria-label` (TopNav avatar trigger, MobileTabBar items, carousel/scroll-row controls, dialog close buttons, hero pause control).
-- **Form labels** — every `Input`/`Textarea`/`Select` paired with `Label htmlFor=` or `aria-label`; replace placeholder-only forms (login, post wizard search, contact).
-- **Color contrast** — replace ad-hoc opacity classes (`text-white/70`, `text-foreground/60`) with semantic tokens where they fall under 4.5:1; specifically audit hero overlay text, `TrustBanner`, footer copyright, badge variants.
-- **Live regions** — ensure toasts (`sonner`) announce politely; verify hero `aria-live` from prior pass.
-- **Keyboard** — tab through every interactive surface on home, listings, listing detail, post wizard, dashboard, admin. Fix any custom `<div onClick>` (convert to `Button`).
-- **Reduced motion** — extend the `prefers-reduced-motion` block in `styles.css` to cover any new animated components (carousel autoplay, ticker, scroll-row hover).
-- **Alt text** — audit all `<img>` for meaningful alt or `alt=""` if decorative (hero photography, listing cards, store/hatchery covers, avatars).
-- **Dialog/sheet** — ensure every shadcn `Dialog`/`Sheet` has `DialogTitle` (currently MobileFilterSheet may be missing one) and `aria-describedby` when content needs it.
+### Explicitly out of scope
 
-## 4. shadcn reusability audit
+- No redesign of the hero, no new home sections, no new routes.
+- No DB or RLS changes.
+- No copy rewrites beyond placeholders for `Select` triggers.
+- No motion changes beyond what's needed to stop layout shift.
 
-Goal: replace hand-rolled patterns with shadcn primitives so styling stays consistent and accessible-by-default.
+### Acceptance
 
-Sweep for and refactor:
-
-- **Custom buttons** (raw `<button className="rounded-md bg-primary ...">`) → `Button` with variants. Add new variants if needed (`hero`, `ghost-on-dark`) via CVA.
-- **Custom cards** (raw `<div className="rounded-2xl border-[1.5px] border-border bg-card ...">`) → `Card` + `CardHeader/Content/Footer`. Keep the editorial radius/border in the base `Card` style.
-- **Custom badges/chips** → `Badge` with `variant` (primary-soft, success, warning, neutral).
-- **Region pickers** — confirm all 4 (services, stores, hatcheries, listings) use `Select`; replace any remaining `<select>`.
-- **Tabs** in dashboard pages → `Tabs`.
-- **FAQ/expanders** → `Accordion`.
-- **Mobile filter sheet** → ensure built on `Sheet` (already), add `Tabs` for grouping.
-- **Toasts** — consolidate on `sonner`; remove any console `alert()` if present.
-- **Skeletons** — replace bespoke `animate-pulse` blocks with `Skeleton` component for consistency.
-- **Tooltips** on verification badges, trust signals → `Tooltip`.
-
-Outcome: a short components manifest at `src/components/ui/README.md` listing which primitives map to which design tokens.
-
-## 5. User-journey QA matrix
-
-Walk each flow end-to-end, fix bugs found, and document the verified state:
-
-1. **Anonymous visitor** — Home → Listings → Listing detail → WhatsApp CTA → back; About → Footer link → each footer destination renders.
-2. **Sign up & verify** — Sign in → Email confirm → Dashboard → Verification flow → tier badge appears in listings.
-3. **Seller post a listing** — `/post` wizard from cold start: every step keyboard-reachable, validation messages announced, success toast.
-4. **Buyer save & contact** — Save toggle persists, `/saved` lists saved items, WhatsApp link opens with prefilled message.
-5. **Hatchery booking** — Hatchery list → detail → batch → reserve.
-6. **Services / Stores** — directory → detail → quote request (where applicable).
-7. **Admin** — admin pages gated correctly, tables paginated, actions confirm via `AlertDialog`.
-
-Each journey gets a row in a new `docs/qa-journeys.md` with: pass/fail, fixes applied, residual notes.
-
-## 6. Technical details
-
-- New DB: `contact_messages (id uuid pk, name text, region text, topic text, message text, created_at timestamptz default now())`. RLS: insert allowed to anon, select only via `has_role(auth.uid(),'admin')`.
-- New server function `src/lib/contact.functions.ts` (`createServerFn` POST) inserting via `supabaseAdmin` after Zod validation (name 1–80, message 10–2000, topic enum).
-- Routes added: `src/routes/contact.tsx`, `safety.tsx`, `privacy.tsx`, `terms.tsx`, `help.tsx`, `sitemap.tsx` — each with proper `head()` meta.
-- `__root.tsx` gets the skip-link + ensures `<main id="content">` lives in `AppShell` only.
-- New `Badge` variants + `Button` variants in `src/components/ui/*` (extend, do not break existing API).
-- All new accordions/forms wired through shadcn `Form` + `react-hook-form` + `zod`.
-
-## Out of scope
-
-- Sending email on contact submissions (no provider configured) — messages are stored only; we surface them in admin.
-- Multilingual content (Twi/Ga) — copy stays English.
-- Replacing the existing icon set.
-- Rewriting auth or RLS beyond the new `contact_messages` table.
-
-```text
-Deliverables
-├── About: 7 new sections + FAQ
-├── Footer: 3 columns + socials, 6 new live pages
-├── A11y: skip link, single main, focus ring, labels, alt, reduced-motion
-├── shadcn refactors: Card/Button/Badge/Tabs/Accordion/Skeleton
-└── docs/qa-journeys.md + components/ui/README.md
-```
+- `/`, `/listings`, `/hatcheries`, `/hatcheries/:slug`, `/about`, `/contact` all render with no overlapping FAB, no "Loading…" placeholder text in form controls, and a real empty state when there's no data.
+- Lighthouse a11y score stays ≥95 on `/` and `/listings`.
+- All icon-only buttons have `aria-label`.
+- Mobile content never sits under the bottom tab bar.

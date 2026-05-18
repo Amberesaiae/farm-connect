@@ -164,7 +164,7 @@ export function HomeHero() {
         farmlink — Ghana's livestock marketplace, direct from the farm.
       </h1>
 
-      <div className="relative aspect-[4/5] w-full sm:aspect-[16/10] md:aspect-[21/9] md:min-h-[520px]">
+      <div className="relative aspect-[3/4] w-full sm:aspect-[16/10] md:aspect-[21/9] md:min-h-[520px]">
         {prev !== null && animate && (
           <img
             key={`prev-${prev}`}
@@ -209,10 +209,10 @@ export function HomeHero() {
         {/* Top vignette for the eyebrow row */}
         <div
           aria-hidden
-          className="absolute inset-x-0 top-0 h-32"
+          className="absolute inset-x-0 top-0 h-40"
           style={{
             background:
-              "linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 100%)",
+              "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 100%)",
           }}
         />
 
@@ -230,7 +230,7 @@ export function HomeHero() {
         </div>
 
         {/* Headline block — rotates per scene */}
-        <div className="absolute inset-x-0 bottom-0 px-6 pb-20 md:px-12 md:pb-24">
+        <div className="absolute inset-x-0 bottom-0 px-6 pb-14 md:px-12 md:pb-24">
           <div
             key={`text-${i}`}
             role="group"
@@ -247,7 +247,7 @@ export function HomeHero() {
             </p>
             <p
               aria-hidden="true"
-              className="font-display mt-3 text-[40px] font-extrabold leading-[0.95] tracking-tight md:text-[72px] lg:text-[88px]"
+              className="font-display mt-3 text-[34px] font-extrabold leading-[0.95] tracking-tight sm:text-[40px] md:text-[72px] lg:text-[88px]"
             >
               <span className="block italic" style={{ color: "var(--accent-2)" }}>
                 {scene.word}

@@ -23,7 +23,13 @@ export function AppShell({
       >
         Skip to content
       </a>
-      <main id="content" tabIndex={-1} className="flex-1 pb-24 md:pb-0">{children}</main>
+      <main
+        id="content"
+        tabIndex={-1}
+        className="flex-1 pb-[calc(env(safe-area-inset-bottom)+88px)] md:pb-0"
+      >
+        {children}
+      </main>
       <Footer />
       <MobileTabBar />
     </div>
