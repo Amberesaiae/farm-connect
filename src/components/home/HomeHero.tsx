@@ -230,7 +230,7 @@ export function HomeHero() {
         </div>
 
         {/* Headline block — rotates per scene */}
-        <div className="absolute inset-x-0 bottom-0 px-6 pb-20 md:px-12 md:pb-24">
+        <div className="absolute inset-x-0 bottom-0 px-6 pb-14 md:px-12 md:pb-24">
           <div
             key={`text-${i}`}
             role="group"
