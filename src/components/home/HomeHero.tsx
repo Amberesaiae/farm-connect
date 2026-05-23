@@ -249,7 +249,7 @@ export function HomeHero() {
               aria-hidden="true"
               className="font-display mt-3 text-[34px] font-extrabold leading-[0.95] tracking-tight sm:text-[40px] md:text-[72px] lg:text-[88px]"
             >
-              <span className="block italic" style={{ color: "var(--accent-2)" }}>
+              <span className="block italic font-display" style={{ color: "var(--accent-2)" }}>
                 {scene.word}
               </span>
               <span className="block text-white">{scene.line}</span>

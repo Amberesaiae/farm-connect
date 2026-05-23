@@ -2,8 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTaxonomy } from "@/lib/taxonomy-context";
-import { CategoryIcon } from "@/components/icons/CategoryIcon";
-import { cn } from "@/lib/utils";
+import { CategoryTile } from "@/components/shared/CategoryTile";
 
 /**
  * Browse-by-category list with live listing counts and the most recently
@@ -44,49 +43,19 @@ export function CategoryList({ pillar }: { pillar?: string }) {
   }, [cats]);
 
   return (
-    <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-      {cats.map((c) => {
+    <ul className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
+      {cats.map((c, i) => {
         const m = meta[c.slug];
         return (
           <li key={c.slug}>
-            <Link
+            <CategoryTile
+              label={c.label}
+              count={m?.count ?? null}
+              iconKey={c.iconKey ?? c.slug}
               to="/listings"
-              search={{ topCategory: c.pillarSlug, category: c.slug } as never}
-              className={cn(
-                "group fl-lift relative flex h-full items-center gap-3 overflow-hidden rounded-2xl border-[1.5px] border-border bg-card p-3 transition-colors hover:border-primary",
-              )}
-            >
-              <span className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-soft text-primary">
-                {m?.preview ? (
-                  <img
-                    src={m.preview}
-                    alt=""
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                  />
-                ) : (
-                  <CategoryIcon name={c.iconKey ?? c.slug} size={36} />
-                )}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[14px] font-bold text-foreground transition-colors group-hover:text-primary">
-                  {c.label}
-                </span>
-                <span className="mt-0.5 block text-[12px] text-muted-foreground">
-                  {m == null
-                    ? "Loading…"
-                    : m.count === 0
-                      ? "Be the first to list"
-                      : `${m.count.toLocaleString()} ${m.count === 1 ? "listing" : "listings"}`}
-                </span>
-              </span>
-              <span
-                aria-hidden
-                className="text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
-              >
-                →
-              </span>
-            </Link>
+              search={{ topCategory: c.pillarSlug, category: c.slug }}
+              index={i}
+            />
           </li>
         );
       })}
