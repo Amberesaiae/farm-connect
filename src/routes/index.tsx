@@ -11,6 +11,7 @@ import { AgroVendorStrip } from "@/components/home/AgroVendorStrip";
 import { RegionsMap } from "@/components/home/RegionsMap";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { FarmerVoices } from "@/components/home/FarmerVoices";
+import { PromoPair } from "@/components/home/PromoPair";
 import mixedHero from "@/assets/mixed-hero.jpg";
 
 export const Route = createFileRoute("/")({
@@ -53,6 +54,10 @@ function HomePage() {
             <CategoryList />
           </div>
         </section>
+
+        <div className="mt-12 md:mt-16">
+          <PromoPair />
+        </div>
 
         <div className="mt-12 md:mt-16">
           <MarketplacePulse />

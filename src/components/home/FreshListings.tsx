@@ -3,6 +3,9 @@ import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { ListingCard, type ListingCardData } from "@/components/listing/ListingCard";
 import { ArrowRightIcon } from "@/components/icons";
+import { SectionHeader } from "@/components/shared/SectionHeader";
+import { DisplayAccent } from "@/components/shared/DisplayAccent";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 interface Row {
   id: string;
@@ -75,39 +78,41 @@ export function FreshListings() {
 
   return (
     <section>
-      <div className="flex items-end justify-between gap-6">
-        <div className="max-w-2xl">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary/80">
-            Just posted · updated hourly
-          </p>
-          <h2 className="font-display mt-2 text-[28px] font-extrabold leading-[1.05] tracking-tight md:text-[40px]">
-            Fresh from farmers <span className="text-primary">this week</span>
-          </h2>
-          <p className="mt-3 text-[14px] leading-relaxed text-muted-foreground md:text-[15px]">
-            New listings from every region — tap any card to talk to the seller on WhatsApp.
-          </p>
-        </div>
-        <Link
-          to="/listings"
-          className="hidden shrink-0 items-center gap-1.5 self-end rounded-full border border-border bg-card px-4 py-2 text-[13px] font-semibold text-foreground transition-colors hover:border-primary hover:text-primary md:inline-flex"
-        >
-          See all <ArrowRightIcon size={14} />
-        </Link>
-      </div>
+      <SectionHeader
+        eyebrow="Just posted · updated hourly"
+        title={
+          <>
+            Fresh from <DisplayAccent>farmers</DisplayAccent> this week
+          </>
+        }
+        description="New listings from every region — tap any card to start a WhatsApp conversation with the farmer."
+        seeAll={{ to: "/listings", label: "See all" }}
+      />
       <div className="mt-7 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {loading
           ? Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
-                className="aspect-[4/3] animate-pulse rounded-2xl border-[1.5px] border-border bg-card"
+                className="aspect-[4/3] animate-pulse rounded-2xl border border-border bg-surface-cream"
               />
             ))
-          : rows.map((l) => <ListingCard key={l.id} listing={l} />)}
+          : rows.length === 0
+            ? null
+            : rows.map((l) => <ListingCard key={l.id} listing={l} />)}
       </div>
+      {!loading && rows.length === 0 ? (
+        <div className="mt-7">
+          <EmptyState
+            title="No listings yet — be the first."
+            description="Post your livestock in under 3 minutes and reach buyers across 16 regions."
+            action={{ to: "/post", label: "Post a listing" }}
+          />
+        </div>
+      ) : null}
       <div className="mt-6 flex justify-center md:hidden">
         <Link
           to="/listings"
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-[13px] font-semibold text-foreground"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-5 py-2.5 text-[13px] font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           See all listings <ArrowRightIcon size={14} />
         </Link>
