@@ -64,21 +64,24 @@ export function TopNav() {
           <NavLink to="/post">Sell</NavLink>
         </nav>
 
-        <form onSubmit={onSearch} className="mx-3 hidden max-w-[420px] flex-1 md:flex">
-          <div className="flex w-full items-center overflow-hidden rounded-xl border-[1.5px] border-border bg-background transition-colors focus-within:border-primary">
+        <form onSubmit={onSearch} className="mx-3 hidden max-w-[440px] flex-1 md:flex">
+          <div className="flex w-full items-center overflow-hidden rounded-full border border-border bg-surface-cream pl-4 transition-colors focus-within:border-primary focus-within:bg-card">
+            <SearchIcon size={15} strokeWidth={2} className="text-muted-foreground" />
+            <label htmlFor="topnav-search" className="sr-only">Search the marketplace</label>
             <input
+              id="topnav-search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search livestock, breed, region…"
-              className="flex-1 bg-transparent px-3.5 py-2 text-[13.5px] text-foreground outline-none placeholder:text-muted-foreground/70"
+              className="flex-1 bg-transparent px-3 py-2.5 text-[13.5px] text-foreground outline-none placeholder:text-muted-foreground"
             />
             <button
               type="submit"
               aria-label="Search"
-              className="flex items-center gap-1.5 bg-primary px-4 py-2 text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              className="m-1 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-[13px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              <SearchIcon size={14} strokeWidth={2} />
               <span className="hidden lg:inline">Search</span>
+              <SearchIcon size={14} strokeWidth={2} className="lg:hidden" />
             </button>
           </div>
         </form>
@@ -98,7 +101,7 @@ export function TopNav() {
               <Button
                 asChild
                 size="sm"
-                className="hidden rounded-md bg-primary font-semibold text-primary-foreground hover:bg-primary/90 md:inline-flex"
+                className="hidden rounded-full bg-primary px-4 font-semibold text-primary-foreground hover:bg-primary/90 md:inline-flex"
               >
                 <Link to="/post">
                   <PlusIcon size={16} strokeWidth={2} /> Post listing
@@ -170,13 +173,13 @@ export function TopNav() {
             </>
           ) : (
             <>
-              <Button asChild variant="ghost" size="sm" className="rounded-md font-semibold">
+              <Button asChild variant="ghost" size="sm" className="rounded-full font-semibold focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                 <Link to="/login">Sign in</Link>
               </Button>
               <Button
                 asChild
                 size="sm"
-                className="hidden rounded-md bg-primary font-semibold text-primary-foreground hover:bg-primary/90 sm:inline-flex"
+                className="hidden rounded-full bg-primary px-4 font-semibold text-primary-foreground hover:bg-primary/90 sm:inline-flex"
               >
                 <Link to="/post">
                   <PlusIcon size={16} strokeWidth={2} /> Post listing
