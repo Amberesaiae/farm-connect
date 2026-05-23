@@ -172,6 +172,23 @@
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }
 
+/* Italic display accent — used inside display headings for a single word of emphasis */
+.display-accent {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* Pastel-tinted surface utilities for category tiles */
+.bg-surface-mint   { background-color: var(--surface-mint); }
+.bg-surface-peach  { background-color: var(--surface-peach); }
+.bg-surface-butter { background-color: var(--surface-butter); }
+.bg-surface-sky    { background-color: var(--surface-sky); }
+.bg-surface-lilac  { background-color: var(--surface-lilac); }
+.bg-surface-rose   { background-color: var(--surface-rose); }
+.bg-surface-cream  { background-color: var(--surface-cream); }
+
 /* Ticker animation */
 @keyframes ticker-slide {
   from { transform: translateX(0); }
