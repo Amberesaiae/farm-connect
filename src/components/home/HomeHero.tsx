@@ -1,352 +1,163 @@
-import { Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { ArrowRightIcon } from "@/components/icons";
-import heroCattle from "@/assets/hero-cattle.jpg";
-import heroGoats from "@/assets/hero-goats.jpg";
-import heroPoultry from "@/assets/hero-poultry.jpg";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useState, type FormEvent } from "react";
+import { ArrowRightIcon, SearchIcon, CheckIcon } from "@/components/icons";
+import { DisplayAccent } from "@/components/shared/DisplayAccent";
+import heroBasket from "@/assets/hero-basket.jpg";
 
-/**
- * Editorial scene-rotator hero. Accessibility-hardened:
- *  - Stable <h1> (does not change between scenes — SEO & SR friendly).
- *  - Rotating scene copy lives inside a role="group" + aria-roledescription="slide".
- *  - Auto-advance honours prefers-reduced-motion, document visibility, hover & focus.
- *  - Visible play/pause toggle (WCAG 2.2.2).
- *  - Indicator strip is a proper role="tablist" with arrow-key + Home/End nav and roving tabindex.
- *  - aria-live region announces the current scene to screen readers.
- *  - Contrast scrim guarantees ≥4.5:1 against any underlying image area.
- */
-interface Scene {
-  src: string;
-  alt: string;
-  eyebrow: string;
-  word: string;
-  line: string;
-  caption: string;
-  meta: string;
-  position: string;
-}
-
-const SCENES: Scene[] = [
-  {
-    src: heroCattle,
-    alt: "Sanga cattle grazing on Ghanaian savannah at golden hour",
-    eyebrow: "Northern Region · Tamale",
-    word: "Sanga",
-    line: "cattle, from the land that raised them.",
-    caption: "Bred on northern grasslands. Sold direct to your farm.",
-    meta: "01 / Cattle",
-    position: "center 55%",
-  },
-  {
-    src: heroGoats,
-    alt: "Herd of West African dwarf and Boer goats on a red-earth path at sunset",
-    eyebrow: "Ashanti Region · Kumasi",
-    word: "Goats",
-    line: "with the dust of home still on their hooves.",
-    caption: "Boer, West African dwarf, Sahelian — pick the breed, pick the farm.",
-    meta: "02 / Small ruminants",
-    position: "center 60%",
-  },
-  {
-    src: heroPoultry,
-    alt: "Free-range layer hens and a rooster in a Ghanaian village compound at sunset",
-    eyebrow: "Bono Region · Dormaa",
-    word: "Poultry",
-    line: "raised under palm shade, ready by sunset.",
-    caption: "Layers, broilers, day-olds, table birds — from hatchery to coop.",
-    meta: "03 / Poultry",
-    position: "center 50%",
-  },
+const QUICK_CHIPS = [
+  { label: "Cattle", category: "cattle" },
+  { label: "Goats", category: "goats" },
+  { label: "Sheep", category: "sheep" },
+  { label: "Poultry", category: "poultry" },
+  { label: "Hatcheries", to: "/hatcheries" as const },
+  { label: "Vets & Services", to: "/services" as const },
 ];
 
-const DURATION_MS = 5500;
+const TRUST = [
+  "Verified farmers",
+  "WhatsApp direct",
+  "16 regions covered",
+];
 
-function usePrefersReducedMotion() {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const handler = () => setReduced(mq.matches);
-    handler();
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-  return reduced;
-}
-
+/**
+ * Agora-style bright editorial hero. No carousel — one decisive headline,
+ * a prominent search pill, and a lifestyle portrait on the right.
+ */
 export function HomeHero() {
-  const [i, setI] = useState(0);
-  const [prev, setPrev] = useState<number | null>(null);
-  const [paused, setPaused] = useState(false);
-  const [hovered, setHovered] = useState(false);
-  const [focusWithin, setFocusWithin] = useState(false);
-  const [visible, setVisible] = useState(true);
-  const reduced = usePrefersReducedMotion();
-  const tablistId = useId();
-  const liveId = useId();
-  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const navigate = useNavigate();
+  const [q, setQ] = useState("");
 
-  // Tab-visibility pause
-  useEffect(() => {
-    const onVis = () => setVisible(!document.hidden);
-    document.addEventListener("visibilitychange", onVis);
-    return () => document.removeEventListener("visibilitychange", onVis);
-  }, []);
-
-  const effectivePaused = paused || hovered || focusWithin || !visible || reduced;
-
-  useEffect(() => {
-    if (effectivePaused) return;
-    const t = window.setTimeout(() => {
-      setPrev(i);
-      setI((n) => (n + 1) % SCENES.length);
-    }, DURATION_MS);
-    return () => window.clearTimeout(t);
-  }, [i, effectivePaused]);
-
-  const goTo = useCallback(
-    (next: number, focus = false) => {
-      const clamped = ((next % SCENES.length) + SCENES.length) % SCENES.length;
-      if (clamped === i) return;
-      setPrev(i);
-      setI(clamped);
-      if (focus) {
-        // Defer to next tick so the new tab is selectable
-        window.setTimeout(() => tabRefs.current[clamped]?.focus(), 0);
-      }
-    },
-    [i],
-  );
-
-  const onTabKey = (e: React.KeyboardEvent) => {
-    switch (e.key) {
-      case "ArrowRight":
-        e.preventDefault();
-        goTo(i + 1, true);
-        break;
-      case "ArrowLeft":
-        e.preventDefault();
-        goTo(i - 1, true);
-        break;
-      case "Home":
-        e.preventDefault();
-        goTo(0, true);
-        break;
-      case "End":
-        e.preventDefault();
-        goTo(SCENES.length - 1, true);
-        break;
-    }
+  const onSearch = (e: FormEvent) => {
+    e.preventDefault();
+    navigate({ to: "/listings", search: { q: q.trim() || undefined } as never });
   };
-
-  const scene = SCENES[i];
-  const animate = !reduced;
 
   return (
     <section
-      id="hero"
-      aria-label="Featured livestock scenes"
-      aria-roledescription="carousel"
-      className="relative isolate overflow-hidden rounded-[28px] bg-foreground text-white shadow-[0_24px_80px_-30px_rgba(17,24,20,0.4)]"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onFocus={() => setFocusWithin(true)}
-      onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node)) setFocusWithin(false);
-      }}
+      aria-label="farmlink marketplace"
+      className="relative overflow-hidden rounded-[28px] border border-border bg-surface-cream"
     >
-      {/* Live region — announces scene changes politely */}
-      <div id={liveId} className="sr-only-live" aria-live="polite" aria-atomic="true">
-        Scene {i + 1} of {SCENES.length}: {scene.word}, {scene.eyebrow}
-      </div>
-
-      {/* Stable H1 for SEO & screen readers — visually hidden, never changes */}
-      <h1 className="sr-only-live">
-        farmlink — Ghana's livestock marketplace, direct from the farm.
-      </h1>
-
-      <div className="relative aspect-[3/4] w-full sm:aspect-[16/10] md:aspect-[21/9] md:min-h-[520px]">
-        {prev !== null && animate && (
-          <img
-            key={`prev-${prev}`}
-            src={SCENES[prev].src}
-            alt=""
-            aria-hidden
-            className="hero-img-leaving absolute inset-0 h-full w-full object-cover"
-            style={{ objectPosition: SCENES[prev].position }}
-            width={1920}
-            height={1080}
-          />
-        )}
-        <img
-          key={`cur-${i}`}
-          src={scene.src}
-          alt={scene.alt}
-          className={animate ? "hero-img-active absolute inset-0 h-full w-full object-cover" : "absolute inset-0 h-full w-full object-cover"}
-          style={{ objectPosition: scene.position }}
-          width={1920}
-          height={1080}
-          fetchPriority="high"
-        />
-
-        {/* Bottom scrim — guarantees text contrast over photography */}
-        <div
-          aria-hidden
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,0.25) 55%, rgba(17,24,20,0.92) 100%)",
-          }}
-        />
-        {/* Targeted contrast pad anchored under the headline — guarantees 4.5:1 without darkening the photo */}
-        <div
-          aria-hidden
-          className="absolute inset-x-0 bottom-0 h-[55%]"
-          style={{
-            background:
-              "radial-gradient(ellipse 70% 80% at 25% 100%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 70%)",
-          }}
-        />
-        {/* Top vignette for the eyebrow row */}
-        <div
-          aria-hidden
-          className="absolute inset-x-0 top-0 h-40"
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 100%)",
-          }}
-        />
-
-        {/* Top meta row */}
-        <div className="absolute inset-x-0 top-0 flex items-center justify-between px-6 pt-5 md:px-10 md:pt-7">
-          <span className="font-display text-[13px] font-extrabold uppercase tracking-[0.22em] text-white">
-            farmlink
+      <div className="grid gap-0 md:grid-cols-[1.15fr_1fr]">
+        {/* Left: copy + search + chips */}
+        <div className="flex flex-col gap-7 p-7 sm:p-10 md:p-14">
+          <span className="inline-flex w-fit items-center gap-2 rounded-full bg-primary-soft px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary pulse-dot" />
+            Ghana's farmer-direct marketplace
           </span>
-          <span
-            key={`meta-${i}`}
-            className={animate ? "hero-text-active font-mono text-[10.5px] font-semibold uppercase tracking-[0.18em] text-white/85" : "font-mono text-[10.5px] font-semibold uppercase tracking-[0.18em] text-white/85"}
+
+          <h1 className="font-display text-[40px] font-extrabold leading-[1.02] tracking-tight text-foreground sm:text-[52px] md:text-[68px] lg:text-[78px]">
+            Livestock,{" "}
+            <DisplayAccent>direct</DisplayAccent>{" "}
+            from the farm that raised them.
+          </h1>
+
+          <p className="max-w-xl text-[15px] leading-relaxed text-muted-foreground md:text-[17px]">
+            Cattle, goats, sheep, poultry, feed and vets — sourced from
+            verified farmers across all 16 regions. No middlemen, no markup,
+            one WhatsApp away.
+          </p>
+
+          {/* Search pill */}
+          <form
+            onSubmit={onSearch}
+            className="flex w-full max-w-xl items-center gap-1.5 rounded-full border border-border bg-card p-1.5 shadow-soft focus-within:border-primary"
           >
-            {scene.meta}
-          </span>
+            <div className="flex flex-1 items-center gap-2 px-4">
+              <SearchIcon size={18} className="text-muted-foreground" />
+              <label htmlFor="hero-search" className="sr-only">
+                Search livestock, breeds, or regions
+              </label>
+              <input
+                id="hero-search"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search Sanga, Boer, layers, Tamale…"
+                className="h-12 w-full bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
+              />
+            </div>
+            <button
+              type="submit"
+              className="inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-[14px] font-bold text-primary-foreground transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              Search
+              <ArrowRightIcon size={14} />
+            </button>
+          </form>
+
+          {/* Quick chips */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              Popular
+            </span>
+            {QUICK_CHIPS.map((c) =>
+              "to" in c ? (
+                <Link
+                  key={c.label}
+                  to={c.to}
+                  className="inline-flex h-9 items-center rounded-full border border-border bg-card px-4 text-[12.5px] font-semibold text-foreground transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  {c.label}
+                </Link>
+              ) : (
+                <Link
+                  key={c.label}
+                  to="/listings"
+                  search={{ topCategory: "livestock", category: c.category } as never}
+                  className="inline-flex h-9 items-center rounded-full border border-border bg-card px-4 text-[12.5px] font-semibold text-foreground transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  {c.label}
+                </Link>
+              ),
+            )}
+          </div>
+
+          {/* Trust strip */}
+          <ul className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border pt-5">
+            {TRUST.map((t) => (
+              <li
+                key={t}
+                className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-foreground/80"
+              >
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary">
+                  <CheckIcon size={10} strokeWidth={3} className="text-primary-foreground" />
+                </span>
+                {t}
+              </li>
+            ))}
+          </ul>
         </div>
 
-        {/* Headline block — rotates per scene */}
-        <div className="absolute inset-x-0 bottom-0 px-6 pb-14 md:px-12 md:pb-24">
-          <div
-            key={`text-${i}`}
-            role="group"
-            aria-roledescription="slide"
-            aria-label={`${i + 1} of ${SCENES.length}: ${scene.word}, ${scene.eyebrow}`}
-            className={animate ? "hero-text-active max-w-3xl" : "max-w-3xl"}
-          >
-            <p className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.24em] text-white">
-              <span
-                className="mr-2 inline-block h-1.5 w-1.5 rounded-full align-middle"
-                style={{ background: "var(--accent-2)" }}
-              />
-              {scene.eyebrow}
-            </p>
-            <p
-              aria-hidden="true"
-              className="font-display mt-3 text-[34px] font-extrabold leading-[0.95] tracking-tight sm:text-[40px] md:text-[72px] lg:text-[88px]"
-            >
-              <span className="block italic font-display" style={{ color: "var(--accent-2)" }}>
-                {scene.word}
-              </span>
-              <span className="block text-white">{scene.line}</span>
-            </p>
-            <p className="mt-5 max-w-xl text-[14px] leading-relaxed text-white md:text-[16px]">
-              {scene.caption}
-            </p>
-
-            <div className="mt-7 flex flex-wrap items-center gap-3">
-              <Link
-                to="/listings"
-                className="group inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-5 py-3 text-[13.5px] font-bold text-foreground transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-foreground"
-              >
-                Browse marketplace
-                <ArrowRightIcon
-                  size={14}
-                  className="transition-transform group-hover:translate-x-0.5"
-                />
-              </Link>
-              <Link
-                to="/post"
-                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/40 px-5 py-3 text-[13.5px] font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-foreground"
-              >
-                Post a listing
-              </Link>
+        {/* Right: lifestyle portrait inside cream basket */}
+        <div className="relative min-h-[320px] md:min-h-full">
+          <div className="absolute inset-4 overflow-hidden rounded-[24px] md:inset-6">
+            <img
+              src={heroBasket}
+              alt="Ghanaian farmer holding a young goat kid in warm light"
+              width={1024}
+              height={1024}
+              fetchPriority="high"
+              className="h-full w-full object-cover"
+            />
+            {/* Floating price card */}
+            <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between gap-3 rounded-2xl bg-card/95 p-3 shadow-soft backdrop-blur md:left-6 md:right-auto md:max-w-[260px]">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-mint text-[16px]">
+                  🐐
+                </span>
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    Ashanti · today
+                  </p>
+                  <p className="font-display text-[14px] font-bold text-foreground">
+                    Boer kid · 4 months
+                  </p>
+                </div>
+              </div>
+              <span className="font-mono text-[15px] font-bold text-primary">GH₵ 380</span>
             </div>
           </div>
         </div>
-
-        {/* Carousel controls — indicators + play/pause. Sits at the bottom edge. */}
-        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-4 px-6 pb-5 md:px-12 md:pb-6">
-          <div
-            id={tablistId}
-            role="tablist"
-            aria-label="Choose a scene"
-            onKeyDown={onTabKey}
-            className="flex w-full max-w-[280px] gap-2"
-          >
-            {SCENES.map((s, idx) => (
-              <button
-                key={s.word}
-                ref={(el) => {
-                  tabRefs.current[idx] = el;
-                }}
-                type="button"
-                role="tab"
-                aria-selected={idx === i}
-                aria-controls={`hero-slide-${idx}`}
-                aria-label={`Scene ${idx + 1}: ${s.word}`}
-                tabIndex={idx === i ? 0 : -1}
-                onClick={() => goTo(idx)}
-                className="group relative h-3 flex-1 cursor-pointer overflow-visible focus-visible:outline-none"
-              >
-                <span className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 overflow-hidden rounded-full bg-white/30 group-focus-visible:ring-2 group-focus-visible:ring-white group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-foreground">
-                  {idx === i && !effectivePaused ? (
-                    <span
-                      key={`bar-${i}`}
-                      className="hero-progress absolute inset-0 block bg-white"
-                      style={{ ["--hero-dur" as string]: `${DURATION_MS}ms` }}
-                    />
-                  ) : idx === i ? (
-                    <span className="absolute inset-0 block bg-white" />
-                  ) : idx < i ? (
-                    <span className="absolute inset-0 block bg-white/70" />
-                  ) : null}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setPaused((p) => !p)}
-            aria-pressed={paused || reduced}
-            aria-label={paused || reduced ? "Play scene auto-advance" : "Pause scene auto-advance"}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/40 bg-black/30 text-white backdrop-blur-sm transition-colors hover:bg-black/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-foreground"
-          >
-            {paused || reduced ? <PlayGlyph /> : <PauseGlyph />}
-          </button>
-        </div>
       </div>
     </section>
-  );
-}
-
-function PlayGlyph() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" fill="currentColor">
-      <path d="M3 1.5v11l9-5.5z" />
-    </svg>
-  );
-}
-function PauseGlyph() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" fill="currentColor">
-      <rect x="2.5" y="1.5" width="3" height="11" rx="0.6" />
-      <rect x="8.5" y="1.5" width="3" height="11" rx="0.6" />
-    </svg>
   );
 }

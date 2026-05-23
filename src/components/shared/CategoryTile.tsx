@@ -1,17 +1,38 @@
 import { Link } from "@tanstack/react-router";
-import { CategoryIcon } from "@/components/icons/CategoryIcon";
 import { cn } from "@/lib/utils";
+import catCattle from "@/assets/cat-cattle.jpg";
+import catGoats from "@/assets/cat-goats.jpg";
+import catSheep from "@/assets/cat-sheep.jpg";
+import catPoultry from "@/assets/cat-poultry.jpg";
+import catSwine from "@/assets/cat-swine.jpg";
+import catFeed from "@/assets/cat-feed.jpg";
+
+const IMAGE_BY_KEY: Record<string, string> = {
+  cattle: catCattle,
+  cow: catCattle,
+  goats: catGoats,
+  goat: catGoats,
+  sheep: catSheep,
+  poultry: catPoultry,
+  chicken: catPoultry,
+  swine: catSwine,
+  pig: catSwine,
+  feed: catFeed,
+};
 
 const TONES = [
-  "bg-surface-mint",
   "bg-surface-peach",
-  "bg-surface-butter",
+  "bg-surface-mint",
   "bg-surface-sky",
-  "bg-surface-lilac",
+  "bg-surface-butter",
   "bg-surface-rose",
+  "bg-surface-lilac",
 ] as const;
 
-/** Pastel-tinted square category tile à la Agora's "Featured Categories" strip. */
+/**
+ * Agora-style circular pastel disc with a product photo inside.
+ * Label sits below; count chip slides in on hover.
+ */
 export function CategoryTile({
   label,
   count,
@@ -28,28 +49,47 @@ export function CategoryTile({
   index?: number;
 }) {
   const tone = TONES[index % TONES.length];
+  const img = IMAGE_BY_KEY[iconKey] ?? IMAGE_BY_KEY[label.toLowerCase()] ?? null;
+
   return (
     <Link
       to={to as never}
       search={search as never}
       className="group block focus-visible:outline-none"
+      aria-label={`Browse ${label}${count != null ? ` — ${count} listings` : ""}`}
     >
       <div
         className={cn(
-          "relative grid aspect-square place-items-center overflow-hidden rounded-3xl border border-border/60 transition-transform group-hover:-translate-y-0.5 group-focus-visible:ring-2 group-focus-visible:ring-ring group-focus-visible:ring-offset-2",
+          "relative grid aspect-square place-items-center overflow-hidden rounded-full transition-transform group-hover:-translate-y-1 group-focus-visible:ring-2 group-focus-visible:ring-ring group-focus-visible:ring-offset-2",
           tone,
         )}
       >
-        <CategoryIcon name={iconKey} size={56} className="text-foreground/80" />
+        {img ? (
+          <img
+            src={img}
+            alt=""
+            loading="lazy"
+            width={512}
+            height={512}
+            className="h-[78%] w-[78%] object-contain transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <span className="font-display text-[36px] font-extrabold text-foreground/30">
+            {label[0]}
+          </span>
+        )}
+        {count != null && count > 0 ? (
+          <span className="absolute right-2 top-2 inline-flex items-center rounded-full bg-card/95 px-2.5 py-1 text-[10.5px] font-bold text-foreground shadow-soft">
+            {count}
+          </span>
+        ) : null}
       </div>
-      <div className="mt-3 text-center">
-        <p className="truncate text-[13.5px] font-bold text-foreground transition-colors group-hover:text-primary">
-          {label}
-        </p>
-        <p className="mt-0.5 text-[11.5px] text-muted-foreground">
-          {count == null ? "—" : count === 0 ? "Be the first" : `${count} listed`}
-        </p>
-      </div>
+      <p className="mt-3 text-center text-[13.5px] font-bold text-foreground transition-colors group-hover:text-primary">
+        {label}
+      </p>
+      <p className="text-center text-[11px] text-muted-foreground">
+        {count == null ? "—" : count === 0 ? "Be the first" : `${count} listed`}
+      </p>
     </Link>
   );
 }

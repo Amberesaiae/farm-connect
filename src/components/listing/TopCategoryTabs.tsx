@@ -7,20 +7,21 @@ interface Props {
   active?: TopCategory;
 }
 
+/** Agora-style segmented pill bar — fully rounded, bright green active state. */
 export function TopCategoryTabs({ active }: Props) {
   const { taxonomy } = useTaxonomy();
   const pillars = taxonomy.marketplacePillars;
   return (
-    <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
-      <div className="flex w-max gap-1.5 rounded-2xl border-[1.5px] border-border bg-card p-1.5">
+    <div className="-mx-4 overflow-x-auto px-4 no-scrollbar md:mx-0 md:px-0">
+      <div className="flex w-max items-center gap-1 rounded-full bg-surface-cream p-1">
         <Link
           to="/listings"
           search={{} as never}
           className={cn(
-            "inline-flex items-center rounded-xl px-3.5 py-1.5 text-[12.5px] font-semibold transition-colors",
+            "inline-flex h-10 items-center rounded-full px-5 text-[13px] font-semibold transition-colors",
             !active
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-surface hover:text-foreground",
+              ? "bg-primary text-primary-foreground shadow-soft"
+              : "text-foreground/70 hover:text-foreground",
           )}
         >
           All
@@ -33,10 +34,10 @@ export function TopCategoryTabs({ active }: Props) {
               to="/listings"
               search={{ topCategory: c.slug } as never}
               className={cn(
-                "inline-flex items-center rounded-xl px-3.5 py-1.5 text-[12.5px] font-semibold transition-colors",
+                "inline-flex h-10 items-center rounded-full px-5 text-[13px] font-semibold transition-colors",
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-surface hover:text-foreground",
+                  ? "bg-primary text-primary-foreground shadow-soft"
+                  : "text-foreground/70 hover:text-foreground",
               )}
             >
               {c.shortLabel || c.label}
