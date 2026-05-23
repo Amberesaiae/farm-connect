@@ -43,17 +43,24 @@ function HomePage() {
       <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-10">
         <HomeHero />
 
-        <div className="mt-10 md:mt-14">
+        {/* Primary discovery — pastel category discs sit right under the hero */}
+        <section className="mt-12 md:mt-16" aria-label="Browse by animal">
+          <div className="mb-7 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                Browse by animal
+              </p>
+              <h2 className="font-display mt-2 text-[28px] font-extrabold leading-[1.05] tracking-tight md:text-[36px]">
+                Pick your animal. We'll show you the farms.
+              </h2>
+            </div>
+          </div>
+          <CategoryList />
+        </section>
+
+        <div className="mt-14 md:mt-20">
           <RolePicker />
         </div>
-
-        {/* Secondary section — quieter header so the hero + Fresh listings stay dominant */}
-        <section className="mt-14 md:mt-20">
-          <SectionLabel>Browse by animal · live counts</SectionLabel>
-          <div className="mt-4">
-            <CategoryList />
-          </div>
-        </section>
 
         <div className="mt-12 md:mt-16">
           <PromoPair />
@@ -93,17 +100,5 @@ function HomePage() {
         </div>
       </div>
     </AppShell>
-  );
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span aria-hidden className="h-px flex-1 bg-border" />
-      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-        {children}
-      </p>
-      <span aria-hidden className="h-px flex-1 bg-border" />
-    </div>
   );
 }

@@ -296,16 +296,17 @@ function ListingsPage() {
   return (
     <AppShell showTrust>
       <div className="mx-auto max-w-7xl space-y-10 px-4 py-6 md:px-8 md:py-10">
-        {/* Page header — establishes top of the visual hierarchy */}
-        <header className="space-y-2">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary/80">
+        {/* Bright marketplace hero — mirrors the Agora pillar */}
+        <header className="overflow-hidden rounded-[28px] border border-border bg-surface-cream p-7 md:p-10">
+          <span className="inline-flex w-fit items-center rounded-full bg-primary-soft px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.16em] text-primary">
             Marketplace
-          </p>
-          <h1 className="font-display text-[30px] font-extrabold leading-[1.05] tracking-tight md:text-[42px]">
-            Browse livestock & farm supplies
+          </span>
+          <h1 className="font-display mt-4 text-[34px] font-extrabold leading-[1.02] tracking-tight md:text-[52px]">
+            Browse <span className="display-accent">fresh</span> livestock & farm supplies
           </h1>
-          <p className="max-w-2xl text-[14px] text-muted-foreground md:text-[15px]">
-            Pick a pillar, then drill into a category. Filter by region, price and breed on the right.
+          <p className="mt-3 max-w-2xl text-[14px] text-muted-foreground md:text-[15.5px]">
+            Pick a pillar, drill into a category, filter by region or breed.
+            Every seller is one WhatsApp tap away.
           </p>
         </header>
 
