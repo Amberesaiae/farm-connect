@@ -1,22 +1,20 @@
 import type { ReactNode } from "react";
 import { TopNav } from "./TopNav";
 import { MobileTabBar } from "./MobileTabBar";
-import { AnnouncementBar } from "./AnnouncementBar";
-import { TrustBanner } from "./TrustBanner";
+import { AgoraTicker } from "./AgoraTicker";
 import { Footer } from "./Footer";
 
 export function AppShell({
   children,
-  showTrust = false,
 }: {
   children: ReactNode;
+  /** @deprecated Trust is now carried by the ticker; this prop is a no-op. */
   showTrust?: boolean;
 }) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <AnnouncementBar />
+      <AgoraTicker />
       <TopNav />
-      {showTrust ? <TrustBanner /> : null}
       <a
         href="#content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:shadow-lg"
