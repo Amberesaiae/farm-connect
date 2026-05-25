@@ -1,111 +1,89 @@
-## Goal
 
-Refactor the entire farmlink UI to the Agora reference language — bright, airy, grocery-marketplace polish — while preserving every existing feature. Lock the visual DNA into shared shadcn-based primitives so every page (home, listings, hatcheries, services, stores, dashboard, auth, static, admin) inherits the same elegance with no per-page divergence.
+# Full-platform Agora alignment — pass 2
 
-## Design DNA extracted from the reference
+The previous passes left visible patchwork: AI-generic hero+search composition, generic role cards, stats band, regions grid, How-it-works panel, trust strips on every page, and inner pages (listings, dashboard, post, static) still on the old visual hierarchy. This plan scraps those and rebuilds end-to-end to one DNA: cream canvas + green accent, italic display word, pill controls, rounded baskets, soft shadow, editorial section headers with an oversized "See more" pill, single line ticker, no duplicated trust panels.
 
-- **Canvas**: near-white #FCFBF7 with cream section bands (#F4EFE6) alternating for rhythm. White cards float on cream.
-- **Primary**: vivid grocery green (~#1FAE57) for CTAs and emphasis. Deep forest reserved for body/headlines. Soft mint pill backgrounds (#E6F6EC).
-- **Accent tiles**: pastel category chips — peach, mint, butter, sky, lilac — each at ~12% saturation on near-white.
-- **Type**: serif/grotesque display ("Make healthy life with **fresh** grocery" pattern — bold sans with italicized accent word in primary green) + clean geometric sans body. Keep `Bricolage Grotesque` for display, swap body to `Inter` for tighter rhythm; introduce italic accent treatment via a `<DisplayAccent>` span.
-- **Components**: fully rounded pill buttons (`rounded-full`), 20–24px rounded cards with hairline borders + soft shadow, micro-meta chips, countdown strip, "See more" ghost pill, badge chips inside product cards.
-- **Spacing**: generous — 80–120px section gaps on desktop, 56–72px mobile. Two-up promo banners. 6-up category strip.
-- **Imagery**: lifestyle photography in cream-tinted product baskets; here translated to livestock/poultry/feed product shots on cream backgrounds.
+## 1 — Global shell
 
-## Scope of pages touched
+- **AnnouncementBar → AgoraTicker.** Replace with a single-line marquee using the existing `.ticker-track` keyframes. Content = rotating verified-seller lines (`"ID-verified sellers · Direct WhatsApp · 16 regions · No middlemen · Verified hatcheries · …"`) separated by a `•` glyph. Pauses on hover, respects `prefers-reduced-motion`.
+- **Delete `TrustBanner.tsx`** and remove the `showTrust` prop from `AppShell`. The ticker now carries that signal; the standalone yellow band duplicates it on every page.
+- **TopNav.** Keep pill search on desktop but tone down: remove the inner green Search button (search-on-Enter only, with subtle right-side `⌘K` hint chip); ghost "Sell" link in nav promoted to a small pill "+ Sell" on the far right next to avatar. Mobile slide-down search keeps the green Go button (touch target).
+- **MobileTabBar.** Recolor active state to vivid primary, replace center FAB shadow with `--shadow-soft`, increase icon weight on active.
+- **Footer.** Keep cream surface; add a slim sign-off row with the same ticker style (static) and a "Built in Ghana" pill — but remove the duplicated v2 monospace tag.
 
-Home, Listings (browse + filters), Listing detail, Hatcheries (list + profile + batch), Services (list + profile), Stores (list + profile), Post wizard, Dashboard (all sub-routes), Saved, Login, About, Contact, Help, Safety, Privacy, Terms, Sitemap, How-it-works, Admin shell. Global shell (TopNav, AnnouncementBar, Footer, MobileTabBar, TrustBanner).
+## 2 — Tokens / primitives
 
-## Workstreams
+- Add `--surface-band` (slightly warmer cream) for full-bleed section bands and a `.section-band` utility (`bg-surface-band rounded-[32px] px-6 py-12 md:px-12 md:py-20`).
+- Add `PillButton` variants (`primary | ghost | outline`) and `SeeMorePill` (ghost pill with arrow) — extract from inline duplications across home, services, hatcheries, agro strip.
+- Add `MetaChip` (icon + label, fully rounded) and `EditorialQuote` for testimonials.
+- All `SectionHeader` usages now render the new "See more" ghost pill on both mobile and desktop (currently hidden on mobile).
 
-### 1. Token + typography refresh (`src/styles.css`)
-- Repaint `--background` to bright off-white, introduce `--surface-cream` band, `--surface-mint`, `--surface-peach`, `--surface-butter`, `--surface-sky`, `--surface-lilac` pastel tokens.
-- Raise `--primary` to vivid green; keep `--primary-deep` (forest) for type emphasis.
-- Tighten radii scale to match reference (cards 20px, pills full, tiles 24px).
-- Add `--shadow-soft` (low, diffuse) replacing current card shadow.
-- Swap body font to Inter; keep Bricolage Grotesque display; register italic-display utility.
+## 3 — Homepage rebuild
 
-### 2. Shared primitives (new + consolidated)
-Build once in `src/components/ui/` and `src/components/shared/`, then replace ad-hoc usage everywhere:
-- `SectionHeader` — eyebrow + display title with italic accent word + optional "See all" link.
-- `DisplayAccent` — span that renders an italicized green word inside any display heading.
-- `PillButton` variants on shadcn `Button` (primary pill, ghost pill, outline pill, icon pill).
-- `CategoryTile` — pastel-tinted square with image + label + count, color cycles through pastel tokens.
-- `PromoBanner` — two-up cream card with copy left, image right, pill CTA.
-- `ProductCard` (livestock + agro variant) — image, name, meta row, price, "Contact seller" or "Add to quote" pill, save heart. Replaces the current `ListingCard`, `StoreCard`, `StorefrontCard`, `HatcheryCard`, `ServiceCard` internals so all cards share one anatomy with category-specific slots.
-- `CountdownStrip` — for time-bound things (batch availability, market deals).
-- `EmptyState`, `LoadingSkeleton`, `StatusPill` — unified empty/loading/status vocabulary used across every list and dashboard.
-- `PageHero` — shared static-page hero (about/help/contact/safety/privacy/terms) replacing current `StaticPage` shell with image + eyebrow + display headline + lede.
+Sections kept (redesigned): Hero, CategoryDiscs, FreshListings, PromoPair, ServicesAndHatcheries, AgroVendorStrip, HowItWorks, FarmerVoices.
+**Removed entirely:** `RolePicker`, `MarketplacePulse` (stats band), `RegionsMap`, `TrustStrip` (duplicates ticker). The 16-region browse moves to the Listings page as a compact pill cloud inside the filter rail; pulse stats move into the About page where they belong.
 
-All primitives wrap shadcn (`Button`, `Card`, `Badge`, `Skeleton`, `Separator`, `Avatar`, `Input`, `Select`, `Dialog`, `Sheet`, `Tabs`) — no hand-rolled equivalents remain.
+Per-section work:
+- **HomeHero**: omit the search pill entirely (user request). Composition becomes: italic-accented headline left, lifestyle portrait right inside cream basket with floating price card, *no* form. Quick chips and trust strip stay. Search lives only in TopNav.
+- **CategoryDiscs**: bigger discs, 2 rows on mobile (3-up) flowing to 6-up desktop, ditch the absolute count badge (cluttered) — count moves below label as a thin meta line. Add a hover lift + subtle ring in the tone color. Generate 2 missing animal images (sheep already exists; add `cat-rabbit.jpg` and `cat-fish.jpg` if taxonomy needs them).
+- **FreshListings**: keep but wrap in a `.section-band` cream surface; add a real "See more →" ghost pill on the right of `SectionHeader` (mobile too).
+- **PromoPair**: increase image side to 55%, swap "See hatcheries"/"Open directory" copy to verb-led ("Reserve a batch" / "Shop essentials"), align to a single rounded-[32px] container.
+- **ServicesAndHatcheries**: scrap the two-column subsection layout. Replace with one editorial header + a single 6-card horizontal scroll-snap row mixing services & hatcheries, each with the new MetaChip set (region · type). Bottom row: two side-by-side pill CTAs ("Browse vets & services" / "Browse hatcheries").
+- **AgroVendorStrip**: align header to `SectionHeader`, increase card width to 320px desktop, add an animated peek of the next card on the right edge.
+- **HowItWorks**: scrap the bordered card; render directly on the cream band with three large oversized numerals (`01 02 03`) in italic display green, two-row tab swap with a smooth crossfade, single primary pill CTA centered below.
+- **FarmerVoices**: scrap the white card grid. Editorial quote pattern: very large opening italic quote glyph in primary green, blockquote in display weight 500 at 22–26px, author row underneath with avatar + tier pill. 3-up desktop / scroll-snap on mobile.
 
-### 3. Global shell refresh
-- **TopNav**: white bar, pill search field, primary pill "Sell" CTA, ghost cart-style saved indicator. Mobile: clean hamburger + search icon with `aria-label`s.
-- **AnnouncementBar**: thin cream strip with marquee disabled, single-line truncation, tiny dot separators.
-- **MobileTabBar**: floating pill on cream background with active-pill highlight in primary green.
-- **Footer**: cream band, big italic "farmlink" wordmark, three link columns in Inter, region-tag chip, newsletter pill input.
+Final `routes/index.tsx` order: AgoraTicker → Hero → CategoryDiscs → PromoPair → FreshListings → ServicesAndHatcheries → AgroVendorStrip → HowItWorks → FarmerVoices.
 
-### 4. Page-by-page application
-For each page: rebuild composition with new primitives, refresh copy to feel grounded and specific (Ghanaian regions, breeds, seasonal cues), swap placeholder copy/loading text for `<EmptyState>`/`<LoadingSkeleton>`, audit a11y (alt text, aria-labels, focus rings, heading order, 44px tap targets).
+## 4 — Listings page rebuild
 
-- **Home**: hero kept but recomposed with italic accent word + pastel side panel + pill CTAs; new 6-up `CategoryTile` strip; two-up `PromoBanner` ("Verified hatcheries" / "Agro essentials"); `FreshListings` rebuilt on shared `ProductCard`; `MarketplacePulse` as countdown strip + stat tiles; testimonials and how-it-works re-typeset.
-- **Listings / Hatcheries / Services / Stores**: shared two-column layout (filter rail + grid), shared `ResultsBar`, shared `ProductCard`, shared `EmptyState`. Detail pages adopt shared `PageHero` + spec panel + sticky CTA.
-- **Post wizard**: shadcn `Form` + `Stepper` refresh; pill primary buttons; cream step backgrounds.
-- **Dashboard**: white cards on cream, KPI tiles use shared primitive, verification card uses shared progress, all status pills standardized.
-- **Auth (login)**: centered card with italic display headline, pastel side image.
-- **Static pages** (about, help, contact, safety, privacy, terms, sitemap, how-it-works): rewritten copy with stronger narrative (about → farmer-first manifesto with Ghanaian context; help → categorized FAQ accordion using shadcn `Accordion`; contact → split layout with form + WhatsApp/phone cards; safety → 5-step grounded guide; legal pages → clean prose template).
-- **Admin**: cream shell, pill nav (already close), reuse shared primitives.
+- Replace the patched cream hero with a real `PageHero` (compact variant) containing italic-accented title + a single search pill (this page is where search belongs).
+- **TopCategoryTabs** + **SubcategoryPills**: merge into a single segmented pill carousel with horizontal scroll; selected pill = solid primary, others = ghost. Drop the divider line between them.
+- **ResultsBar**: rebuild as a clean row — left side count + sort dropdown styled as a pill; right side mobile filter trigger pill. Active filter chips move into a dedicated row above with a leading "Filters:" label.
+- **Filters sidebar**: redesigned as a sticky cream-surfaced card, all inputs become rounded-full or rounded-2xl pills; verified toggle gets a custom pill switch. Add the new "Browse by region" pill cloud (replacing the deleted home-page RegionsMap) at the bottom of the sidebar.
+- **Empty state**: replace inline `EmptyResults` with the shared `EmptyState`.
 
-### 5. Imagery
-Use existing hero assets (`hero-cattle`, `hero-goats`, `hero-poultry`, `mixed-hero`) plus generate cream-background product shots for:
-- 6 category tiles (cattle, goats, sheep, poultry, swine, feed/agro)
-- 2 promo banners (verified hatchery basket, agro essentials basket)
-- About page hero (farmer + livestock lifestyle)
-- Static-page accent imagery
-Generated via `imagegen` at `standard` quality, stored under `src/assets/`, imported as ES6 modules with descriptive `alt` text.
+## 5 — Detail / static / dashboard / post / admin / auth
 
-### 6. Copy pass
-Rewrite every headline, sub-headline, empty state, error state, and CTA on every touched page. Tone: confident, grounded, specifically Ghanaian, never generic SaaS. Examples:
-- Home hero: "Livestock, *direct* from the farm that raised them."
-- Categories: "Browse by animal" → "Pick your animal. We'll show you the farms."
-- Empty saved: "Nothing saved yet — tap the heart on any listing to keep it here."
+Every page swept to one pattern:
 
-### 7. Accessibility hardening (carried through every page)
-- All icon-only `Button`s get `aria-label`.
-- `focus-visible:ring-2 ring-ring ring-offset-2` everywhere (replace any `outline-none`).
-- Single `<main>` (already in `__root` via AppShell), correct heading order, no skipped levels.
-- Min 44×44 tap targets on mobile.
-- All images get meaningful `alt`; decorative get `alt=""`.
-- Replace `text-muted-foreground/50` with `text-muted-foreground` (AA contrast).
-- Live regions on async actions where appropriate (already on hero).
+- **`listings.$id.tsx`**: photo carousel inside cream basket, sticky right-rail seller card on desktop, specs as MetaChip grid, WhatsApp CTA as full-width primary pill, similar listings use the new `SectionHeader` + ghost see-more.
+- **`hatcheries.tsx`, `hatcheries.$slug.tsx`, `services.tsx`, `services.$slug.tsx`, `stores.index.tsx`, `stores.$slug.tsx`**: use `PageHero`, replace grid headers with `SectionHeader`, restyle their card components (`HatcheryCard`, `ServiceCard`, `StoreCard`, `StorefrontCard`) to the new ListingCard basket pattern (cream image area, MetaChips, pill CTA).
+- **Static pages** (`about`, `contact`, `help`, `safety`, `privacy`, `terms`, `sitemap`, `how-it-works`): all routed through `StaticPage` + `PageHero`. About becomes the new home for the stats band (rebuilt as a clean 4-column editorial stat block with italic numerals). Help/FAQs become accordion pills on cream surface. Privacy/Terms/Sitemap get readable serif-toned typography on cream.
+- **Auth (`login`)**: split-screen — left lifestyle image inside cream panel, right form on white with rounded-full inputs and primary pill submit. Google button as ghost pill with brand glyph.
+- **Dashboard suite** (`dashboard.tsx` + all `_authenticated/dashboard.*`): scrap card-only grids. Header band with `PageHero` compact. Sidebar nav as vertical pill list. `KpiTile`, `ListingQuotaBanner`, `VerificationProgressCard` restyled to soft cream with italic accent numerals. Tables → rounded-2xl card rows with MetaChips. All status pills (hatchery / reservation / quote) recolored against the new token set.
+- **Post wizard (`_authenticated/post.tsx`)**: `Stepper` + `WizardProgress` redrawn as connected pill steps in primary. Form fields use rounded-2xl inputs, section headers use display italic accent, sticky bottom action bar with two pills (Back ghost / Next primary).
+- **Admin shell** (`AdminNav`, `admin.*`): cream sidebar, pill nav, table rows redesigned to match dashboard; ShieldIcon header band.
 
-## Technical notes
+## 6 — Component-level grooming
 
-- **No backend changes.** Pure frontend refactor — no schema, no RLS, no server functions touched.
-- **shadcn-first**: every new primitive composes shadcn `Button`/`Card`/`Badge`/`Input`/`Select`/`Skeleton`/`Accordion`/`Tabs`/`Dialog`/`Sheet`/`Avatar`/`Separator`. No bespoke unstyled equivalents survive.
-- **Token-only colors**: zero hex literals in components — everything routes through `src/styles.css` tokens.
-- **Refactor strategy**: introduce tokens + primitives first (one PR-sized batch), then sweep pages section by section so the app stays buildable at every step.
-- **No route changes**, no URL changes, no link-target changes — purely presentational + copy.
-- **Imagery**: generated once, committed to `src/assets/`, never inlined from external URLs.
+- `ListingCard`: tighten meta row, move Save button visually into top-right of basket (already), make verified chip use solid mint, sellerName moves to its own line under price for legibility, "Contact" pill always primary (no hover-darken to foreground).
+- `BadgeChip`, `HatcheryStatusPill`, `ReservationStatusPill`, `QuoteStatusPill`, `BatchStatusPill`, `AgroStoreStatus`: unified `StatusPill` styling — fully rounded, 11px bold uppercase, tone-mapped to mint / peach / butter / rose surfaces.
+- `MobileFilterSheet`, `RequireSignInModal`, `RequirePhoneVerifyModal`, `RequireIdVerifyModal`, `ActionConfirmDialog`: redraw to use rounded-3xl cream sheets with primary pill confirm.
+- Generate one missing hero image: `auth-hero.jpg` (Ghanaian farmer with goats, golden hour, cream tone).
+
+## 7 — Deduplication & hygiene
+
+- Remove `TrustStrip` + `TrustBanner` references everywhere.
+- Drop unused `HeroOffer`, `CategoryStrip` (legacy).
+- Single source for ticker content list in `lib/constants.ts`.
+- Sweep for `fl-lift` on cards: keep only on grid items, remove from sections that get their own band lift.
 
 ## Out of scope
 
-- Backend logic, DB, auth flows, RLS.
-- New routes or features.
-- Motion library swaps (keep current CSS transitions; only add subtle `transition-transform`/`hover:-translate-y-0.5` consistent with reference).
-- Dark mode redesign (token map updated, but no dedicated dark-mode pass).
+- No backend / RLS / route / data changes.
+- No new third-party motion libs; keep existing CSS keyframes.
+- No dark-mode redesign.
 
-## Sequencing (single build pass)
+## Sequencing
 
-1. Tokens + typography in `styles.css`.
-2. Shared primitives in `src/components/ui/` + `src/components/shared/`.
-3. Global shell (TopNav, AnnouncementBar, Footer, MobileTabBar, TrustBanner).
-4. Home page recomposition.
-5. Browse pages (listings, hatcheries, services, stores) + their detail pages.
-6. Dashboard + post wizard + login + saved.
-7. Static pages copy + layout rewrite.
-8. Admin shell pass.
-9. Generate + wire imagery.
-10. Final a11y + copy sweep + screenshot QA at 360px and 1280px.
-
-Deliverable: a unified, Agora-grade marketplace where every page shares one DNA — same type rhythm, same green, same card, same pill, same cream bands, same elegant empty states.
+1. Tokens + new primitives (PillButton, SeeMorePill, MetaChip, EditorialQuote, AgoraTicker, StatusPill).
+2. Global shell (ticker, TopNav, Footer, MobileTabBar, AppShell prop cleanup).
+3. Home — delete RolePicker / MarketplacePulse / RegionsMap / TrustStrip; rebuild remaining sections; reorder.
+4. Listings + ListingCard + filter rail.
+5. Detail, hatcheries, services, stores pages + their cards.
+6. Static pages (PageHero everywhere; About absorbs stats band).
+7. Dashboard suite + post wizard + admin.
+8. Auth.
+9. Generate missing imagery.
+10. Final screenshot QA at 360 / 768 / 1280 across every route; remove orphaned files.
