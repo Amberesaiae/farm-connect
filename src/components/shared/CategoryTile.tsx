@@ -78,17 +78,12 @@ export function CategoryTile({
             {label[0]}
           </span>
         )}
-        {count != null && count > 0 ? (
-          <span className="absolute right-2 top-2 inline-flex items-center rounded-full bg-card/95 px-2.5 py-1 text-[10.5px] font-bold text-foreground shadow-soft">
-            {count}
-          </span>
-        ) : null}
       </div>
-      <p className="mt-3 text-center text-[13.5px] font-bold text-foreground transition-colors group-hover:text-primary">
+      <p className="mt-3 text-center text-[14px] font-bold text-foreground transition-colors group-hover:text-primary">
         {label}
       </p>
-      <p className="text-center text-[11px] text-muted-foreground">
-        {count == null ? "—" : count === 0 ? "Be the first" : `${count} listed`}
+      <p className="text-center text-[11px] font-medium text-muted-foreground">
+        {count == null ? "·" : count === 0 ? "Be the first" : `${count} listed`}
       </p>
     </Link>
   );

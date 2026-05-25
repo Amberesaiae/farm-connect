@@ -1,6 +1,5 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
-import { ArrowRightIcon, SearchIcon, CheckIcon } from "@/components/icons";
+import { Link } from "@tanstack/react-router";
+import { ArrowRightIcon, CheckIcon } from "@/components/icons";
 import { DisplayAccent } from "@/components/shared/DisplayAccent";
 import heroBasket from "@/assets/hero-basket.jpg";
 
@@ -20,18 +19,11 @@ const TRUST = [
 ];
 
 /**
- * Agora-style bright editorial hero. No carousel — one decisive headline,
- * a prominent search pill, and a lifestyle portrait on the right.
+ * Agora-style bright editorial hero. Search lives in TopNav — the hero is
+ * an editorial statement: italic-accented headline, lifestyle portrait inside
+ * a cream basket, quick category chips, trust strip.
  */
 export function HomeHero() {
-  const navigate = useNavigate();
-  const [q, setQ] = useState("");
-
-  const onSearch = (e: FormEvent) => {
-    e.preventDefault();
-    navigate({ to: "/listings", search: { q: q.trim() || undefined } as never });
-  };
-
   return (
     <section
       aria-label="farmlink marketplace"
@@ -57,32 +49,22 @@ export function HomeHero() {
             one WhatsApp away.
           </p>
 
-          {/* Search pill */}
-          <form
-            onSubmit={onSearch}
-            className="flex w-full max-w-xl items-center gap-1.5 rounded-full border border-border bg-card p-1.5 shadow-soft focus-within:border-primary"
-          >
-            <div className="flex flex-1 items-center gap-2 px-4">
-              <SearchIcon size={18} className="text-muted-foreground" />
-              <label htmlFor="hero-search" className="sr-only">
-                Search livestock, breeds, or regions
-              </label>
-              <input
-                id="hero-search"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search Sanga, Boer, layers, Tamale…"
-                className="h-12 w-full bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
-              />
-            </div>
-            <button
-              type="submit"
-              className="inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-[14px] font-bold text-primary-foreground transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          {/* Primary CTA pair — search lives in the TopNav */}
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              to="/listings"
+              className="inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-[14px] font-bold text-primary-foreground shadow-soft transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              Search
+              Browse the marketplace
               <ArrowRightIcon size={14} />
-            </button>
-          </form>
+            </Link>
+            <Link
+              to="/post"
+              className="inline-flex h-12 items-center gap-2 rounded-full border border-border bg-card px-6 text-[14px] font-bold text-foreground transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              Sell on farmlink
+            </Link>
+          </div>
 
           {/* Quick chips */}
           <div className="flex flex-wrap items-center gap-2">
