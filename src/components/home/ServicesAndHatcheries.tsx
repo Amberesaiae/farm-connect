@@ -4,83 +4,57 @@ import { HatcheryCard } from "@/components/services/HatcheryCard";
 import { SERVICES } from "@/lib/services-data";
 import { HATCHERIES } from "@/lib/hatcheries-data";
 import { ArrowRightIcon } from "@/components/icons";
+import { SectionHeader } from "@/components/shared/SectionHeader";
+import { DisplayAccent } from "@/components/shared/DisplayAccent";
 
 /**
- * Two-up section: vets/services on the left, hatcheries on the right.
- * Reuses existing card components so styling stays consistent across the app.
+ * Mixed editorial row of vets/services + hatcheries — one scroll-snap rail
+ * with a single header, followed by twin pill CTAs on a cream sign-off.
  */
 export function ServicesAndHatcheries() {
   const services = SERVICES.slice(0, 3);
   const hatcheries = HATCHERIES.slice(0, 3);
 
   return (
-    <section aria-label="Services and hatcheries" className="grid gap-8 lg:grid-cols-2 lg:gap-10">
-      <SubSection
+    <section aria-label="Services and hatcheries">
+      <SectionHeader
         eyebrow="Beyond the marketplace"
-        title="Vets, transport & training"
-        copy="Trusted partners ready to keep your herd healthy and moving."
-        to="/services"
-        ctaLabel="All services"
-      >
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-          {services.map((s) => (
-            <li key={s.id}><ServiceCard service={s} /></li>
-          ))}
-        </ul>
-      </SubSection>
+        title={
+          <>
+            Vets, hatcheries <DisplayAccent>&amp; the people</DisplayAccent> who keep farms moving.
+          </>
+        }
+        description="Mobile vets, certified hatcheries, transporters and trainers — every partner verified before they appear here."
+        seeAll={{ to: "/services", label: "Browse services" }}
+      />
 
-      <SubSection
-        eyebrow="Chicks & fingerlings"
-        title="Hatcheries near you"
-        copy="Day-olds, layers, broilers and fish fry from licenced hatcheries."
-        to="/hatcheries"
-        ctaLabel="All hatcheries"
-      >
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-          {hatcheries.map((h) => (
-            <li key={h.id}><HatcheryCard hatchery={h} /></li>
-          ))}
-        </ul>
-      </SubSection>
-    </section>
-  );
-}
+      <div className="scroll-snap-row -mx-4 mt-8 flex gap-4 overflow-x-auto px-4 pb-2 md:-mx-8 md:px-8">
+        {services.map((s) => (
+          <div key={s.id} className="w-[260px] shrink-0 md:w-[300px]">
+            <ServiceCard service={s} />
+          </div>
+        ))}
+        {hatcheries.map((h) => (
+          <div key={h.id} className="w-[260px] shrink-0 md:w-[300px]">
+            <HatcheryCard hatchery={h} />
+          </div>
+        ))}
+      </div>
 
-function SubSection({
-  eyebrow, title, copy, to, ctaLabel, children,
-}: {
-  eyebrow: string;
-  title: string;
-  copy: string;
-  to: "/services" | "/hatcheries";
-  ctaLabel: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <div className="mb-5 flex items-end justify-between gap-4">
-        <div>
-          <p className="font-mono text-[10.5px] font-bold uppercase tracking-[0.14em] text-primary/80">
-            {eyebrow}
-          </p>
-          <h2 className="font-display mt-1.5 text-[22px] font-extrabold tracking-tight md:text-[26px]">
-            {title}
-          </h2>
-          <p className="mt-1 text-[13px] text-muted-foreground">{copy}</p>
-        </div>
+      <div className="mt-6 flex flex-wrap gap-3">
         <Link
-          to={to}
-          className="hidden shrink-0 items-center gap-1.5 self-end text-[13px] font-semibold text-primary hover:underline md:inline-flex"
+          to="/services"
+          className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border bg-card px-5 text-[13px] font-semibold text-foreground transition-colors hover:border-primary hover:text-primary"
         >
-          {ctaLabel} <ArrowRightIcon size={14} />
+          Vets &amp; services <ArrowRightIcon size={14} />
+        </Link>
+        <Link
+          to="/hatcheries"
+          className="inline-flex h-11 items-center gap-1.5 rounded-full border border-border bg-card px-5 text-[13px] font-semibold text-foreground transition-colors hover:border-primary hover:text-primary"
+        >
+          Hatcheries <ArrowRightIcon size={14} />
         </Link>
       </div>
-      {children}
-      <div className="mt-4 md:hidden">
-        <Link to={to} className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-primary">
-          {ctaLabel} <ArrowRightIcon size={14} />
-        </Link>
-      </div>
-    </div>
+    </section>
   );
 }
