@@ -71,9 +71,6 @@ export function Footer() {
       <div className="border-t border-border">
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-2 px-4 py-5 text-[12px] text-muted-foreground md:flex-row md:items-center md:px-8">
           <p>© {new Date().getFullYear()} farmlink. Built for Ghanaian farmers.</p>
-          <p className="font-mono text-[11px] uppercase tracking-wider">
-            v2 · serving 16 regions
-          </p>
         </div>
       </div>
     </footer>

@@ -25,6 +25,9 @@ import { type TopCategory } from "@/lib/categories";
 import { useTaxonomy } from "@/lib/taxonomy-context";
 import type { ResolvedAttribute, Taxonomy } from "@/lib/taxonomy";
 import mixedHero from "@/assets/mixed-hero.jpg";
+import { PageHero } from "@/components/shared/PageHero";
+import { DisplayAccent } from "@/components/shared/DisplayAccent";
+import { EmptyState } from "@/components/shared/EmptyState";
 
 interface ListingsSearch {
   q?: string;
@@ -294,21 +297,17 @@ function ListingsPage() {
   );
 
   return (
-    <AppShell showTrust>
+    <AppShell>
       <div className="mx-auto max-w-7xl space-y-10 px-4 py-6 md:px-8 md:py-10">
-        {/* Bright marketplace hero — mirrors the Agora pillar */}
-        <header className="overflow-hidden rounded-[28px] border border-border bg-surface-cream p-7 md:p-10">
-          <span className="inline-flex w-fit items-center rounded-full bg-primary-soft px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.16em] text-primary">
-            Marketplace
-          </span>
-          <h1 className="font-display mt-4 text-[34px] font-extrabold leading-[1.02] tracking-tight md:text-[52px]">
-            Browse <span className="display-accent">fresh</span> livestock & farm supplies
-          </h1>
-          <p className="mt-3 max-w-2xl text-[14px] text-muted-foreground md:text-[15.5px]">
-            Pick a pillar, drill into a category, filter by region or breed.
-            Every seller is one WhatsApp tap away.
-          </p>
-        </header>
+        <PageHero
+          eyebrow="Marketplace"
+          title={
+            <>
+              Browse <DisplayAccent>fresh</DisplayAccent> livestock &amp; farm supplies.
+            </>
+          }
+          lede="Pick a pillar, drill into a category, filter by region or breed. Every seller is one WhatsApp tap away."
+        />
 
         {/* Pillar + subcategory navigation — secondary tier */}
         <section aria-label="Categories">
@@ -365,10 +364,19 @@ function ListingsPage() {
                   ))}
                 </div>
               ) : rows.length === 0 ? (
-                <EmptyResults
-                  hasFilters={activeCount > 0}
-                  onClear={() => navigate({ to: "/listings", search: {} as never })}
-                />
+                activeCount > 0 ? (
+                  <EmptyState
+                    title="No listings match these filters"
+                    description="Try widening your price range, picking a different region, or clearing a filter or two."
+                    action={{ to: "/listings", label: "Clear all filters" }}
+                  />
+                ) : (
+                  <EmptyState
+                    title="Nothing here yet"
+                    description="Be the first to post a listing in this category."
+                    action={{ to: "/post", label: "Post a listing" }}
+                  />
+                )
               ) : (
                 <ListingGrid
                   listings={rows}
@@ -383,35 +391,6 @@ function ListingsPage() {
   );
 }
 
-function EmptyResults({ hasFilters, onClear }: { hasFilters: boolean; onClear: () => void }) {
-  return (
-    <div className="fl-fade-in flex flex-col items-center gap-4 rounded-3xl border-[1.5px] border-dashed border-border bg-card p-12 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-soft text-primary">
-        <span className="text-3xl">🔎</span>
-      </div>
-      <div className="max-w-md space-y-1.5">
-        <h3 className="font-display text-[18px] font-extrabold tracking-tight">
-          {hasFilters ? "No listings match these filters" : "Nothing here yet"}
-        </h3>
-        <p className="text-[13px] leading-relaxed text-muted-foreground">
-          {hasFilters
-            ? "Try widening your price range, picking a different region, or clearing a filter or two."
-            : "Be the first to post a listing in this category."}
-        </p>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {hasFilters ? (
-          <Button onClick={onClear} variant="outline" className="rounded-full">
-            Clear all filters
-          </Button>
-        ) : null}
-        <Button asChild className="rounded-full">
-          <a href="/post">Post a listing</a>
-        </Button>
-      </div>
-    </div>
-  );
-}
 
 function FiltersInner({
   search,

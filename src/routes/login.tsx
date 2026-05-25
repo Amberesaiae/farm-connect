@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { DisplayAccent } from "@/components/shared/DisplayAccent";
+import authHero from "@/assets/auth-hero.jpg";
 
 interface LoginSearch {
   redirect?: string;
@@ -78,19 +80,45 @@ function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-6 flex flex-col items-center gap-1.5">
-          <Wordmark size="text-[26px]" />
-          <span className="text-xs text-muted-foreground">
-            Sell or save livestock listings across Ghana
-          </span>
+    <div className="min-h-screen bg-background p-4 md:p-6">
+      <div className="mx-auto grid min-h-[calc(100vh-3rem)] max-w-6xl gap-6 overflow-hidden rounded-[28px] border border-border bg-surface-cream md:grid-cols-[1.05fr_1fr]">
+        {/* Left — editorial lifestyle panel */}
+        <div className="relative hidden overflow-hidden md:block">
+          <img
+            src={authHero}
+            alt="Ghanaian farmer holding a young goat kid at golden hour"
+            width={1024}
+            height={1280}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute inset-x-8 bottom-8 max-w-sm rounded-3xl bg-card/95 p-6 shadow-soft backdrop-blur">
+            <Wordmark size="text-[22px]" />
+            <p className="font-display mt-3 text-[22px] font-extrabold leading-tight tracking-tight text-foreground">
+              Livestock, <DisplayAccent>direct</DisplayAccent> from the farm that raised them.
+            </p>
+          </div>
         </div>
 
-        <div className="rounded-3xl border-[1.5px] border-border bg-card p-6">
+        {/* Right — form */}
+        <div className="flex items-center justify-center bg-card p-6 md:p-10">
+          <div className="w-full max-w-sm">
+            <div className="mb-7 md:hidden">
+              <Wordmark size="text-[24px]" />
+            </div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+              Sign in
+            </p>
+            <h1 className="font-display mt-2 text-[30px] font-extrabold leading-tight tracking-tight md:text-[36px]">
+              Welcome <DisplayAccent>back</DisplayAccent>.
+            </h1>
+            <p className="mt-2 text-[13.5px] leading-relaxed text-muted-foreground">
+              Post, save and message farmers across Ghana — one account.
+            </p>
+
+            <div className="mt-7">
           <Button
             variant="outline"
-            className="w-full rounded-xl border-[1.5px] font-semibold"
+            className="h-12 w-full rounded-full border-[1.5px] font-semibold"
             onClick={onGoogle}
             disabled={busy}
           >
@@ -107,11 +135,11 @@ function LoginPage() {
           </div>
 
           <Tabs defaultValue="signin">
-            <TabsList className="grid w-full grid-cols-2 rounded-xl bg-surface p-1">
-              <TabsTrigger value="signin" className="rounded-lg">
+            <TabsList className="grid w-full grid-cols-2 rounded-full bg-surface-cream p-1">
+              <TabsTrigger value="signin" className="rounded-full">
                 Sign in
               </TabsTrigger>
-              <TabsTrigger value="signup" className="rounded-lg">
+              <TabsTrigger value="signup" className="rounded-full">
                 Create account
               </TabsTrigger>
             </TabsList>
@@ -126,7 +154,7 @@ function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1.5 rounded-xl"
+                    className="mt-1.5 h-11 rounded-full px-4"
                   />
                 </div>
                 <div>
@@ -137,10 +165,10 @@ function LoginPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="mt-1.5 rounded-xl"
+                    className="mt-1.5 h-11 rounded-full px-4"
                   />
                 </div>
-                <Button type="submit" className="w-full rounded-xl font-semibold" disabled={busy}>
+                <Button type="submit" className="h-12 w-full rounded-full font-bold" disabled={busy}>
                   Sign in
                 </Button>
               </form>
@@ -155,7 +183,7 @@ function LoginPage() {
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="Kwame Mensah"
-                    className="mt-1.5 rounded-xl"
+                    className="mt-1.5 h-11 rounded-full px-4"
                   />
                 </div>
                 <div>
@@ -166,7 +194,7 @@ function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1.5 rounded-xl"
+                    className="mt-1.5 h-11 rounded-full px-4"
                   />
                 </div>
                 <div>
@@ -178,25 +206,27 @@ function LoginPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="mt-1.5 rounded-xl"
+                    className="mt-1.5 h-11 rounded-full px-4"
                   />
                   <p className="mt-1 text-xs text-muted-foreground">At least 8 characters.</p>
                 </div>
-                <Button type="submit" className="w-full rounded-xl font-semibold" disabled={busy}>
+                <Button type="submit" className="h-12 w-full rounded-full font-bold" disabled={busy}>
                   Create account
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
-        </div>
+            </div>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          By continuing, you agree to{" "}
-          <Link to="/about" className="underline hover:text-foreground">
-            farmlink's terms
-          </Link>
-          .
-        </p>
+            <p className="mt-6 text-center text-xs text-muted-foreground">
+              By continuing, you agree to{" "}
+              <Link to="/terms" className="underline hover:text-foreground">
+                farmlink's terms
+              </Link>
+              .
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

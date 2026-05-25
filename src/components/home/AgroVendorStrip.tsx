@@ -2,7 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { StoreCard, type StoreCardData } from "@/components/store/StoreCard";
-import { ArrowRightIcon } from "@/components/icons";
+import { SectionHeader } from "@/components/shared/SectionHeader";
+import { DisplayAccent } from "@/components/shared/DisplayAccent";
 
 interface Row {
   id: string;
@@ -53,36 +54,27 @@ export function AgroVendorStrip() {
 
   return (
     <section aria-label="Featured agro-vendor stores">
-      <div className="mb-5 flex items-end justify-between gap-4">
-        <div>
-          <p className="font-mono text-[10.5px] font-bold uppercase tracking-[0.14em] text-primary/80">
-            Stocked & ready
-          </p>
-          <h2 className="font-display mt-1.5 text-[22px] font-extrabold tracking-tight md:text-[26px]">
-            Feed, equipment & supplies
-          </h2>
-          <p className="mt-1 max-w-xl text-[13px] text-muted-foreground">
-            Independent shops across Ghana selling everything from layer mash to incubators.
-          </p>
-        </div>
-        <Link
-          to="/stores"
-          className="hidden shrink-0 items-center gap-1.5 self-end text-[13px] font-semibold text-primary hover:underline md:inline-flex"
-        >
-          All stores <ArrowRightIcon size={14} />
-        </Link>
-      </div>
+      <SectionHeader
+        eyebrow="Stocked & ready"
+        title={
+          <>
+            Feed, equipment <DisplayAccent>&amp; supplies</DisplayAccent>.
+          </>
+        }
+        description="Independent agro shops across Ghana — layer mash, incubators, vet meds, tools."
+        seeAll={{ to: "/stores", label: "All stores" }}
+      />
 
-      <div className="scroll-snap-row -mx-4 flex gap-4 overflow-x-auto px-4 pb-2 md:-mx-8 md:px-8">
+      <div className="scroll-snap-row -mx-4 mt-8 flex gap-4 overflow-x-auto px-4 pb-2 md:-mx-8 md:px-8">
         {rows === null
           ? Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="w-[260px] shrink-0 animate-pulse rounded-2xl border border-border bg-card">
+              <div key={i} className="w-[280px] shrink-0 animate-pulse rounded-2xl border border-border bg-card md:w-[320px]">
                 <div className="aspect-[16/9] rounded-t-2xl bg-surface" />
                 <div className="h-24" />
               </div>
             ))
           : rows.map((s) => (
-              <div key={s.id} className="w-[260px] shrink-0 md:w-[300px]">
+              <div key={s.id} className="w-[280px] shrink-0 md:w-[320px]">
                 <StoreCard store={s} />
               </div>
             ))}
