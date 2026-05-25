@@ -1,14 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/layout/AppShell";
 import { HomeHero } from "@/components/home/HomeHero";
-import { RolePicker } from "@/components/home/RolePicker";
 import { CategoryList } from "@/components/home/CategoryList";
 import { FreshListings } from "@/components/home/FreshListings";
-import { TrustStrip } from "@/components/home/TrustStrip";
-import { MarketplacePulse } from "@/components/home/MarketplacePulse";
 import { ServicesAndHatcheries } from "@/components/home/ServicesAndHatcheries";
 import { AgroVendorStrip } from "@/components/home/AgroVendorStrip";
-import { RegionsMap } from "@/components/home/RegionsMap";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { FarmerVoices } from "@/components/home/FarmerVoices";
 import { PromoPair } from "@/components/home/PromoPair";
@@ -39,7 +35,7 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   return (
-    <AppShell showTrust>
+    <AppShell>
       <div className="mx-auto max-w-7xl px-4 py-6 md:px-8 md:py-10">
         <HomeHero />
 
@@ -58,16 +54,8 @@ function HomePage() {
           <CategoryList />
         </section>
 
-        <div className="mt-14 md:mt-20">
-          <RolePicker />
-        </div>
-
         <div className="mt-12 md:mt-16">
           <PromoPair />
-        </div>
-
-        <div className="mt-12 md:mt-16">
-          <MarketplacePulse />
         </div>
 
         {/* Primary browse hook — largest type, most breathing room */}
@@ -84,19 +72,11 @@ function HomePage() {
         </div>
 
         <div className="mt-16 md:mt-24">
-          <RegionsMap />
-        </div>
-
-        <div className="mt-16 md:mt-24">
           <HowItWorks />
         </div>
 
         <div className="mt-16 md:mt-24">
           <FarmerVoices />
-        </div>
-
-        <div className="mt-16 md:mt-24">
-          <TrustStrip />
         </div>
       </div>
     </AppShell>

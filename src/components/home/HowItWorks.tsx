@@ -25,21 +25,24 @@ export function HowItWorks() {
   const steps = mode === "buyer" ? BUYER : SELLER;
 
   return (
-    <section aria-label="How farmlink works" className="rounded-3xl border border-border bg-card p-6 md:p-10">
+    <section aria-label="How farmlink works" className="rounded-[32px] bg-surface-cream p-7 md:px-14 md:py-16">
       <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="font-mono text-[10.5px] font-bold uppercase tracking-[0.14em] text-primary/80">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
             How it works
           </p>
-          <h2 className="font-display mt-1.5 text-[22px] font-extrabold tracking-tight md:text-[28px]">
-            Three steps. {mode === "buyer" ? "From scroll to stable." : "From post to payday."}
+          <h2 className="font-display mt-2 text-[28px] font-extrabold leading-[1.05] tracking-tight md:text-[40px]">
+            Three steps.{" "}
+            <span className="display-accent">
+              {mode === "buyer" ? "From scroll to stable." : "From post to payday."}
+            </span>
           </h2>
         </div>
 
         <div
           role="tablist"
           aria-label="Choose role"
-          className="inline-flex self-start rounded-full border border-border bg-background p-1"
+          className="inline-flex self-start rounded-full border border-border bg-card p-1"
         >
           {(["buyer", "seller"] as const).map((m) => (
             <button
@@ -59,38 +62,32 @@ export function HowItWorks() {
         </div>
       </div>
 
-      <ol className="mt-8 grid gap-4 md:grid-cols-3 md:gap-6">
-        {steps.map((s, idx) => (
+      <ol key={mode} className="fl-fade-in mt-10 grid gap-5 md:grid-cols-3 md:gap-8">
+        {steps.map((s) => (
           <li
             key={s.n}
-            className="relative flex flex-col gap-3 rounded-2xl border border-border bg-background p-5 md:p-6"
+            className="relative flex flex-col gap-3"
           >
             <span
               aria-hidden
-              className="font-display text-[42px] font-extrabold leading-none tracking-tight text-primary/15 md:text-[56px]"
+              className="font-display italic text-[64px] font-extrabold leading-none tracking-tight text-primary md:text-[88px]"
             >
               {s.n}
             </span>
-            <h3 className="font-display text-[17px] font-extrabold tracking-tight text-foreground">
+            <h3 className="font-display mt-2 text-[20px] font-extrabold tracking-tight text-foreground md:text-[22px]">
               {s.title}
             </h3>
-            <p className="text-[13px] leading-relaxed text-muted-foreground">{s.copy}</p>
-            {idx < steps.length - 1 ? (
-              <span
-                aria-hidden
-                className="absolute -right-3 top-1/2 hidden h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground md:flex"
-              >
-                →
-              </span>
-            ) : null}
+            <p className="text-[13.5px] leading-relaxed text-muted-foreground md:text-[14px]">
+              {s.copy}
+            </p>
           </li>
         ))}
       </ol>
 
-      <div className="mt-6">
+      <div className="mt-10 flex justify-center md:mt-12">
         <Link
           to={mode === "buyer" ? "/listings" : "/post"}
-          className="inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-5 py-3 text-[13.5px] font-bold text-primary-foreground transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          className="inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-7 py-3 text-[14px] font-bold text-primary-foreground shadow-soft transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
           {mode === "buyer" ? "Start browsing" : "Post your first listing"}
           <ArrowRightIcon size={14} />
