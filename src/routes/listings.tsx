@@ -391,35 +391,6 @@ function ListingsPage() {
   );
 }
 
-function EmptyResults({ hasFilters, onClear }: { hasFilters: boolean; onClear: () => void }) {
-  return (
-    <div className="fl-fade-in flex flex-col items-center gap-4 rounded-3xl border-[1.5px] border-dashed border-border bg-card p-12 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-soft text-primary">
-        <span className="text-3xl">🔎</span>
-      </div>
-      <div className="max-w-md space-y-1.5">
-        <h3 className="font-display text-[18px] font-extrabold tracking-tight">
-          {hasFilters ? "No listings match these filters" : "Nothing here yet"}
-        </h3>
-        <p className="text-[13px] leading-relaxed text-muted-foreground">
-          {hasFilters
-            ? "Try widening your price range, picking a different region, or clearing a filter or two."
-            : "Be the first to post a listing in this category."}
-        </p>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {hasFilters ? (
-          <Button onClick={onClear} variant="outline" className="rounded-full">
-            Clear all filters
-          </Button>
-        ) : null}
-        <Button asChild className="rounded-full">
-          <a href="/post">Post a listing</a>
-        </Button>
-      </div>
-    </div>
-  );
-}
 
 function FiltersInner({
   search,
